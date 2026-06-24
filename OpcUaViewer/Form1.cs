@@ -1,0 +1,399 @@
+﻿using Opc.Ua;
+using Opc.Ua.Client;
+using Opc.Ua.Configuration;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace OpcUaViewer
+{
+    public partial class Form1 : Form
+    {
+        /// <summary>
+        /// Path to browse, relative to the Objects folder, expressed as "namespaceIndex:BrowseName"
+        /// segments separated by '/'. Equivalent to:
+        /// /Root/Objects/4:PLC/6:Modules/6:::/6:Global PV/6:Monitoring
+        /// Change this if your server's address space uses a different structure.
+        /// </summary>
+        private const string MonitoringFolderPath = "4:PLC/6:Modules/6:::/6:Global PV/6:Monitoring";
+
+        private ISession session;
+        private Subscription subscription;
+        private CancellationTokenSource cts;
+
+        // The variables discovered under MonitoringFolderPath, populated on connect.
+        private List<(string Name, NodeId NodeId)> monitoredNodes = new List<(string Name, NodeId NodeId)>();
+
+        // Maps a MonitoredItem's ClientHandle to the grid row that displays its value.
+        private readonly Dictionary<uint, DataGridViewRow> rowsByClientHandle = new Dictionary<uint, DataGridViewRow>();
+
+        public Form1()
+        {
+            InitializeComponent();
+            FormClosing += Form1_FormClosing;
+        }
+
+        private async void connectButton_Click(object sender, EventArgs e)
+        {
+            if (session != null)
+            {
+                DisconnectClient();
+                connectButton.Text = "Connect";
+                return;
+            }
+
+            string endpointUrl = endpointTextBox.Text.Trim();
+            if (string.IsNullOrEmpty(endpointUrl))
+            {
+                MessageBox.Show("Please enter an endpoint URL.", "OPC UA Client",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            connectButton.Enabled = false;
+            endpointTextBox.Enabled = false;
+            UpdateStatus("Connecting...");
+
+            cts = new CancellationTokenSource();
+            await StartClient(endpointUrl, cts.Token);
+
+            connectButton.Enabled = true;
+            connectButton.Text = session != null ? "Disconnect" : "Connect";
+            endpointTextBox.Enabled = session == null;
+        }
+
+        private async Task StartClient(string endpointUrl, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var config = BuildApplicationConfiguration();
+                await config.Validate(ApplicationType.Client);
+
+                // NOTE: accepting all certs is fine for a lab/dev network, but don't ship this
+                // to anything internet-facing. Swap for proper trust-list handling in production.
+                config.CertificateValidator.CertificateValidation += (s, ce) => { ce.Accept = true; };
+
+                var endpointDescription = CoreClientUtils.SelectEndpoint(config, endpointUrl, useSecurity: false);
+                var configuredEndpoint = new ConfiguredEndpoint(
+                    null,
+                    endpointDescription,
+                    EndpointConfiguration.Create(config));
+
+                session = await DefaultSessionFactory.Instance.CreateAsync(
+                    config,
+                    configuredEndpoint,
+                    updateBeforeConnect: false,
+                    sessionName: "Session",
+                    sessionTimeout: 60000,
+                    identity: new UserIdentity(),
+                    preferredLocales: null,
+                    ct: cancellationToken);
+
+                UpdateStatus($"Connected to {endpointDescription.EndpointUrl} — browsing...");
+
+                PopulateMonitoredNodesFromServer();
+                CreateSubscription();
+
+                UpdateStatus(monitoredNodes.Count > 0
+                    ? $"Connected to {endpointDescription.EndpointUrl} ({monitoredNodes.Count} items)"
+                    : $"Connected to {endpointDescription.EndpointUrl} — no items found at the configured path");
+            }
+            catch (OperationCanceledException)
+            {
+                // form closed/cancelled during connect — nothing to report
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus("Connection FAILED");
+                MessageBox.Show("Connection FAILED:\n\n" + ex, "OPC UA Client",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private static ApplicationConfiguration BuildApplicationConfiguration()
+        {
+            var config = new ApplicationConfiguration()
+            {
+                ApplicationName = "OPC UA Client",
+                ApplicationType = ApplicationType.Client,
+
+                SecurityConfiguration = new SecurityConfiguration
+                {
+                    ApplicationCertificate = new CertificateIdentifier
+                    {
+                        StoreType = CertificateStoreType.Directory,
+                        StorePath = "CertificateStores/UA_MachineDefault",
+                        SubjectName = "CN=OPC UA Client"
+                    },
+                    TrustedPeerCertificates = new CertificateTrustList
+                    {
+                        StoreType = CertificateStoreType.Directory,
+                        StorePath = "CertificateStores/UA Applications"
+                    },
+                    TrustedIssuerCertificates = new CertificateTrustList
+                    {
+                        StoreType = CertificateStoreType.Directory,
+                        StorePath = "CertificateStores/UA Certificate Authorities"
+                    },
+                    RejectedCertificateStore = new CertificateTrustList
+                    {
+                        StoreType = CertificateStoreType.Directory,
+                        StorePath = "CertificateStores/RejectedCertificates"
+                    },
+                    AutoAcceptUntrustedCertificates = true,
+                    RejectSHA1SignedCertificates = false
+                },
+
+                TransportQuotas = new TransportQuotas
+                {
+                    OperationTimeout = 15000
+                },
+                ClientConfiguration = new ClientConfiguration(),
+
+                TraceConfiguration = new TraceConfiguration
+                {
+                    OutputFilePath = "opcua.log",
+                    TraceMasks = Utils.TraceMasks.All
+                }
+            };
+
+            config.TraceConfiguration.ApplySettings();
+            return config;
+        }
+
+        /// <summary>
+        /// Resolves MonitoringFolderPath to a NodeId, browses its children, and fills in
+        /// monitoredNodes + the grid with whatever Variable nodes it finds.
+        /// </summary>
+        private void PopulateMonitoredNodesFromServer()
+        {
+            try
+            {
+                NodeId folderNodeId = ResolveBrowsePath(MonitoringFolderPath);
+                monitoredNodes = BrowseVariables(folderNodeId);
+            }
+            catch (Exception ex)
+            {
+                monitoredNodes = new List<(string Name, NodeId NodeId)>();
+                MessageBox.Show("Failed to browse the monitoring folder:\n\n" + ex, "OPC UA Client",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            dataGridView1.Rows.Clear();
+            rowsByClientHandle.Clear();
+
+            foreach (var node in monitoredNodes)
+            {
+                dataGridView1.Rows.Add(node.Name, node.NodeId.ToString(), "-", "-", "-");
+            }
+        }
+
+        /// <summary>
+        /// Walks a relative path of "ns:BrowseName" segments starting at the Objects folder
+        /// and returns the NodeId of the final segment.
+        /// </summary>
+        private NodeId ResolveBrowsePath(string relativePath)
+        {
+            string[] segments = relativePath.Split('/');
+            var elements = new RelativePathElementCollection();
+
+            foreach (string segment in segments)
+            {
+                int colonIndex = segment.IndexOf(':');
+                if (colonIndex < 0)
+                {
+                    throw new FormatException(
+                        $"Invalid path segment '{segment}'. Expected format 'namespaceIndex:BrowseName'.");
+                }
+
+                ushort namespaceIndex = ushort.Parse(segment.Substring(0, colonIndex));
+                string browseName = segment.Substring(colonIndex + 1);
+
+                elements.Add(new RelativePathElement
+                {
+                    ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences,
+                    IsInverse = false,
+                    IncludeSubtypes = true,
+                    TargetName = new QualifiedName(browseName, namespaceIndex)
+                });
+            }
+
+            var browsePaths = new BrowsePathCollection
+            {
+                new BrowsePath
+                {
+                    StartingNode = ObjectIds.ObjectsFolder,
+                    RelativePath = new RelativePath { Elements = elements }
+                }
+            };
+
+            // TranslateBrowsePathsToNodeIds is a core, synchronous service call. Some library
+            // versions flag it [Obsolete] in favor of an async overload — safe to ignore for now.
+#pragma warning disable CS0618
+            session.TranslateBrowsePathsToNodeIds(null, browsePaths, out BrowsePathResultCollection results, out _);
+#pragma warning restore CS0618
+
+            if (results == null || results.Count == 0 || StatusCode.IsBad(results[0].StatusCode) || results[0].Targets.Count == 0)
+            {
+                string statusText = results?.Count > 0 ? results[0].StatusCode.ToString() : "no result";
+                throw new Exception($"Could not resolve path '/Root/Objects/{relativePath}' ({statusText}).");
+            }
+
+            return ExpandedNodeId.ToNodeId(results[0].Targets[0].TargetId, session.NamespaceUris);
+        }
+
+        /// <summary>
+        /// Browses the direct children of a folder and returns every Variable node found.
+        /// </summary>
+        private List<(string Name, NodeId NodeId)> BrowseVariables(NodeId folderNodeId)
+        {
+            var found = new List<(string Name, NodeId NodeId)>();
+
+#pragma warning disable CS0618
+            session.Browse(
+                null,
+                null,
+                folderNodeId,
+                0u,
+                BrowseDirection.Forward,
+                ReferenceTypeIds.HierarchicalReferences,
+                true,
+                (uint)NodeClass.Variable,
+                out byte[] continuationPoint,
+                out ReferenceDescriptionCollection references);
+#pragma warning restore CS0618
+
+            foreach (var reference in references)
+            {
+                var nodeId = ExpandedNodeId.ToNodeId(reference.NodeId, session.NamespaceUris);
+                string name = !string.IsNullOrEmpty(reference.DisplayName?.Text)
+                    ? reference.DisplayName.Text
+                    : reference.BrowseName.Name;
+
+                found.Add((name, nodeId));
+            }
+
+            return found;
+        }
+
+        private void CreateSubscription()
+        {
+            if (session == null || monitoredNodes.Count == 0)
+                return;
+
+            try
+            {
+                subscription = new Subscription(session.DefaultSubscription)
+                {
+                    PublishingInterval = 500
+                };
+
+                for (int i = 0; i < monitoredNodes.Count; i++)
+                {
+                    var node = monitoredNodes[i];
+
+                    var item = new MonitoredItem(subscription.DefaultItem)
+                    {
+                        DisplayName = node.Name,
+                        StartNodeId = node.NodeId,
+                        AttributeId = Attributes.Value,
+                        SamplingInterval = 500
+                    };
+
+                    item.Notification += OnValueChanged;
+                    subscription.AddItem(item);
+
+                    // ClientHandle isn't assigned until the item is added to the subscription,
+                    // so map it here before Create() so notifications can be matched to rows.
+                    rowsByClientHandle[item.ClientHandle] = dataGridView1.Rows[i];
+                }
+
+                session.AddSubscription(subscription);
+                subscription.Create();
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus("Subscription FAILED");
+                MessageBox.Show("Failed to create subscription:\n\n" + ex, "OPC UA Client",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void OnValueChanged(MonitoredItem item, MonitoredItemNotificationEventArgs e)
+        {
+            foreach (var v in item.DequeueValues())
+            {
+                UpdateRow(item.ClientHandle, v);
+            }
+        }
+
+        private void UpdateRow(uint clientHandle, DataValue value)
+        {
+            if (!rowsByClientHandle.TryGetValue(clientHandle, out var row) || dataGridView1.IsDisposed)
+                return;
+
+            void Apply()
+            {
+                row.Cells[2].Value = value.Value?.ToString() ?? "(null)";
+                row.Cells[3].Value = value.StatusCode.ToString();
+                row.Cells[4].Value = value.SourceTimestamp != DateTime.MinValue
+                    ? value.SourceTimestamp.ToLocalTime().ToString("HH:mm:ss.fff")
+                    : DateTime.Now.ToString("HH:mm:ss.fff");
+            }
+
+            if (dataGridView1.InvokeRequired)
+                dataGridView1.Invoke(new Action(Apply));
+            else
+                Apply();
+        }
+
+        private void UpdateStatus(string text)
+        {
+            if (statusLabel.IsDisposed) return;
+
+            if (statusLabel.InvokeRequired)
+                statusLabel.Invoke(new Action(() => statusLabel.Text = text));
+            else
+                statusLabel.Text = text;
+        }
+
+        private void DisconnectClient()
+        {
+            cts?.Cancel();
+
+            try
+            {
+                if (subscription != null && session != null)
+                {
+                    session.RemoveSubscription(subscription);
+                    subscription.Dispose();
+                }
+
+                session?.Close();
+                session?.Dispose();
+            }
+            catch
+            {
+                // best-effort cleanup
+            }
+            finally
+            {
+                subscription = null;
+                session = null;
+                rowsByClientHandle.Clear();
+                monitoredNodes.Clear();
+                dataGridView1.Rows.Clear();
+                UpdateStatus("Disconnected");
+            }
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            DisconnectClient();
+        }
+    }
+}
