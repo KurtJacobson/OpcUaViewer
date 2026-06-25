@@ -4,6 +4,7 @@ using Opc.Ua.Configuration;
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +22,12 @@ namespace OpcUaViewer
         /// </summary>
         private const string MonitoringFolderPath = "4:PLC/6:Modules/6:::/6:Global PV/6:Monitoring";
 
+        /// <summary>
+        /// Any monitored item whose name contains this text (case-insensitive) is treated as the
+        /// "current product id" — its value drives which PDF gets shown in the Document Viewer tab.
+        /// </summary>
+        private const string ProductIdNameMatch = "ProductId";
+
         private ISession session;
         private Subscription subscription;
         private CancellationTokenSource cts;
@@ -31,10 +38,72 @@ namespace OpcUaViewer
         // Maps a MonitoredItem's ClientHandle to the grid row that displays its value.
         private readonly Dictionary<uint, DataGridViewRow> rowsByClientHandle = new Dictionary<uint, DataGridViewRow>();
 
+        // ClientHandle of the item identified as the product id, if one was found.
+        private uint? productIdClientHandle;
+
+        // Avoids re-navigating the WebView2 control to the same file repeatedly.
+        private string lastLoadedProductId;
+
         public Form1()
         {
             InitializeComponent();
             FormClosing += Form1_FormClosing;
+            Load += Form1_Load;
+            LoadSettings();
+        }
+
+        private void LoadSettings()
+        {
+            string savedFolder = Properties.Settings.Default.PdfFolderPath;
+            if (!string.IsNullOrWhiteSpace(savedFolder))
+            {
+                pdfFolderTextBox.Text = savedFolder;
+            }
+        }
+
+        private void SaveSettings()
+        {
+            Properties.Settings.Default.PdfFolderPath = pdfFolderTextBox.Text.Trim();
+            Properties.Settings.Default.Save();
+        }
+
+        private async void Form1_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                await docViewer.EnsureCoreWebView2Async();
+                ClearPdfView("Waiting for a product id...");
+            }
+            catch (Exception ex)
+            {
+                SetPdfStatus("PDF viewer unavailable: " + ex.Message +
+                    " (requires the Microsoft Edge WebView2 Runtime).");
+            }
+        }
+
+        private void pdfBrowseButton_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                if (Directory.Exists(pdfFolderTextBox.Text))
+                {
+                    dialog.SelectedPath = pdfFolderTextBox.Text;
+                }
+
+                if (dialog.ShowDialog(this) == DialogResult.OK)
+                {
+                    pdfFolderTextBox.Text = dialog.SelectedPath;
+                    SaveSettings();
+
+                    // Re-trigger a load attempt with the new folder if we already have a product id.
+                    if (!string.IsNullOrEmpty(lastLoadedProductId))
+                    {
+                        string productId = lastLoadedProductId;
+                        lastLoadedProductId = null; // force reload
+                        OpenProductPdf(productId);
+                    }
+                }
+            }
         }
 
         private async void connectButton_Click(object sender, EventArgs e)
@@ -285,6 +354,8 @@ namespace OpcUaViewer
             if (session == null || monitoredNodes.Count == 0)
                 return;
 
+            productIdClientHandle = null;
+
             try
             {
                 subscription = new Subscription(session.DefaultSubscription)
@@ -310,10 +381,20 @@ namespace OpcUaViewer
                     // ClientHandle isn't assigned until the item is added to the subscription,
                     // so map it here before Create() so notifications can be matched to rows.
                     rowsByClientHandle[item.ClientHandle] = dataGridView1.Rows[i];
+
+                    if (node.Name.IndexOf(ProductIdNameMatch, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        productIdClientHandle = item.ClientHandle;
+                    }
                 }
 
                 session.AddSubscription(subscription);
                 subscription.Create();
+
+                if (productIdClientHandle == null)
+                {
+                    SetPdfStatus($"No monitored item matching '{ProductIdNameMatch}' was found.");
+                }
             }
             catch (Exception ex)
             {
@@ -328,6 +409,11 @@ namespace OpcUaViewer
             foreach (var v in item.DequeueValues())
             {
                 UpdateRow(item.ClientHandle, v);
+
+                if (productIdClientHandle.HasValue && item.ClientHandle == productIdClientHandle.Value)
+                {
+                    OpenProductPdf(v.Value?.ToString());
+                }
             }
         }
 
@@ -349,6 +435,130 @@ namespace OpcUaViewer
                 dataGridView1.Invoke(new Action(Apply));
             else
                 Apply();
+        }
+
+        /// <summary>
+        /// Looks for "{productId}.pdf" in the configured folder and, if found, loads it into the
+        /// Document Viewer tab's WebView2 control.
+        /// </summary>
+        private void OpenProductPdf(string productId)
+        {
+            if (docViewer.IsDisposed)
+                return;
+
+            if (docViewer.InvokeRequired)
+            {
+                docViewer.Invoke(new Action(() => OpenProductPdf(productId)));
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(productId))
+            {
+                if (lastLoadedProductId != null)
+                {
+                    ClearPdfView("Waiting for a product id...");
+                    lastLoadedProductId = null;
+                }
+                return;
+            }
+
+            if (productId == lastLoadedProductId)
+                return;
+
+            lastLoadedProductId = productId;
+
+            string folder = pdfFolderTextBox.Text.Trim();
+            if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
+            {
+                ClearPdfView($"PDF folder not found: {folder}");
+                return;
+            }
+
+            string fileName = SanitizeFileName(productId) + ".pdf";
+            string fullPath = Path.Combine(folder, fileName);
+
+            if (!File.Exists(fullPath))
+            {
+                ClearPdfView($"No PDF found for product '{productId}' (expected {fullPath}).");
+                return;
+            }
+
+            try
+            {
+                docViewer.Source = new Uri(fullPath);
+                SetPdfStatus($"Showing: {fileName}");
+            }
+            catch (Exception ex)
+            {
+                ClearPdfView("Failed to open PDF: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Blanks out the WebView2 control so a stale PDF from a previous product isn't left on screen,
+        /// replacing it with a small status page explaining why nothing is shown.
+        /// </summary>
+        private void ClearPdfView(string statusText)
+        {
+            try
+            {
+                docViewer.NavigateToString(BuildNoDocumentHtml(statusText));
+            }
+            catch
+            {
+                // CoreWebView2 may not be initialized yet, or the embedded resource may be missing —
+                // fall back to a blank page rather than leaving a stale PDF on screen.
+                try { docViewer.Source = new Uri("about:blank"); } catch { /* ignore */ }
+            }
+
+            SetPdfStatus(statusText);
+        }
+
+        private static string BuildNoDocumentHtml(string message)
+        {
+            string template = LoadEmbeddedHtmlTemplate();
+            string safeMessage = System.Net.WebUtility.HtmlEncode(message);
+            return template.Replace("{{MESSAGE}}", safeMessage);
+        }
+
+        private static string LoadEmbeddedHtmlTemplate()
+        {
+            var assembly = typeof(Form1).Assembly;
+            string resourceName = assembly.GetManifestResourceNames()
+                .FirstOrDefault(n => n.EndsWith("NoDocumentFound.html", StringComparison.OrdinalIgnoreCase));
+
+            if (resourceName == null)
+            {
+                throw new InvalidOperationException(
+                    "Embedded resource 'NoDocumentFound.html' not found. " +
+                    "Make sure the file's Build Action is set to 'Embedded Resource'.");
+            }
+
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            using (var reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
+            }
+        }
+
+        private static string SanitizeFileName(string name)
+        {
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                name = name.Replace(c, '_');
+            }
+
+            return name;
+        }
+
+        private void SetPdfStatus(string text)
+        {
+            if (pdfStatusLabel.IsDisposed) return;
+
+            if (pdfStatusLabel.InvokeRequired)
+                pdfStatusLabel.Invoke(new Action(() => pdfStatusLabel.Text = text));
+            else
+                pdfStatusLabel.Text = text;
         }
 
         private void UpdateStatus(string text)
@@ -386,6 +596,7 @@ namespace OpcUaViewer
                 session = null;
                 rowsByClientHandle.Clear();
                 monitoredNodes.Clear();
+                productIdClientHandle = null;
                 dataGridView1.Rows.Clear();
                 UpdateStatus("Disconnected");
             }
@@ -393,6 +604,7 @@ namespace OpcUaViewer
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            SaveSettings();
             DisconnectClient();
         }
     }
