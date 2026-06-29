@@ -73,15 +73,25 @@ namespace OpcUaViewer
         {
             try
             {
-                string runtimeFolder = Path.Combine(AppContext.BaseDirectory, "WebView2Runtime");
-                var env = await CoreWebView2Environment.CreateAsync(browserExecutableFolder: runtimeFolder);
+                CoreWebView2Environment env;
+                string runtimeFolder = FindWebView2RuntimeFolder();
+                if (runtimeFolder != null)
+                {
+                    env = await CoreWebView2Environment.CreateAsync(browserExecutableFolder: runtimeFolder);
+                }
+                else
+                {
+                    // Fall back to the system-installed Evergreen runtime.
+                    env = await CoreWebView2Environment.CreateAsync();
+                }
                 await docViewer.EnsureCoreWebView2Async(env);
                 ClearPdfView("Waiting for a product id...");
             }
             catch (Exception ex)
             {
-                SetPdfStatus("PDF viewer unavailable: " + ex.Message +
-                    " (ensure the WebView2Runtime folder is present alongside the EXE).");
+                string expected = Path.Combine(AppContext.BaseDirectory, "WebView2Runtime");
+                SetPdfStatus($"PDF viewer unavailable: {ex.Message} " +
+                    $"(looked for bundled runtime in '{expected}', and no system runtime was found)");
             }
         }
 
@@ -516,6 +526,33 @@ namespace OpcUaViewer
             }
 
             SetPdfStatus(statusText);
+        }
+
+        /// <summary>
+        /// Locates the fixed-version WebView2 runtime folder alongside the EXE.
+        /// Handles both a flat layout (WebView2Runtime\msedgewebview2.exe) and the
+        /// versioned-subfolder layout the Microsoft download zip extracts to
+        /// (WebView2Runtime\Microsoft.WebView2.FixedVersionRuntime.x.y.z.x64\msedgewebview2.exe).
+        /// Returns null if no bundled runtime is found.
+        /// </summary>
+        private static string FindWebView2RuntimeFolder()
+        {
+            string root = Path.Combine(AppContext.BaseDirectory, "WebView2Runtime");
+            if (!Directory.Exists(root))
+                return null;
+
+            // Flat layout: msedgewebview2.exe sits directly in WebView2Runtime\.
+            if (File.Exists(Path.Combine(root, "msedgewebview2.exe")))
+                return root;
+
+            // Versioned subfolder layout: one child directory contains the runtime.
+            foreach (string sub in Directory.GetDirectories(root))
+            {
+                if (File.Exists(Path.Combine(sub, "msedgewebview2.exe")))
+                    return sub;
+            }
+
+            return null;
         }
 
         private static string BuildNoDocumentHtml(string message)
