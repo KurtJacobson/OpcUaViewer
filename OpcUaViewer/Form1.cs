@@ -1,4 +1,6 @@
-﻿using Opc.Ua;
+﻿using Microsoft.Web.WebView2.Core;
+
+using Opc.Ua;
 using Opc.Ua.Client;
 using Opc.Ua.Configuration;
 
@@ -71,13 +73,15 @@ namespace OpcUaViewer
         {
             try
             {
-                await docViewer.EnsureCoreWebView2Async();
+                string runtimeFolder = Path.Combine(AppContext.BaseDirectory, "WebView2Runtime");
+                var env = await CoreWebView2Environment.CreateAsync(browserExecutableFolder: runtimeFolder);
+                await docViewer.EnsureCoreWebView2Async(env);
                 ClearPdfView("Waiting for a product id...");
             }
             catch (Exception ex)
             {
                 SetPdfStatus("PDF viewer unavailable: " + ex.Message +
-                    " (requires the Microsoft Edge WebView2 Runtime).");
+                    " (ensure the WebView2Runtime folder is present alongside the EXE).");
             }
         }
 
