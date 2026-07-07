@@ -89,7 +89,8 @@ namespace OpcUaViewer
             }
             catch (Exception ex)
             {
-                string expected = Path.Combine(AppContext.BaseDirectory, "WebView2Runtime");
+                string exeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
+                string expected = Path.Combine(exeDir, "WebView2Runtime");
                 SetPdfStatus($"PDF viewer unavailable: {ex.Message} " +
                     $"(looked for bundled runtime in '{expected}', and no system runtime was found)");
             }
@@ -537,7 +538,10 @@ namespace OpcUaViewer
         /// </summary>
         private static string FindWebView2RuntimeFolder()
         {
-            string root = Path.Combine(AppContext.BaseDirectory, "WebView2Runtime");
+            // AppContext.BaseDirectory can point to a temp extraction folder for single-file
+            // published apps; Environment.ProcessPath is always the actual EXE location.
+            string exeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
+            string root = Path.Combine(exeDir, "WebView2Runtime");
             if (!Directory.Exists(root))
                 return null;
 
