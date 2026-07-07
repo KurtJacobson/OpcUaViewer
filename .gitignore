@@ -177,6 +177,9 @@ publish-standalone/
 # Bundled WebView2 fixed-version runtime (~150 MB, not committed)
 WebView2Runtime/
 
+# Pdfium native binary (~3 MB, not committed — download separately)
+pdfium.dll
+
 # Publish Web Output
 *.[Pp]ublish.xml
 *.azurePubxml

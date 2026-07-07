@@ -1,5 +1,3 @@
-﻿using Microsoft.Web.WebView2.Core;
-
 using Opc.Ua;
 using Opc.Ua.Client;
 using Opc.Ua.Configuration;
@@ -7,7 +5,6 @@ using Opc.Ua.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -43,15 +40,15 @@ namespace OpcUaViewer
         // ClientHandle of the item identified as the product id, if one was found.
         private uint? productIdClientHandle;
 
-        // Avoids re-navigating the WebView2 control to the same file repeatedly.
+        // Avoids reloading the same PDF repeatedly.
         private string lastLoadedProductId;
 
         public Form1()
         {
             InitializeComponent();
             FormClosing += Form1_FormClosing;
-            Load += Form1_Load;
             LoadSettings();
+            docViewer.ClearPreview("Waiting for a product id...");
         }
 
         private void LoadSettings()
@@ -69,41 +66,12 @@ namespace OpcUaViewer
             Properties.Settings.Default.Save();
         }
 
-        private async void Form1_Load(object sender, EventArgs e)
-        {
-            try
-            {
-                CoreWebView2Environment env;
-                string runtimeFolder = FindWebView2RuntimeFolder();
-                if (runtimeFolder != null)
-                {
-                    env = await CoreWebView2Environment.CreateAsync(browserExecutableFolder: runtimeFolder);
-                }
-                else
-                {
-                    // Fall back to the system-installed Evergreen runtime.
-                    env = await CoreWebView2Environment.CreateAsync();
-                }
-                await docViewer.EnsureCoreWebView2Async(env);
-                ClearPdfView("Waiting for a product id...");
-            }
-            catch (Exception ex)
-            {
-                string exeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
-                string expected = Path.Combine(exeDir, "WebView2Runtime");
-                SetPdfStatus($"PDF viewer unavailable: {ex.Message} " +
-                    $"(looked for bundled runtime in '{expected}', and no system runtime was found)");
-            }
-        }
-
         private void pdfBrowseButton_Click(object sender, EventArgs e)
         {
             using (var dialog = new FolderBrowserDialog())
             {
                 if (Directory.Exists(pdfFolderTextBox.Text))
-                {
                     dialog.SelectedPath = pdfFolderTextBox.Text;
-                }
 
                 if (dialog.ShowDialog(this) == DialogResult.OK)
                 {
@@ -114,7 +82,7 @@ namespace OpcUaViewer
                     if (!string.IsNullOrEmpty(lastLoadedProductId))
                     {
                         string productId = lastLoadedProductId;
-                        lastLoadedProductId = null; // force reload
+                        lastLoadedProductId = null;
                         OpenProductPdf(productId);
                     }
                 }
@@ -232,10 +200,7 @@ namespace OpcUaViewer
                     RejectSHA1SignedCertificates = false
                 },
 
-                TransportQuotas = new TransportQuotas
-                {
-                    OperationTimeout = 15000
-                },
+                TransportQuotas = new TransportQuotas { OperationTimeout = 15000 },
                 ClientConfiguration = new ClientConfiguration(),
 
                 TraceConfiguration = new TraceConfiguration
@@ -271,9 +236,7 @@ namespace OpcUaViewer
             rowsByClientHandle.Clear();
 
             foreach (var node in monitoredNodes)
-            {
                 dataGridView1.Rows.Add(node.Name, node.NodeId.ToString(), "-", "-", "-");
-            }
         }
 
         /// <summary>
@@ -289,10 +252,7 @@ namespace OpcUaViewer
             {
                 int colonIndex = segment.IndexOf(':');
                 if (colonIndex < 0)
-                {
-                    throw new FormatException(
-                        $"Invalid path segment '{segment}'. Expected format 'namespaceIndex:BrowseName'.");
-                }
+                    throw new FormatException($"Invalid path segment '{segment}'. Expected format 'namespaceIndex:BrowseName'.");
 
                 ushort namespaceIndex = ushort.Parse(segment.Substring(0, colonIndex));
                 string browseName = segment.Substring(colonIndex + 1);
@@ -339,10 +299,7 @@ namespace OpcUaViewer
 
 #pragma warning disable CS0618
             session.Browse(
-                null,
-                null,
-                folderNodeId,
-                0u,
+                null, null, folderNodeId, 0u,
                 BrowseDirection.Forward,
                 ReferenceTypeIds.HierarchicalReferences,
                 true,
@@ -357,7 +314,6 @@ namespace OpcUaViewer
                 string name = !string.IsNullOrEmpty(reference.DisplayName?.Text)
                     ? reference.DisplayName.Text
                     : reference.BrowseName.Name;
-
                 found.Add((name, nodeId));
             }
 
@@ -373,10 +329,7 @@ namespace OpcUaViewer
 
             try
             {
-                subscription = new Subscription(session.DefaultSubscription)
-                {
-                    PublishingInterval = 500
-                };
+                subscription = new Subscription(session.DefaultSubscription) { PublishingInterval = 500 };
 
                 for (int i = 0; i < monitoredNodes.Count; i++)
                 {
@@ -398,18 +351,14 @@ namespace OpcUaViewer
                     rowsByClientHandle[item.ClientHandle] = dataGridView1.Rows[i];
 
                     if (node.Name.IndexOf(ProductIdNameMatch, StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
                         productIdClientHandle = item.ClientHandle;
-                    }
                 }
 
                 session.AddSubscription(subscription);
                 subscription.Create();
 
                 if (productIdClientHandle == null)
-                {
                     SetPdfStatus($"No monitored item matching '{ProductIdNameMatch}' was found.");
-                }
             }
             catch (Exception ex)
             {
@@ -426,9 +375,7 @@ namespace OpcUaViewer
                 UpdateRow(item.ClientHandle, v);
 
                 if (productIdClientHandle.HasValue && item.ClientHandle == productIdClientHandle.Value)
-                {
                     OpenProductPdf(v.Value?.ToString());
-                }
             }
         }
 
@@ -453,8 +400,7 @@ namespace OpcUaViewer
         }
 
         /// <summary>
-        /// Looks for "{productId}.pdf" in the configured folder and, if found, loads it into the
-        /// Document Viewer tab's WebView2 control.
+        /// Looks for "{productId}.pdf" in the configured folder and loads it into the viewer.
         /// </summary>
         private void OpenProductPdf(string productId)
         {
@@ -500,7 +446,7 @@ namespace OpcUaViewer
 
             try
             {
-                docViewer.Source = new Uri(fullPath);
+                docViewer.PreviewFile(fullPath);
                 SetPdfStatus($"Showing: {fileName}");
             }
             catch (Exception ex)
@@ -509,90 +455,16 @@ namespace OpcUaViewer
             }
         }
 
-        /// <summary>
-        /// Blanks out the WebView2 control so a stale PDF from a previous product isn't left on screen,
-        /// replacing it with a small status page explaining why nothing is shown.
-        /// </summary>
         private void ClearPdfView(string statusText)
         {
-            try
-            {
-                docViewer.NavigateToString(BuildNoDocumentHtml(statusText));
-            }
-            catch
-            {
-                // CoreWebView2 may not be initialized yet, or the embedded resource may be missing —
-                // fall back to a blank page rather than leaving a stale PDF on screen.
-                try { docViewer.Source = new Uri("about:blank"); } catch { /* ignore */ }
-            }
-
+            docViewer.ClearPreview(statusText);
             SetPdfStatus(statusText);
-        }
-
-        /// <summary>
-        /// Locates the fixed-version WebView2 runtime folder alongside the EXE.
-        /// Handles both a flat layout (WebView2Runtime\msedgewebview2.exe) and the
-        /// versioned-subfolder layout the Microsoft download zip extracts to
-        /// (WebView2Runtime\Microsoft.WebView2.FixedVersionRuntime.x.y.z.x64\msedgewebview2.exe).
-        /// Returns null if no bundled runtime is found.
-        /// </summary>
-        private static string FindWebView2RuntimeFolder()
-        {
-            // AppContext.BaseDirectory can point to a temp extraction folder for single-file
-            // published apps; Environment.ProcessPath is always the actual EXE location.
-            string exeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
-            string root = Path.Combine(exeDir, "WebView2Runtime");
-            if (!Directory.Exists(root))
-                return null;
-
-            // Flat layout: msedgewebview2.exe sits directly in WebView2Runtime\.
-            if (File.Exists(Path.Combine(root, "msedgewebview2.exe")))
-                return root;
-
-            // Versioned subfolder layout: one child directory contains the runtime.
-            foreach (string sub in Directory.GetDirectories(root))
-            {
-                if (File.Exists(Path.Combine(sub, "msedgewebview2.exe")))
-                    return sub;
-            }
-
-            return null;
-        }
-
-        private static string BuildNoDocumentHtml(string message)
-        {
-            string template = LoadEmbeddedHtmlTemplate();
-            string safeMessage = System.Net.WebUtility.HtmlEncode(message);
-            return template.Replace("{{MESSAGE}}", safeMessage);
-        }
-
-        private static string LoadEmbeddedHtmlTemplate()
-        {
-            var assembly = typeof(Form1).Assembly;
-            string resourceName = assembly.GetManifestResourceNames()
-                .FirstOrDefault(n => n.EndsWith("NoDocumentFound.html", StringComparison.OrdinalIgnoreCase));
-
-            if (resourceName == null)
-            {
-                throw new InvalidOperationException(
-                    "Embedded resource 'NoDocumentFound.html' not found. " +
-                    "Make sure the file's Build Action is set to 'Embedded Resource'.");
-            }
-
-            using (var stream = assembly.GetManifestResourceStream(resourceName))
-            using (var reader = new StreamReader(stream))
-            {
-                return reader.ReadToEnd();
-            }
         }
 
         private static string SanitizeFileName(string name)
         {
             foreach (char c in Path.GetInvalidFileNameChars())
-            {
                 name = name.Replace(c, '_');
-            }
-
             return name;
         }
 
