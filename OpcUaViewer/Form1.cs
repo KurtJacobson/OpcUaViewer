@@ -56,21 +56,226 @@ namespace OpcUaViewer
             docViewer.ClearPreview("Waiting for a product id...");
         }
 
+        // Loaded .p3cam orders; index matches groupsListView item index.
+        private readonly List<CamOrder> _camOrders = new List<CamOrder>();
+
         private void monitorNavButton_Click(object sender, EventArgs e)  => ShowPage(monitoringPanel, monitorNavButton);
         private void documentNavButton_Click(object sender, EventArgs e) => ShowPage(documentPanel,  documentNavButton);
         private void settingsNavButton_Click(object sender, EventArgs e) => ShowPage(settingsPanel,  settingsNavButton);
+        private void groupsNavButton_Click(object sender, EventArgs e)
+        {
+            ShowPage(groupsPanel, groupsNavButton);
+            if (_camOrders.Count == 0)
+                LoadCamFiles();
+        }
 
         private void ShowPage(System.Windows.Forms.Panel page, Button activeButton)
         {
             monitoringPanel.Visible = false;
             documentPanel.Visible   = false;
             settingsPanel.Visible   = false;
+            groupsPanel.Visible     = false;
             page.Visible = true;
 
-            foreach (var btn in new[] { monitorNavButton, documentNavButton, settingsNavButton })
+            foreach (var btn in new[] { monitorNavButton, documentNavButton, settingsNavButton, groupsNavButton })
             {
                 btn.BackColor = btn == activeButton ? NavAccent   : NavInactive;
                 btn.ForeColor = btn == activeButton ? NavTextOn   : NavTextOff;
+            }
+        }
+
+        private void LoadCamFiles()
+        {
+            string folder = camFolderTextBox.Text.Trim();
+            if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
+            {
+                ordersDataGridView.Rows.Clear();
+                productsDataGridView.Rows.Clear();
+                _camOrders.Clear();
+                return;
+            }
+
+            var files = Directory.GetFiles(folder, "*.p3cam", SearchOption.TopDirectoryOnly);
+
+            ordersDataGridView.Rows.Clear();
+            productsDataGridView.Rows.Clear();
+            _camOrders.Clear();
+
+            foreach (var file in files)
+            {
+                try
+                {
+                    var order = new CamOrder(file);
+                    _camOrders.Add(order);
+                    ordersDataGridView.Rows.Add(order.OrderId, order.CustomerName, order.Quantity);
+                }
+                catch
+                {
+                    // skip malformed files silently
+                }
+            }
+
+            if (ordersDataGridView.Rows.Count > 0)
+                ordersDataGridView.Rows[0].Selected = true;
+        }
+
+        private void ordersDataGridView_SelectionChanged(object sender, EventArgs e)
+        {
+            if (ordersDataGridView.SelectedRows.Count == 0) return;
+            int idx = ordersDataGridView.SelectedRows[0].Index;
+            if (idx >= 0 && idx < _camOrders.Count)
+                PopulateProductsGrid(_camOrders[idx]);
+        }
+
+        private void PopulateProductsGrid(CamOrder order)
+        {
+            productsDataGridView.Rows.Clear();
+            foreach (var p in order.Products)
+            {
+                productsDataGridView.Rows.Add(
+                    p.ListId,
+                    p.DisplayName,
+                    p.Parameters,
+                    p.MaterialId,
+                    p.MaterialThickness,
+                    p.Quantity,
+                    p.RunQuantity,
+                    p.OperatorHint);
+            }
+        }
+
+        private void productsDataGridView_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        {
+            if (productsDataGridView.Columns[e.ColumnIndex].Name != "prodRunQtyColumn") return;
+
+            if (!int.TryParse(e.FormattedValue?.ToString(), out int val) || val < 0)
+            {
+                e.Cancel = true;
+                productsDataGridView.Rows[e.RowIndex].ErrorText = "Run Qty must be a whole number ≥ 0";
+            }
+            else
+            {
+                productsDataGridView.Rows[e.RowIndex].ErrorText = string.Empty;
+
+                // Write back to the model so the value survives a re-selection.
+                if (ordersDataGridView.SelectedRows.Count > 0)
+                {
+                    int orderIdx = ordersDataGridView.SelectedRows[0].Index;
+                    if (orderIdx < _camOrders.Count && e.RowIndex < _camOrders[orderIdx].Products.Count)
+                        _camOrders[orderIdx].Products[e.RowIndex].RunQuantity = val;
+                }
+            }
+        }
+
+        private void camFolderBrowseButton_Click(object sender, EventArgs e)
+        {
+            using var dialog = new FolderBrowserDialog();
+            if (Directory.Exists(camFolderTextBox.Text))
+                dialog.SelectedPath = camFolderTextBox.Text;
+
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+            {
+                camFolderTextBox.Text = dialog.SelectedPath;
+                SaveSettings();
+                LoadCamFiles();
+            }
+        }
+
+        private void camOutputBrowseButton_Click(object sender, EventArgs e)
+        {
+            using var dialog = new FolderBrowserDialog();
+            if (Directory.Exists(camOutputTextBox.Text))
+                dialog.SelectedPath = camOutputTextBox.Text;
+
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+            {
+                camOutputTextBox.Text = dialog.SelectedPath;
+                SaveSettings();
+            }
+        }
+
+        private void runGroupButton_Click(object sender, EventArgs e)
+        {
+            if (ordersDataGridView.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select a product group first.", "Run Group",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string outputBase = camOutputTextBox.Text.Trim();
+            if (string.IsNullOrEmpty(outputBase))
+            {
+                MessageBox.Show("Please set the CAM Output Directory in Settings first.", "Run Group",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            int idx = ordersDataGridView.SelectedRows[0].Index;
+            var order = _camOrders[idx];
+
+            try
+            {
+                string inDir = Path.Combine(outputBase, "in");
+                Directory.CreateDirectory(inDir);
+                string dest = Path.Combine(inDir, Path.GetFileName(order.FilePath));
+                File.Copy(order.FilePath, dest, overwrite: true);
+
+                MessageBox.Show($"Copied '{Path.GetFileName(order.FilePath)}' to:\n{inDir}",
+                    "Run Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to copy CAM file:\n\n" + ex.Message, "Run Group",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void cancelGroupButton_Click(object sender, EventArgs e)
+        {
+            if (ordersDataGridView.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select a product group first.", "Cancel Group",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string outputBase = camOutputTextBox.Text.Trim();
+            if (string.IsNullOrEmpty(outputBase))
+            {
+                MessageBox.Show("Please set the CAM Output Directory in Settings first.", "Cancel Group",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            int idx = ordersDataGridView.SelectedRows[0].Index;
+            var order = _camOrders[idx];
+            string fileName = Path.GetFileName(order.FilePath);
+
+            string inDir        = Path.Combine(outputBase, "in");
+            string canceledDir  = Path.Combine(outputBase, "canceled");
+            string inPath       = Path.Combine(inDir, fileName);
+
+            if (!File.Exists(inPath))
+            {
+                MessageBox.Show($"'{fileName}' is not currently in the 'in' folder — nothing to cancel.",
+                    "Cancel Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                Directory.CreateDirectory(canceledDir);
+                string dest = Path.Combine(canceledDir, fileName);
+                File.Move(inPath, dest, overwrite: true);
+
+                MessageBox.Show($"Moved '{fileName}' to:\n{canceledDir}",
+                    "Cancel Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to move CAM file:\n\n" + ex.Message, "Cancel Group",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -84,13 +289,23 @@ namespace OpcUaViewer
             if (!string.IsNullOrWhiteSpace(savedUrl))
                 endpointTextBox.Text = savedUrl;
 
+            string savedCamFolder = Properties.Settings.Default.CamFolderPath;
+            if (!string.IsNullOrWhiteSpace(savedCamFolder))
+                camFolderTextBox.Text = savedCamFolder;
+
+            string savedCamOutput = Properties.Settings.Default.CamOutputPath;
+            if (!string.IsNullOrWhiteSpace(savedCamOutput))
+                camOutputTextBox.Text = savedCamOutput;
+
             RestoreWindowPlacement();
         }
 
         private void SaveSettings()
         {
-            Properties.Settings.Default.PdfFolderPath = pdfFolderTextBox.Text.Trim();
-            Properties.Settings.Default.EndpointUrl = endpointTextBox.Text.Trim();
+            Properties.Settings.Default.PdfFolderPath  = pdfFolderTextBox.Text.Trim();
+            Properties.Settings.Default.EndpointUrl    = endpointTextBox.Text.Trim();
+            Properties.Settings.Default.CamFolderPath  = camFolderTextBox.Text.Trim();
+            Properties.Settings.Default.CamOutputPath  = camOutputTextBox.Text.Trim();
             SaveWindowPlacement();
             Properties.Settings.Default.Save();
         }

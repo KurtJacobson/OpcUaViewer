@@ -81,6 +81,22 @@ namespace OpcUaViewer.Properties {
 
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string CamFolderPath {
+            get { return ((string)(this["CamFolderPath"])); }
+            set { this["CamFolderPath"] = value; }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string CamOutputPath {
+            get { return ((string)(this["CamOutputPath"])); }
+            set { this["CamOutputPath"] = value; }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Normal")]
         public string WindowState {
             get { return ((string)(this["WindowState"])); }
