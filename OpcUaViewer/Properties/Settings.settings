@@ -5,5 +5,8 @@
     <Setting Name="PdfFolderPath" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\ProductDocs</Value>
     </Setting>
+    <Setting Name="EndpointUrl" Type="System.String" Scope="User">
+      <Value Profile="(Default)">opc.tcp://10.10.0.102:4840</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -55,14 +55,17 @@ namespace OpcUaViewer
         {
             string savedFolder = Properties.Settings.Default.PdfFolderPath;
             if (!string.IsNullOrWhiteSpace(savedFolder))
-            {
                 pdfFolderTextBox.Text = savedFolder;
-            }
+
+            string savedUrl = Properties.Settings.Default.EndpointUrl;
+            if (!string.IsNullOrWhiteSpace(savedUrl))
+                endpointTextBox.Text = savedUrl;
         }
 
         private void SaveSettings()
         {
             Properties.Settings.Default.PdfFolderPath = pdfFolderTextBox.Text.Trim();
+            Properties.Settings.Default.EndpointUrl = endpointTextBox.Text.Trim();
             Properties.Settings.Default.Save();
         }
 
@@ -109,6 +112,7 @@ namespace OpcUaViewer
             connectButton.Enabled = false;
             endpointTextBox.Enabled = false;
             UpdateStatus("Connecting...");
+            SaveSettings();
 
             cts = new CancellationTokenSource();
             await StartClient(endpointUrl, cts.Token);
@@ -129,13 +133,17 @@ namespace OpcUaViewer
                 // to anything internet-facing. Swap for proper trust-list handling in production.
                 config.CertificateValidator.CertificateValidation += (s, ce) => { ce.Accept = true; };
 
-                var endpointDescription = CoreClientUtils.SelectEndpoint(config, endpointUrl, useSecurity: false);
+                // SelectEndpoint does a synchronous network probe — run it off the UI thread.
+                var endpointDescription = await Task.Run(
+                    () => CoreClientUtils.SelectEndpoint(config, endpointUrl, useSecurity: false),
+                    cancellationToken);
+
                 var configuredEndpoint = new ConfiguredEndpoint(
                     null,
                     endpointDescription,
                     EndpointConfiguration.Create(config));
 
-                session = await DefaultSessionFactory.Instance.CreateAsync(
+                session = await new DefaultSessionFactory().CreateAsync(
                     config,
                     configuredEndpoint,
                     updateBeforeConnect: false,
@@ -147,8 +155,12 @@ namespace OpcUaViewer
 
                 UpdateStatus($"Connected to {endpointDescription.EndpointUrl} — browsing...");
 
-                PopulateMonitoredNodesFromServer();
-                CreateSubscription();
+                // Browse and subscribe are also synchronous OPC UA calls — keep off the UI thread.
+                await Task.Run(() =>
+                {
+                    PopulateMonitoredNodesFromServer();
+                    CreateSubscription();
+                }, cancellationToken);
 
                 UpdateStatus(monitoredNodes.Count > 0
                     ? $"Connected to {endpointDescription.EndpointUrl} ({monitoredNodes.Count} items)"
@@ -215,8 +227,8 @@ namespace OpcUaViewer
         }
 
         /// <summary>
-        /// Resolves MonitoringFolderPath to a NodeId, browses its children, and fills in
-        /// monitoredNodes + the grid with whatever Variable nodes it finds.
+        /// Resolves MonitoringFolderPath to a NodeId and browses its children.
+        /// Safe to call from a background thread — does not touch UI controls.
         /// </summary>
         private void PopulateMonitoredNodesFromServer()
         {
@@ -228,15 +240,19 @@ namespace OpcUaViewer
             catch (Exception ex)
             {
                 monitoredNodes = new List<(string Name, NodeId NodeId)>();
-                MessageBox.Show("Failed to browse the monitoring folder:\n\n" + ex, "OPC UA Client",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                this.Invoke(new Action(() =>
+                    MessageBox.Show("Failed to browse the monitoring folder:\n\n" + ex, "OPC UA Client",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error)));
             }
 
-            dataGridView1.Rows.Clear();
-            rowsByClientHandle.Clear();
-
-            foreach (var node in monitoredNodes)
-                dataGridView1.Rows.Add(node.Name, node.NodeId.ToString(), "-", "-", "-");
+            var nodes = monitoredNodes;
+            this.Invoke(new Action(() =>
+            {
+                dataGridView1.Rows.Clear();
+                rowsByClientHandle.Clear();
+                foreach (var node in nodes)
+                    dataGridView1.Rows.Add(node.Name, node.NodeId.ToString(), "-", "-", "-");
+            }));
         }
 
         /// <summary>

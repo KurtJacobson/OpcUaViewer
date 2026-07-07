@@ -34,5 +34,17 @@ namespace OpcUaViewer.Properties {
                 this["PdfFolderPath"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("opc.tcp://10.10.0.102:4840")]
+        public string EndpointUrl {
+            get {
+                return ((string)(this["EndpointUrl"]));
+            }
+            set {
+                this["EndpointUrl"] = value;
+            }
+        }
     }
 }
