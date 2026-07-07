@@ -7,9 +7,7 @@ namespace OpcUaViewer
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
-            {
                 components.Dispose();
-            }
             base.Dispose(disposing);
         }
 
@@ -17,308 +15,428 @@ namespace OpcUaViewer
 
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
-            this.mainTabControl = new System.Windows.Forms.TabControl();
-            this.monitoringTabPage = new System.Windows.Forms.TabPage();
-            this.dataGroupBox = new System.Windows.Forms.GroupBox();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.nameColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.nodeIdColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.valueColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.statusColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.timestampColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.documentTabPage = new System.Windows.Forms.TabPage();
-            this.docViewer = new ShellPreviewPanel();
-            this.settingsTabPage = new System.Windows.Forms.TabPage();
-            this.connectionGroupBox = new System.Windows.Forms.GroupBox();
-            this.endpointLabel = new System.Windows.Forms.Label();
-            this.endpointTextBox = new System.Windows.Forms.TextBox();
-            this.connectButton = new System.Windows.Forms.Button();
-            this.statusLabel = new System.Windows.Forms.Label();
-            this.pdfGroupBox = new System.Windows.Forms.GroupBox();
-            this.pdfFolderLabel = new System.Windows.Forms.Label();
-            this.pdfFolderTextBox = new System.Windows.Forms.TextBox();
-            this.pdfBrowseButton = new System.Windows.Forms.Button();
-            this.pdfStatusLabel = new System.Windows.Forms.Label();
-            this.mainTabControl.SuspendLayout();
-            this.monitoringTabPage.SuspendLayout();
-            this.dataGroupBox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
-            this.documentTabPage.SuspendLayout();
-            this.settingsTabPage.SuspendLayout();
-            this.connectionGroupBox.SuspendLayout();
-            this.pdfGroupBox.SuspendLayout();
-            this.SuspendLayout();
-            //
-            // mainTabControl
-            //
-            this.mainTabControl.Alignment = System.Windows.Forms.TabAlignment.Left;
-            this.mainTabControl.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
-            this.mainTabControl.ItemSize = new System.Drawing.Size(88, 36);
-            this.mainTabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.mainTabControl.Controls.Add(this.monitoringTabPage);
-            this.mainTabControl.Controls.Add(this.documentTabPage);
-            this.mainTabControl.Controls.Add(this.settingsTabPage);
-            this.mainTabControl.Location = new System.Drawing.Point(12, 12);
-            this.mainTabControl.Name = "mainTabControl";
-            this.mainTabControl.SelectedIndex = 0;
-            this.mainTabControl.Size = new System.Drawing.Size(776, 426);
-            this.mainTabControl.TabIndex = 0;
-            //
-            // monitoringTabPage
-            //
-            this.monitoringTabPage.Controls.Add(this.dataGroupBox);
-            this.monitoringTabPage.Location = new System.Drawing.Point(40, 4);
-            this.monitoringTabPage.Name = "monitoringTabPage";
-            this.monitoringTabPage.Padding = new System.Windows.Forms.Padding(8);
-            this.monitoringTabPage.Size = new System.Drawing.Size(732, 418);
-            this.monitoringTabPage.TabIndex = 0;
-            this.monitoringTabPage.Text = "Monitor";
-            this.monitoringTabPage.UseVisualStyleBackColor = true;
-            //
+            navPanel = new System.Windows.Forms.Panel();
+            titleLabel = new System.Windows.Forms.Label();
+            monitorNavButton = new System.Windows.Forms.Button();
+            documentNavButton = new System.Windows.Forms.Button();
+            settingsNavButton = new System.Windows.Forms.Button();
+            monitoringPanel = new System.Windows.Forms.Panel();
+            dataGroupBox = new System.Windows.Forms.GroupBox();
+            dataGridView1 = new System.Windows.Forms.DataGridView();
+            nameColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            nodeIdColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            valueColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            statusColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            timestampColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            documentPanel = new System.Windows.Forms.Panel();
+            docViewer = new ShellPreviewPanel();
+            settingsPanel = new System.Windows.Forms.Panel();
+            connectionGroupBox = new System.Windows.Forms.GroupBox();
+            endpointLabel = new System.Windows.Forms.Label();
+            endpointTextBox = new System.Windows.Forms.TextBox();
+            connectButton = new System.Windows.Forms.Button();
+            statusLabel = new System.Windows.Forms.Label();
+            pdfGroupBox = new System.Windows.Forms.GroupBox();
+            pdfFolderLabel = new System.Windows.Forms.Label();
+            pdfFolderTextBox = new System.Windows.Forms.TextBox();
+            pdfBrowseButton = new System.Windows.Forms.Button();
+            pdfStatusLabel = new System.Windows.Forms.Label();
+            navPanel.SuspendLayout();
+            monitoringPanel.SuspendLayout();
+            dataGroupBox.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+            documentPanel.SuspendLayout();
+            settingsPanel.SuspendLayout();
+            connectionGroupBox.SuspendLayout();
+            pdfGroupBox.SuspendLayout();
+            SuspendLayout();
+            // 
+            // navPanel
+            // 
+            navPanel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            navPanel.BackColor = System.Drawing.Color.FromArgb(28, 28, 28);
+            navPanel.Controls.Add(titleLabel);
+            navPanel.Controls.Add(monitorNavButton);
+            navPanel.Controls.Add(documentNavButton);
+            navPanel.Controls.Add(settingsNavButton);
+            navPanel.Location = new System.Drawing.Point(0, 0);
+            navPanel.Name = "navPanel";
+            navPanel.Size = new System.Drawing.Size(100, 660);
+            navPanel.TabIndex = 0;
+            // 
+            // titleLabel
+            // 
+            titleLabel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            titleLabel.BackColor = System.Drawing.Color.FromArgb(20, 20, 20);
+            titleLabel.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+            titleLabel.ForeColor = System.Drawing.Color.FromArgb(180, 180, 180);
+            titleLabel.Location = new System.Drawing.Point(0, 0);
+            titleLabel.Name = "titleLabel";
+            titleLabel.Size = new System.Drawing.Size(100, 65);
+            titleLabel.TabIndex = 0;
+            titleLabel.Text = "OPC UA\r\nViewer";
+            titleLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // monitorNavButton
+            // 
+            monitorNavButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            monitorNavButton.BackColor = System.Drawing.Color.FromArgb(255, 140, 0);
+            monitorNavButton.FlatAppearance.BorderSize = 0;
+            monitorNavButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            monitorNavButton.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            monitorNavButton.ForeColor = System.Drawing.Color.White;
+            monitorNavButton.Location = new System.Drawing.Point(0, 65);
+            monitorNavButton.Name = "monitorNavButton";
+            monitorNavButton.Size = new System.Drawing.Size(100, 90);
+            monitorNavButton.TabIndex = 0;
+            monitorNavButton.Text = "Status Monitor";
+            monitorNavButton.UseVisualStyleBackColor = false;
+            monitorNavButton.Click += monitorNavButton_Click;
+            // 
+            // documentNavButton
+            // 
+            documentNavButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            documentNavButton.BackColor = System.Drawing.Color.FromArgb(48, 48, 48);
+            documentNavButton.FlatAppearance.BorderSize = 0;
+            documentNavButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            documentNavButton.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            documentNavButton.ForeColor = System.Drawing.Color.FromArgb(170, 170, 170);
+            documentNavButton.Location = new System.Drawing.Point(0, 158);
+            documentNavButton.Name = "documentNavButton";
+            documentNavButton.Size = new System.Drawing.Size(100, 90);
+            documentNavButton.TabIndex = 1;
+            documentNavButton.Text = "Document";
+            documentNavButton.UseVisualStyleBackColor = false;
+            documentNavButton.Click += documentNavButton_Click;
+            // 
+            // settingsNavButton
+            // 
+            settingsNavButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            settingsNavButton.BackColor = System.Drawing.Color.FromArgb(48, 48, 48);
+            settingsNavButton.FlatAppearance.BorderSize = 0;
+            settingsNavButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            settingsNavButton.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            settingsNavButton.ForeColor = System.Drawing.Color.FromArgb(170, 170, 170);
+            settingsNavButton.Location = new System.Drawing.Point(0, 251);
+            settingsNavButton.Name = "settingsNavButton";
+            settingsNavButton.Size = new System.Drawing.Size(100, 90);
+            settingsNavButton.TabIndex = 2;
+            settingsNavButton.Text = "Settings";
+            settingsNavButton.UseVisualStyleBackColor = false;
+            settingsNavButton.Click += settingsNavButton_Click;
+            // 
+            // monitoringPanel
+            // 
+            monitoringPanel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            monitoringPanel.BackColor = System.Drawing.Color.FromArgb(24, 24, 24);
+            monitoringPanel.Controls.Add(dataGroupBox);
+            monitoringPanel.Location = new System.Drawing.Point(100, 0);
+            monitoringPanel.Name = "monitoringPanel";
+            monitoringPanel.Size = new System.Drawing.Size(1000, 660);
+            monitoringPanel.TabIndex = 1;
+            // 
             // dataGroupBox
-            //
-            this.dataGroupBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dataGroupBox.Controls.Add(this.dataGridView1);
-            this.dataGroupBox.Location = new System.Drawing.Point(8, 8);
-            this.dataGroupBox.Name = "dataGroupBox";
-            this.dataGroupBox.Size = new System.Drawing.Size(716, 402);
-            this.dataGroupBox.TabIndex = 0;
-            this.dataGroupBox.TabStop = false;
-            this.dataGroupBox.Text = "Monitored Data";
-            //
+            // 
+            dataGroupBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            dataGroupBox.BackColor = System.Drawing.Color.FromArgb(32, 32, 32);
+            dataGroupBox.Controls.Add(dataGridView1);
+            dataGroupBox.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            dataGroupBox.ForeColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            dataGroupBox.Location = new System.Drawing.Point(8, 8);
+            dataGroupBox.Name = "dataGroupBox";
+            dataGroupBox.Size = new System.Drawing.Size(984, 644);
+            dataGroupBox.TabIndex = 0;
+            dataGroupBox.TabStop = false;
+            dataGroupBox.Text = "Monitored Data";
+            // 
             // dataGridView1
-            //
-            this.dataGridView1.AllowUserToAddRows = false;
-            this.dataGridView1.AllowUserToDeleteRows = false;
-            this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.nameColumn,
-            this.nodeIdColumn,
-            this.valueColumn,
-            this.statusColumn,
-            this.timestampColumn});
-            this.dataGridView1.Location = new System.Drawing.Point(6, 19);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.ReadOnly = true;
-            this.dataGridView1.RowHeadersVisible = false;
-            this.dataGridView1.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridView1.Size = new System.Drawing.Size(704, 377);
-            this.dataGridView1.TabIndex = 0;
-            //
+            // 
+            dataGridView1.AllowUserToAddRows = false;
+            dataGridView1.AllowUserToDeleteRows = false;
+            dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(36, 36, 36);
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Segoe UI", 11F);
+            dataGridViewCellStyle1.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.Color.FromArgb(255, 140, 0);
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.Color.White;
+            dataGridView1.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridView1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            dataGridView1.BackgroundColor = System.Drawing.Color.FromArgb(28, 28, 28);
+            dataGridView1.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            dataGridView1.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal;
+            dataGridView1.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.Color.FromArgb(45, 45, 45);
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            dataGridViewCellStyle2.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.Color.FromArgb(45, 45, 45);
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            dataGridView1.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
+            dataGridView1.ColumnHeadersHeight = 40;
+            dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] { nameColumn, nodeIdColumn, valueColumn, statusColumn, timestampColumn });
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.Color.FromArgb(32, 32, 32);
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Segoe UI", 11F);
+            dataGridViewCellStyle3.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.Color.FromArgb(255, 140, 0);
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.Color.White;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            dataGridView1.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridView1.EnableHeadersVisualStyles = false;
+            dataGridView1.GridColor = System.Drawing.Color.FromArgb(55, 55, 55);
+            dataGridView1.Location = new System.Drawing.Point(6, 24);
+            dataGridView1.Name = "dataGridView1";
+            dataGridView1.ReadOnly = true;
+            dataGridView1.RowHeadersVisible = false;
+            dataGridView1.RowTemplate.Height = 40;
+            dataGridView1.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            dataGridView1.Size = new System.Drawing.Size(972, 614);
+            dataGridView1.TabIndex = 0;
+            // 
             // nameColumn
-            //
-            this.nameColumn.HeaderText = "Name";
-            this.nameColumn.Name = "nameColumn";
-            this.nameColumn.ReadOnly = true;
-            this.nameColumn.Width = 150;
-            //
+            // 
+            nameColumn.HeaderText = "Name";
+            nameColumn.Name = "nameColumn";
+            nameColumn.ReadOnly = true;
+            nameColumn.Width = 160;
+            // 
             // nodeIdColumn
-            //
-            this.nodeIdColumn.HeaderText = "Node Id";
-            this.nodeIdColumn.Name = "nodeIdColumn";
-            this.nodeIdColumn.ReadOnly = true;
-            this.nodeIdColumn.Width = 260;
-            //
+            // 
+            nodeIdColumn.HeaderText = "Node Id";
+            nodeIdColumn.Name = "nodeIdColumn";
+            nodeIdColumn.ReadOnly = true;
+            nodeIdColumn.Width = 260;
+            // 
             // valueColumn
-            //
-            this.valueColumn.HeaderText = "Value";
-            this.valueColumn.Name = "valueColumn";
-            this.valueColumn.ReadOnly = true;
-            this.valueColumn.Width = 150;
-            //
+            // 
+            valueColumn.HeaderText = "Value";
+            valueColumn.Name = "valueColumn";
+            valueColumn.ReadOnly = true;
+            valueColumn.Width = 160;
+            // 
             // statusColumn
-            //
-            this.statusColumn.HeaderText = "Status";
-            this.statusColumn.Name = "statusColumn";
-            this.statusColumn.ReadOnly = true;
-            this.statusColumn.Width = 90;
-            //
+            // 
+            statusColumn.HeaderText = "Status";
+            statusColumn.Name = "statusColumn";
+            statusColumn.ReadOnly = true;
+            // 
             // timestampColumn
-            //
-            this.timestampColumn.HeaderText = "Last Updated";
-            this.timestampColumn.Name = "timestampColumn";
-            this.timestampColumn.ReadOnly = true;
-            this.timestampColumn.Width = 110;
-            //
-            // documentTabPage
-            //
-            this.documentTabPage.Controls.Add(this.docViewer);
-            this.documentTabPage.Location = new System.Drawing.Point(40, 4);
-            this.documentTabPage.Name = "documentTabPage";
-            this.documentTabPage.Padding = new System.Windows.Forms.Padding(0);
-            this.documentTabPage.Size = new System.Drawing.Size(732, 418);
-            this.documentTabPage.TabIndex = 1;
-            this.documentTabPage.Text = "Document";
-            this.documentTabPage.UseVisualStyleBackColor = true;
+            // 
+            timestampColumn.HeaderText = "Last Updated";
+            timestampColumn.Name = "timestampColumn";
+            timestampColumn.ReadOnly = true;
+            timestampColumn.Width = 120;
             //
             // docViewer
             //
-            this.docViewer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.docViewer.BackColor = System.Drawing.Color.White;
-            this.docViewer.Location = new System.Drawing.Point(0, 0);
-            this.docViewer.Name = "docViewer";
-            this.docViewer.Size = new System.Drawing.Size(732, 418);
-            this.docViewer.TabIndex = 0;
+            docViewer.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            docViewer.BackColor = System.Drawing.Color.White;
+            docViewer.Location = new System.Drawing.Point(0, 0);
+            docViewer.Name = "docViewer";
+            docViewer.Size = new System.Drawing.Size(1000, 660);
+            docViewer.TabIndex = 0;
             //
-            // settingsTabPage
+            // documentPanel
             //
-            this.settingsTabPage.Controls.Add(this.connectionGroupBox);
-            this.settingsTabPage.Controls.Add(this.pdfGroupBox);
-            this.settingsTabPage.Location = new System.Drawing.Point(40, 4);
-            this.settingsTabPage.Name = "settingsTabPage";
-            this.settingsTabPage.Padding = new System.Windows.Forms.Padding(8);
-            this.settingsTabPage.Size = new System.Drawing.Size(732, 418);
-            this.settingsTabPage.TabIndex = 2;
-            this.settingsTabPage.Text = "Settings";
-            this.settingsTabPage.UseVisualStyleBackColor = true;
-            //
+            documentPanel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            documentPanel.BackColor = System.Drawing.Color.FromArgb(24, 24, 24);
+            documentPanel.Controls.Add(docViewer);
+            documentPanel.Location = new System.Drawing.Point(100, 0);
+            documentPanel.Name = "documentPanel";
+            documentPanel.Size = new System.Drawing.Size(1000, 660);
+            documentPanel.TabIndex = 2;
+            documentPanel.Visible = false;
+            // 
+            // settingsPanel
+            // 
+            settingsPanel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            settingsPanel.BackColor = System.Drawing.Color.FromArgb(24, 24, 24);
+            settingsPanel.Controls.Add(connectionGroupBox);
+            settingsPanel.Controls.Add(pdfGroupBox);
+            settingsPanel.Location = new System.Drawing.Point(100, 0);
+            settingsPanel.Name = "settingsPanel";
+            settingsPanel.Size = new System.Drawing.Size(1000, 660);
+            settingsPanel.TabIndex = 3;
+            settingsPanel.Visible = false;
+            // 
             // connectionGroupBox
-            //
-            this.connectionGroupBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.connectionGroupBox.Controls.Add(this.endpointLabel);
-            this.connectionGroupBox.Controls.Add(this.endpointTextBox);
-            this.connectionGroupBox.Controls.Add(this.connectButton);
-            this.connectionGroupBox.Controls.Add(this.statusLabel);
-            this.connectionGroupBox.Location = new System.Drawing.Point(8, 8);
-            this.connectionGroupBox.Name = "connectionGroupBox";
-            this.connectionGroupBox.Size = new System.Drawing.Size(716, 90);
-            this.connectionGroupBox.TabIndex = 0;
-            this.connectionGroupBox.TabStop = false;
-            this.connectionGroupBox.Text = "OPC UA Connection";
-            //
+            // 
+            connectionGroupBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            connectionGroupBox.BackColor = System.Drawing.Color.FromArgb(36, 36, 36);
+            connectionGroupBox.Controls.Add(endpointLabel);
+            connectionGroupBox.Controls.Add(endpointTextBox);
+            connectionGroupBox.Controls.Add(connectButton);
+            connectionGroupBox.Controls.Add(statusLabel);
+            connectionGroupBox.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            connectionGroupBox.ForeColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            connectionGroupBox.Location = new System.Drawing.Point(20, 20);
+            connectionGroupBox.Name = "connectionGroupBox";
+            connectionGroupBox.Size = new System.Drawing.Size(960, 120);
+            connectionGroupBox.TabIndex = 0;
+            connectionGroupBox.TabStop = false;
+            connectionGroupBox.Text = "OPC UA Connection";
+            // 
             // endpointLabel
-            //
-            this.endpointLabel.AutoSize = true;
-            this.endpointLabel.Location = new System.Drawing.Point(13, 28);
-            this.endpointLabel.Name = "endpointLabel";
-            this.endpointLabel.Size = new System.Drawing.Size(52, 13);
-            this.endpointLabel.TabIndex = 0;
-            this.endpointLabel.Text = "Endpoint:";
-            //
+            // 
+            endpointLabel.AutoSize = true;
+            endpointLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
+            endpointLabel.ForeColor = System.Drawing.Color.FromArgb(190, 190, 190);
+            endpointLabel.Location = new System.Drawing.Point(16, 40);
+            endpointLabel.Name = "endpointLabel";
+            endpointLabel.Size = new System.Drawing.Size(72, 20);
+            endpointLabel.TabIndex = 0;
+            endpointLabel.Text = "Endpoint:";
+            // 
             // endpointTextBox
-            //
-            this.endpointTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.endpointTextBox.Location = new System.Drawing.Point(72, 25);
-            this.endpointTextBox.Name = "endpointTextBox";
-            this.endpointTextBox.Size = new System.Drawing.Size(532, 20);
-            this.endpointTextBox.TabIndex = 1;
-            this.endpointTextBox.Text = "opc.tcp://10.10.0.102:4840";
-            //
+            // 
+            endpointTextBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            endpointTextBox.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            endpointTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            endpointTextBox.Font = new System.Drawing.Font("Segoe UI", 11F);
+            endpointTextBox.ForeColor = System.Drawing.Color.FromArgb(230, 230, 230);
+            endpointTextBox.Location = new System.Drawing.Point(100, 36);
+            endpointTextBox.Name = "endpointTextBox";
+            endpointTextBox.Size = new System.Drawing.Size(710, 27);
+            endpointTextBox.TabIndex = 1;
+            endpointTextBox.Text = "opc.tcp://10.10.0.102:4840";
+            // 
             // connectButton
-            //
-            this.connectButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.connectButton.Location = new System.Drawing.Point(610, 23);
-            this.connectButton.Name = "connectButton";
-            this.connectButton.Size = new System.Drawing.Size(100, 25);
-            this.connectButton.TabIndex = 2;
-            this.connectButton.Text = "Connect";
-            this.connectButton.UseVisualStyleBackColor = true;
-            this.connectButton.Click += new System.EventHandler(this.connectButton_Click);
-            //
+            // 
+            connectButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            connectButton.BackColor = System.Drawing.Color.FromArgb(255, 140, 0);
+            connectButton.FlatAppearance.BorderSize = 0;
+            connectButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            connectButton.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            connectButton.ForeColor = System.Drawing.Color.White;
+            connectButton.Location = new System.Drawing.Point(820, 32);
+            connectButton.Name = "connectButton";
+            connectButton.Size = new System.Drawing.Size(130, 38);
+            connectButton.TabIndex = 2;
+            connectButton.Text = "Connect";
+            connectButton.UseVisualStyleBackColor = false;
+            connectButton.Click += connectButton_Click;
+            // 
             // statusLabel
-            //
-            this.statusLabel.AutoSize = true;
-            this.statusLabel.ForeColor = System.Drawing.Color.DimGray;
-            this.statusLabel.Location = new System.Drawing.Point(13, 58);
-            this.statusLabel.Name = "statusLabel";
-            this.statusLabel.Size = new System.Drawing.Size(78, 13);
-            this.statusLabel.TabIndex = 3;
-            this.statusLabel.Text = "Not connected";
-            //
+            // 
+            statusLabel.AutoSize = true;
+            statusLabel.Font = new System.Drawing.Font("Segoe UI", 10F);
+            statusLabel.ForeColor = System.Drawing.Color.FromArgb(150, 150, 150);
+            statusLabel.Location = new System.Drawing.Point(16, 82);
+            statusLabel.Name = "statusLabel";
+            statusLabel.Size = new System.Drawing.Size(99, 19);
+            statusLabel.TabIndex = 3;
+            statusLabel.Text = "Not connected";
+            // 
             // pdfGroupBox
-            //
-            this.pdfGroupBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.pdfGroupBox.Controls.Add(this.pdfFolderLabel);
-            this.pdfGroupBox.Controls.Add(this.pdfFolderTextBox);
-            this.pdfGroupBox.Controls.Add(this.pdfBrowseButton);
-            this.pdfGroupBox.Controls.Add(this.pdfStatusLabel);
-            this.pdfGroupBox.Location = new System.Drawing.Point(8, 110);
-            this.pdfGroupBox.Name = "pdfGroupBox";
-            this.pdfGroupBox.Size = new System.Drawing.Size(716, 70);
-            this.pdfGroupBox.TabIndex = 1;
-            this.pdfGroupBox.TabStop = false;
-            this.pdfGroupBox.Text = "PDF Documents";
-            //
+            // 
+            pdfGroupBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            pdfGroupBox.BackColor = System.Drawing.Color.FromArgb(36, 36, 36);
+            pdfGroupBox.Controls.Add(pdfFolderLabel);
+            pdfGroupBox.Controls.Add(pdfFolderTextBox);
+            pdfGroupBox.Controls.Add(pdfBrowseButton);
+            pdfGroupBox.Controls.Add(pdfStatusLabel);
+            pdfGroupBox.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            pdfGroupBox.ForeColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            pdfGroupBox.Location = new System.Drawing.Point(20, 156);
+            pdfGroupBox.Name = "pdfGroupBox";
+            pdfGroupBox.Size = new System.Drawing.Size(960, 100);
+            pdfGroupBox.TabIndex = 1;
+            pdfGroupBox.TabStop = false;
+            pdfGroupBox.Text = "PDF Documents";
+            // 
             // pdfFolderLabel
-            //
-            this.pdfFolderLabel.AutoSize = true;
-            this.pdfFolderLabel.Location = new System.Drawing.Point(13, 24);
-            this.pdfFolderLabel.Name = "pdfFolderLabel";
-            this.pdfFolderLabel.Size = new System.Drawing.Size(43, 13);
-            this.pdfFolderLabel.TabIndex = 0;
-            this.pdfFolderLabel.Text = "Folder:";
-            //
+            // 
+            pdfFolderLabel.AutoSize = true;
+            pdfFolderLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
+            pdfFolderLabel.ForeColor = System.Drawing.Color.FromArgb(190, 190, 190);
+            pdfFolderLabel.Location = new System.Drawing.Point(16, 40);
+            pdfFolderLabel.Name = "pdfFolderLabel";
+            pdfFolderLabel.Size = new System.Drawing.Size(54, 20);
+            pdfFolderLabel.TabIndex = 0;
+            pdfFolderLabel.Text = "Folder:";
+            // 
             // pdfFolderTextBox
-            //
-            this.pdfFolderTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.pdfFolderTextBox.Location = new System.Drawing.Point(62, 21);
-            this.pdfFolderTextBox.Name = "pdfFolderTextBox";
-            this.pdfFolderTextBox.Size = new System.Drawing.Size(542, 20);
-            this.pdfFolderTextBox.TabIndex = 1;
-            this.pdfFolderTextBox.Text = "C:\\ProductDocs";
-            //
+            // 
+            pdfFolderTextBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            pdfFolderTextBox.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            pdfFolderTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            pdfFolderTextBox.Font = new System.Drawing.Font("Segoe UI", 11F);
+            pdfFolderTextBox.ForeColor = System.Drawing.Color.FromArgb(230, 230, 230);
+            pdfFolderTextBox.Location = new System.Drawing.Point(72, 36);
+            pdfFolderTextBox.Name = "pdfFolderTextBox";
+            pdfFolderTextBox.Size = new System.Drawing.Size(738, 27);
+            pdfFolderTextBox.TabIndex = 1;
+            pdfFolderTextBox.Text = "C:\\ProductDocs";
+            // 
             // pdfBrowseButton
-            //
-            this.pdfBrowseButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.pdfBrowseButton.Location = new System.Drawing.Point(610, 19);
-            this.pdfBrowseButton.Name = "pdfBrowseButton";
-            this.pdfBrowseButton.Size = new System.Drawing.Size(100, 25);
-            this.pdfBrowseButton.TabIndex = 2;
-            this.pdfBrowseButton.Text = "Browse...";
-            this.pdfBrowseButton.UseVisualStyleBackColor = true;
-            this.pdfBrowseButton.Click += new System.EventHandler(this.pdfBrowseButton_Click);
-            //
+            // 
+            pdfBrowseButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            pdfBrowseButton.BackColor = System.Drawing.Color.FromArgb(65, 65, 65);
+            pdfBrowseButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            pdfBrowseButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            pdfBrowseButton.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            pdfBrowseButton.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            pdfBrowseButton.Location = new System.Drawing.Point(820, 32);
+            pdfBrowseButton.Name = "pdfBrowseButton";
+            pdfBrowseButton.Size = new System.Drawing.Size(130, 38);
+            pdfBrowseButton.TabIndex = 2;
+            pdfBrowseButton.Text = "Browse...";
+            pdfBrowseButton.UseVisualStyleBackColor = false;
+            pdfBrowseButton.Click += pdfBrowseButton_Click;
+            // 
             // pdfStatusLabel
-            //
-            this.pdfStatusLabel.AutoSize = true;
-            this.pdfStatusLabel.ForeColor = System.Drawing.Color.DimGray;
-            this.pdfStatusLabel.Location = new System.Drawing.Point(13, 48);
-            this.pdfStatusLabel.Name = "pdfStatusLabel";
-            this.pdfStatusLabel.Size = new System.Drawing.Size(126, 13);
-            this.pdfStatusLabel.TabIndex = 3;
-            this.pdfStatusLabel.Text = "Waiting for a product id...";
-            //
+            // 
+            pdfStatusLabel.AutoSize = true;
+            pdfStatusLabel.Font = new System.Drawing.Font("Segoe UI", 10F);
+            pdfStatusLabel.ForeColor = System.Drawing.Color.FromArgb(150, 150, 150);
+            pdfStatusLabel.Location = new System.Drawing.Point(16, 74);
+            pdfStatusLabel.Name = "pdfStatusLabel";
+            pdfStatusLabel.Size = new System.Drawing.Size(163, 19);
+            pdfStatusLabel.TabIndex = 3;
+            pdfStatusLabel.Text = "Waiting for a product id...";
+            // 
             // Form1
-            //
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.mainTabControl);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MinimumSize = new System.Drawing.Size(600, 400);
-            this.Name = "Form1";
-            this.Text = "OPC UA Viewer";
-            this.mainTabControl.ResumeLayout(false);
-            this.monitoringTabPage.ResumeLayout(false);
-            this.dataGroupBox.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
-            this.documentTabPage.ResumeLayout(false);
-            this.settingsTabPage.ResumeLayout(false);
-            this.connectionGroupBox.ResumeLayout(false);
-            this.connectionGroupBox.PerformLayout();
-            this.pdfGroupBox.ResumeLayout(false);
-            this.pdfGroupBox.PerformLayout();
-            this.ResumeLayout(false);
+            // 
+            AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            BackColor = System.Drawing.Color.FromArgb(24, 24, 24);
+            ClientSize = new System.Drawing.Size(1100, 660);
+            Controls.Add(navPanel);
+            Controls.Add(monitoringPanel);
+            Controls.Add(documentPanel);
+            Controls.Add(settingsPanel);
+            Font = new System.Drawing.Font("Segoe UI", 11F);
+            ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
+            MinimumSize = new System.Drawing.Size(800, 500);
+            Name = "Form1";
+            Text = "OPC UA Viewer";
+            navPanel.ResumeLayout(false);
+            monitoringPanel.ResumeLayout(false);
+            dataGroupBox.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+            documentPanel.ResumeLayout(false);
+            settingsPanel.ResumeLayout(false);
+            connectionGroupBox.ResumeLayout(false);
+            connectionGroupBox.PerformLayout();
+            pdfGroupBox.ResumeLayout(false);
+            pdfGroupBox.PerformLayout();
+            ResumeLayout(false);
         }
 
         #endregion
 
-        private System.Windows.Forms.TabControl mainTabControl;
-        private System.Windows.Forms.TabPage monitoringTabPage;
+        private System.Windows.Forms.Panel navPanel;
+        private System.Windows.Forms.Label titleLabel;
+        private System.Windows.Forms.Button monitorNavButton;
+        private System.Windows.Forms.Button documentNavButton;
+        private System.Windows.Forms.Button settingsNavButton;
+
+        private System.Windows.Forms.Panel monitoringPanel;
         private System.Windows.Forms.GroupBox dataGroupBox;
         private System.Windows.Forms.DataGridView dataGridView1;
         private System.Windows.Forms.DataGridViewTextBoxColumn nameColumn;
@@ -326,9 +444,11 @@ namespace OpcUaViewer
         private System.Windows.Forms.DataGridViewTextBoxColumn valueColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn statusColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn timestampColumn;
-        private System.Windows.Forms.TabPage documentTabPage;
+
+        private System.Windows.Forms.Panel documentPanel;
         private ShellPreviewPanel docViewer;
-        private System.Windows.Forms.TabPage settingsTabPage;
+
+        private System.Windows.Forms.Panel settingsPanel;
         private System.Windows.Forms.GroupBox connectionGroupBox;
         private System.Windows.Forms.Label endpointLabel;
         private System.Windows.Forms.TextBox endpointTextBox;

@@ -103,6 +103,17 @@ namespace OpcUaViewer
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
+            ApplyRect();
+        }
+
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            base.OnVisibleChanged(e);
+            if (Visible) ApplyRect();
+        }
+
+        private void ApplyRect()
+        {
             if (_handler is IPreviewHandler ph)
             {
                 var rect = ToRECT(ClientRectangle);

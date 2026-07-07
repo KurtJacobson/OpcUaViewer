@@ -43,12 +43,35 @@ namespace OpcUaViewer
         // Avoids reloading the same PDF repeatedly.
         private string lastLoadedProductId;
 
+        private static readonly System.Drawing.Color NavAccent   = System.Drawing.Color.FromArgb(255, 140, 0);
+        private static readonly System.Drawing.Color NavInactive = System.Drawing.Color.FromArgb(48, 48, 48);
+        private static readonly System.Drawing.Color NavTextOn   = System.Drawing.Color.White;
+        private static readonly System.Drawing.Color NavTextOff  = System.Drawing.Color.FromArgb(170, 170, 170);
+
         public Form1()
         {
             InitializeComponent();
             FormClosing += Form1_FormClosing;
             LoadSettings();
             docViewer.ClearPreview("Waiting for a product id...");
+        }
+
+        private void monitorNavButton_Click(object sender, EventArgs e)  => ShowPage(monitoringPanel, monitorNavButton);
+        private void documentNavButton_Click(object sender, EventArgs e) => ShowPage(documentPanel,  documentNavButton);
+        private void settingsNavButton_Click(object sender, EventArgs e) => ShowPage(settingsPanel,  settingsNavButton);
+
+        private void ShowPage(System.Windows.Forms.Panel page, Button activeButton)
+        {
+            monitoringPanel.Visible = false;
+            documentPanel.Visible   = false;
+            settingsPanel.Visible   = false;
+            page.Visible = true;
+
+            foreach (var btn in new[] { monitorNavButton, documentNavButton, settingsNavButton })
+            {
+                btn.BackColor = btn == activeButton ? NavAccent   : NavInactive;
+                btn.ForeColor = btn == activeButton ? NavTextOn   : NavTextOff;
+            }
         }
 
         private void LoadSettings()
