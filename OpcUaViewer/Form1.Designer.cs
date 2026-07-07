@@ -40,6 +40,7 @@ namespace OpcUaViewer
             endpointTextBox = new System.Windows.Forms.TextBox();
             connectButton = new System.Windows.Forms.Button();
             statusLabel = new System.Windows.Forms.Label();
+            fullscreenCheckBox = new System.Windows.Forms.CheckBox();
             pdfGroupBox = new System.Windows.Forms.GroupBox();
             pdfFolderLabel = new System.Windows.Forms.Label();
             pdfFolderTextBox = new System.Windows.Forms.TextBox();
@@ -257,6 +258,7 @@ namespace OpcUaViewer
             settingsPanel.BackColor = System.Drawing.Color.FromArgb(24, 24, 24);
             settingsPanel.Controls.Add(connectionGroupBox);
             settingsPanel.Controls.Add(pdfGroupBox);
+            settingsPanel.Controls.Add(fullscreenCheckBox);
             settingsPanel.Location = new System.Drawing.Point(100, 0);
             settingsPanel.Name = "settingsPanel";
             settingsPanel.Size = new System.Drawing.Size(1000, 660);
@@ -398,9 +400,24 @@ namespace OpcUaViewer
             pdfStatusLabel.Size = new System.Drawing.Size(163, 19);
             pdfStatusLabel.TabIndex = 3;
             pdfStatusLabel.Text = "Waiting for a product id...";
-            // 
+            //
+            // fullscreenCheckBox
+            //
+            fullscreenCheckBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left;
+            fullscreenCheckBox.AutoSize = true;
+            fullscreenCheckBox.Font = new System.Drawing.Font("Segoe UI", 11F);
+            fullscreenCheckBox.ForeColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            fullscreenCheckBox.Location = new System.Drawing.Point(20, 272);
+            fullscreenCheckBox.Name = "fullscreenCheckBox";
+            fullscreenCheckBox.Size = new System.Drawing.Size(160, 24);
+            fullscreenCheckBox.TabIndex = 2;
+            fullscreenCheckBox.Text = "Full screen on startup";
+            fullscreenCheckBox.UseVisualStyleBackColor = false;
+            fullscreenCheckBox.BackColor = System.Drawing.Color.Transparent;
+            fullscreenCheckBox.CheckedChanged += new System.EventHandler(this.fullscreenCheckBox_CheckedChanged);
+            //
             // Form1
-            // 
+            //
             AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.FromArgb(24, 24, 24);
@@ -454,6 +471,7 @@ namespace OpcUaViewer
         private System.Windows.Forms.TextBox endpointTextBox;
         private System.Windows.Forms.Button connectButton;
         private System.Windows.Forms.Label statusLabel;
+        private System.Windows.Forms.CheckBox fullscreenCheckBox;
         private System.Windows.Forms.GroupBox pdfGroupBox;
         private System.Windows.Forms.Label pdfFolderLabel;
         private System.Windows.Forms.TextBox pdfFolderTextBox;

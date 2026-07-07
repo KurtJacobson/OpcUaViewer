@@ -83,13 +83,74 @@ namespace OpcUaViewer
             string savedUrl = Properties.Settings.Default.EndpointUrl;
             if (!string.IsNullOrWhiteSpace(savedUrl))
                 endpointTextBox.Text = savedUrl;
+
+            RestoreWindowPlacement();
         }
 
         private void SaveSettings()
         {
             Properties.Settings.Default.PdfFolderPath = pdfFolderTextBox.Text.Trim();
             Properties.Settings.Default.EndpointUrl = endpointTextBox.Text.Trim();
+            SaveWindowPlacement();
             Properties.Settings.Default.Save();
+        }
+
+        private void RestoreWindowPlacement()
+        {
+            var s = Properties.Settings.Default;
+            if (s.WindowLeft == -1) return; // first run — use designer defaults
+
+            var saved = new System.Drawing.Rectangle(s.WindowLeft, s.WindowTop, s.WindowWidth, s.WindowHeight);
+
+            // Only restore if the saved bounds overlap at least one connected screen.
+            bool onScreen = false;
+            foreach (var screen in Screen.AllScreens)
+            {
+                if (screen.WorkingArea.IntersectsWith(saved)) { onScreen = true; break; }
+            }
+
+            if (onScreen)
+            {
+                StartPosition = FormStartPosition.Manual;
+                Bounds = saved;
+            }
+
+            if (System.Enum.TryParse(s.WindowState, out FormWindowState state) && state == FormWindowState.Maximized)
+                SetFullscreen(true);
+
+            fullscreenCheckBox.Checked = (WindowState == FormWindowState.Maximized);
+        }
+
+        private void fullscreenCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            SetFullscreen(fullscreenCheckBox.Checked);
+        }
+
+        private void SetFullscreen(bool fullscreen)
+        {
+            if (fullscreen)
+            {
+                FormBorderStyle = FormBorderStyle.None;
+                WindowState = FormWindowState.Maximized;
+            }
+            else
+            {
+                FormBorderStyle = FormBorderStyle.Sizable;
+                WindowState = FormWindowState.Normal;
+            }
+        }
+
+        private void SaveWindowPlacement()
+        {
+            var s = Properties.Settings.Default;
+            s.WindowState = WindowState.ToString();
+
+            // Save the restored (non-maximised) bounds so we know where to place the window next time.
+            var bounds = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
+            s.WindowLeft   = bounds.Left;
+            s.WindowTop    = bounds.Top;
+            s.WindowWidth  = bounds.Width;
+            s.WindowHeight = bounds.Height;
         }
 
         private void pdfBrowseButton_Click(object sender, EventArgs e)

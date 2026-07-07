@@ -46,5 +46,45 @@ namespace OpcUaViewer.Properties {
                 this["EndpointUrl"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("-1")]
+        public int WindowLeft {
+            get { return ((int)(this["WindowLeft"])); }
+            set { this["WindowLeft"] = value; }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("-1")]
+        public int WindowTop {
+            get { return ((int)(this["WindowTop"])); }
+            set { this["WindowTop"] = value; }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1100")]
+        public int WindowWidth {
+            get { return ((int)(this["WindowWidth"])); }
+            set { this["WindowWidth"] = value; }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("660")]
+        public int WindowHeight {
+            get { return ((int)(this["WindowHeight"])); }
+            set { this["WindowHeight"] = value; }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Normal")]
+        public string WindowState {
+            get { return ((string)(this["WindowState"])); }
+            set { this["WindowState"] = value; }
+        }
     }
 }
