@@ -52,8 +52,26 @@ namespace OpcUaViewer
         {
             InitializeComponent();
             FormClosing += Form1_FormClosing;
+            Shown        += Form1_Shown;
             LoadSettings();
             docViewer.ClearPreview("Waiting for a product id...");
+        }
+
+        private async void Form1_Shown(object sender, EventArgs e)
+        {
+            string url = endpointTextBox.Text.Trim();
+            if (string.IsNullOrEmpty(url)) return;
+
+            connectButton.Enabled   = false;
+            endpointTextBox.Enabled = false;
+            UpdateStatus("Auto-connecting...");
+
+            cts = new CancellationTokenSource();
+            await StartClient(url, cts.Token);
+
+            connectButton.Enabled = true;
+            connectButton.Text    = session != null ? "Disconnect" : "Connect";
+            endpointTextBox.Enabled = session == null;
         }
 
         // Loaded .p3cam orders; index matches groupsListView item index.
@@ -198,7 +216,7 @@ namespace OpcUaViewer
         {
             if (ordersDataGridView.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Please select a product group first.", "Run Group",
+                DarkMessageBox.Show(this,"Please select a product group first.", "Run Group",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -206,7 +224,7 @@ namespace OpcUaViewer
             string outputBase = camOutputTextBox.Text.Trim();
             if (string.IsNullOrEmpty(outputBase))
             {
-                MessageBox.Show("Please set the CAM Output Directory in Settings first.", "Run Group",
+                DarkMessageBox.Show(this,"Please set the CAM Output Directory in Settings first.", "Run Group",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -221,12 +239,12 @@ namespace OpcUaViewer
                 string dest = Path.Combine(inDir, Path.GetFileName(order.FilePath));
                 File.Copy(order.FilePath, dest, overwrite: true);
 
-                MessageBox.Show($"Copied '{Path.GetFileName(order.FilePath)}' to:\n{inDir}",
+                DarkMessageBox.Show(this,$"Copied '{Path.GetFileName(order.FilePath)}' to:\n{inDir}",
                     "Run Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Failed to copy CAM file:\n\n" + ex.Message, "Run Group",
+                DarkMessageBox.Show(this,"Failed to copy CAM file:\n\n" + ex.Message, "Run Group",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -235,7 +253,7 @@ namespace OpcUaViewer
         {
             if (ordersDataGridView.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Please select a product group first.", "Cancel Group",
+                DarkMessageBox.Show(this,"Please select a product group first.", "Cancel Group",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -243,7 +261,7 @@ namespace OpcUaViewer
             string outputBase = camOutputTextBox.Text.Trim();
             if (string.IsNullOrEmpty(outputBase))
             {
-                MessageBox.Show("Please set the CAM Output Directory in Settings first.", "Cancel Group",
+                DarkMessageBox.Show(this,"Please set the CAM Output Directory in Settings first.", "Cancel Group",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -258,7 +276,7 @@ namespace OpcUaViewer
 
             if (!File.Exists(inPath))
             {
-                MessageBox.Show($"'{fileName}' is not currently in the 'in' folder — nothing to cancel.",
+                DarkMessageBox.Show(this,$"'{fileName}' is not currently in the 'in' folder — nothing to cancel.",
                     "Cancel Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -269,12 +287,12 @@ namespace OpcUaViewer
                 string dest = Path.Combine(canceledDir, fileName);
                 File.Move(inPath, dest, overwrite: true);
 
-                MessageBox.Show($"Moved '{fileName}' to:\n{canceledDir}",
+                DarkMessageBox.Show(this,$"Moved '{fileName}' to:\n{canceledDir}",
                     "Cancel Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Failed to move CAM file:\n\n" + ex.Message, "Cancel Group",
+                DarkMessageBox.Show(this,"Failed to move CAM file:\n\n" + ex.Message, "Cancel Group",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -403,7 +421,7 @@ namespace OpcUaViewer
             string endpointUrl = endpointTextBox.Text.Trim();
             if (string.IsNullOrEmpty(endpointUrl))
             {
-                MessageBox.Show("Please enter an endpoint URL.", "OPC UA Client",
+                DarkMessageBox.Show(this,"Please enter an endpoint URL.", "OPC UA Client",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -471,9 +489,10 @@ namespace OpcUaViewer
             }
             catch (Exception ex)
             {
-                UpdateStatus("Connection FAILED");
-                MessageBox.Show("Connection FAILED:\n\n" + ex, "OPC UA Client",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                string brief = ex.InnerException?.Message ?? ex.Message;
+                UpdateStatus("Not connected");
+                DarkMessageBox.Show(this, $"Could not connect to the OPC UA server.\n\n{brief}",
+                    "Connection Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -540,8 +559,8 @@ namespace OpcUaViewer
             {
                 monitoredNodes = new List<(string Name, NodeId NodeId)>();
                 this.Invoke(new Action(() =>
-                    MessageBox.Show("Failed to browse the monitoring folder:\n\n" + ex, "OPC UA Client",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error)));
+                    DarkMessageBox.Show(this, "Failed to browse the monitoring folder.\n\n" + (ex.InnerException?.Message ?? ex.Message),
+                        "OPC UA Client", MessageBoxButtons.OK, MessageBoxIcon.Error)));
             }
 
             var nodes = monitoredNodes;
@@ -677,9 +696,9 @@ namespace OpcUaViewer
             }
             catch (Exception ex)
             {
-                UpdateStatus("Subscription FAILED");
-                MessageBox.Show("Failed to create subscription:\n\n" + ex, "OPC UA Client",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UpdateStatus("Subscription failed");
+                DarkMessageBox.Show(this, "Failed to create data subscription.\n\n" + (ex.InnerException?.Message ?? ex.Message),
+                    "OPC UA Client", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

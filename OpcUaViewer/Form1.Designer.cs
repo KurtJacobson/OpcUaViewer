@@ -232,7 +232,9 @@ namespace OpcUaViewer
             dataGridView1.ReadOnly = true;
             dataGridView1.RowHeadersVisible = false;
             dataGridView1.RowTemplate.Height = 40;
-            dataGridView1.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            dataGridView1.AllowUserToResizeRows = false;
+            dataGridView1.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
+            dataGridView1.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
             dataGridView1.Size = new System.Drawing.Size(994, 660);
             dataGridView1.TabIndex = 0;
             // 
@@ -248,14 +250,16 @@ namespace OpcUaViewer
             nodeIdColumn.HeaderText = "Node Id";
             nodeIdColumn.Name = "nodeIdColumn";
             nodeIdColumn.ReadOnly = true;
-            nodeIdColumn.Width = 260;
-            // 
+            nodeIdColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            nodeIdColumn.MinimumWidth = 120;
+            //
             // valueColumn
-            // 
+            //
             valueColumn.HeaderText = "Value";
             valueColumn.Name = "valueColumn";
             valueColumn.ReadOnly = true;
-            valueColumn.Width = 160;
+            valueColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            valueColumn.MinimumWidth = 80;
             // 
             // statusColumn
             // 
