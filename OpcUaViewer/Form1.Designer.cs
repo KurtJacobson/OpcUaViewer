@@ -387,6 +387,7 @@ namespace OpcUaViewer
             ordersDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             ordersDataGridView.Size = new System.Drawing.Size(277, 604);
             ordersDataGridView.TabIndex = 0;
+            ordersDataGridView.AllowUserToResizeRows = false;
             ordersDataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
                 ordersOrderColumn, ordersCustomerColumn, ordersQtyColumn });
 
@@ -434,6 +435,7 @@ namespace OpcUaViewer
             productsDataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             productsDataGridView.Size = new System.Drawing.Size(717, 660);
             productsDataGridView.TabIndex = 0;
+            productsDataGridView.AllowUserToResizeRows = false;
             productsDataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
                 prodListIdColumn, prodNameColumn, prodParametersColumn,
                 prodMaterialColumn, prodThicknessColumn, prodQtyColumn,
