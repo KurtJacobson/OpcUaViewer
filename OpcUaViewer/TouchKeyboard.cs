@@ -50,7 +50,7 @@ namespace OpcUaViewer
 
             KeyPreview = true;
             KeyDown   += (s, e) => { if (e.KeyCode == Keys.Escape) { DialogResult = DialogResult.Cancel; Close(); } };
-            Deactivate += (s, e) => { if (Visible) { DialogResult = DialogResult.Cancel; Close(); } };
+            Deactivate += (s, e) => { if (Visible && DialogResult == DialogResult.None) { DialogResult = DialogResult.Cancel; Close(); } };
 
             Paint += (s, e) =>
             {

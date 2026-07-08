@@ -98,6 +98,7 @@ namespace OpcUaViewer
             HookKeyboard(camFolderTextBox);
             HookKeyboard(camOutputTextBox);
             HookKeyboard(camProductsTextBox);
+            HookKeyboard(camProductPrefixTextBox);
             productsDataGridView.CellBeginEdit += productsDataGridView_CellBeginEdit;
         }
 
@@ -202,9 +203,10 @@ namespace OpcUaViewer
             groupInfoPanel.Controls.Add(tlp);
 
             // Keyboard hooks (guard in HookKeyboard skips ReadOnly boxes)
-            foreach (var tb in new[] { infoFileNameBox, infoOrderIdBox, infoQtyBox,
+            foreach (var tb in new[] { infoFileNameBox, infoOrderIdBox,
                                        infoCustomerBox, infoInfoTextBox })
                 HookKeyboard(tb);
+            HookKeyboard(infoQtyBox, numericOnly: true);
         }
 
         // ── touch-friendly dark scrollbars ───────────────────────────────────────
@@ -398,7 +400,7 @@ namespace OpcUaViewer
             if (reload) LoadCamFiles(pathToRestore);
         }
 
-        private void HookKeyboard(TextBox tb)
+        private void HookKeyboard(TextBox tb, bool numericOnly = false)
         {
             // Record when focus arrives so Click can distinguish the focusing tap
             // from a subsequent tap. On touchscreens Enter fires before MouseDown,
@@ -413,7 +415,7 @@ namespace OpcUaViewer
                 if ((DateTime.UtcNow - focusedAt).TotalMilliseconds < 300) return;
                 if (_suppressKeyboard || !keyboardToggle.Checked) return;
                 _suppressKeyboard = true;
-                string result = TouchKeyboard.Show(this, tb.Text);
+                string result = TouchKeyboard.Show(this, tb.Text, numericOnly);
                 if (result != null) tb.Text = result;
                 BeginInvoke(new Action(() => _suppressKeyboard = false));
             };
