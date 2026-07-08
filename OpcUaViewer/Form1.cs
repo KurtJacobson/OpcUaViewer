@@ -41,9 +41,32 @@ namespace OpcUaViewer
 
         // ClientHandle of the item identified as the product id, if one was found.
         private uint? productIdClientHandle;
+        private uint? camFileClientHandle;
+        private uint? machineStateClientHandle;
+
+        // Last-known values from the three monitoring nodes.
+        private string _activeCamFileName;
+        private string _activeProductId;
+        private int    _machineState    = -1;
+        private int    _activeCamRowIndex = -1;  // row locked by OPC — -1 when no active file
+        private bool   _lockingSelection;        // re-entry guard for selection snap-back
 
         // Avoids reloading the same PDF repeatedly.
         private string lastLoadedProductId;
+
+        // Row-state dictionaries used by CellFormatting — keyed by row index.
+        // null entry = normal (no override). Updated by OnCamFileChanged / HighlightActiveProduct.
+        private enum RowState { Normal, Active, Dim }
+        private readonly Dictionary<int, RowState> _orderRowStates   = new();
+        private readonly Dictionary<int, RowState> _productRowStates = new();
+
+        private static readonly System.Drawing.Color RowActiveBg        = System.Drawing.Color.FromArgb(25, 70, 35);
+        private static readonly System.Drawing.Color RowActiveFg        = System.Drawing.Color.FromArgb(180, 255, 180);
+        private static readonly System.Drawing.Color RowActiveSelBg     = System.Drawing.Color.FromArgb(40, 100, 50);
+        private static readonly System.Drawing.Color RowActiveProductBg = System.Drawing.Color.FromArgb(90, 55, 10);
+        private static readonly System.Drawing.Color RowActiveProductFg = System.Drawing.Color.FromArgb(255, 210, 140);
+        private static readonly System.Drawing.Color RowDimBg           = System.Drawing.Color.FromArgb(22, 22, 22);
+        private static readonly System.Drawing.Color RowDimFg           = System.Drawing.Color.FromArgb(65, 65, 65);
 
         private static readonly System.Drawing.Color NavAccent   = System.Drawing.Color.FromArgb(255, 140, 0);
         private static readonly System.Drawing.Color NavInactive = System.Drawing.Color.FromArgb(48, 48, 48);
@@ -57,6 +80,13 @@ namespace OpcUaViewer
         {
             InitializeComponent();
             BuildGroupInfoPanel();
+            ordersDataGridView.CellFormatting   += OrdersGrid_CellFormatting;
+            productsDataGridView.CellFormatting += ProductsGrid_CellFormatting;
+            productsDataGridView.SelectionChanged += (s, e) =>
+            {
+                if (IsRunningLocked())
+                    productsDataGridView.ClearSelection();
+            };
             FormClosing += Form1_FormClosing;
             Shown        += Form1_Shown;
             LoadSettings();
@@ -454,19 +484,40 @@ namespace OpcUaViewer
             return ($"{date} - Order {next:D3}", $"O{next:D3}");
         }
 
+        private void SnapToActiveRow()
+        {
+            if (_activeCamRowIndex < 0 || _activeCamRowIndex >= ordersDataGridView.Rows.Count) return;
+            _lockingSelection = true;
+            try { ordersDataGridView.CurrentCell = ordersDataGridView.Rows[_activeCamRowIndex].Cells[0]; }
+            catch { }
+            finally { _lockingSelection = false; }
+        }
+
         private void ordersDataGridView_SelectionChanged(object sender, EventArgs e)
         {
+            if (_lockingSelection) return;
+
+            // Snap back to the active row while the machine is running
+            if (!_editMode && IsRunningLocked())
+            {
+                SnapToActiveRow();
+                return;
+            }
+
             if (ordersDataGridView.SelectedRows.Count == 0) return;
             int idx = ordersDataGridView.SelectedRows[0].Index;
             if (idx < 0 || idx >= _camOrders.Count) return;
             var order = _camOrders[idx];
             PopulateProductsGrid(order);
-            infoFileNameBox.Text = order.FileName;
-            infoCustomerBox.Text = order.CustomerName;
-            infoOrderIdBox.Text  = order.OrderId;
+            infoFileNameBox.Text  = order.FileName;
+            infoCustomerBox.Text  = order.CustomerName;
+            infoOrderIdBox.Text   = order.OrderId;
             infoQtyBox.Text       = order.Quantity.ToString();
             infoCompletedBox.Text = order.Completed.ToString();
             infoInfoTextBox.Text  = order.InfoText;
+
+            if (_activeProductId != null && IsRunningLocked())
+                HighlightActiveProduct(_activeProductId);
         }
 
         private void PopulateProductsGrid(CamOrder order)
@@ -1176,7 +1227,9 @@ namespace OpcUaViewer
             if (session == null || monitoredNodes.Count == 0)
                 return;
 
-            productIdClientHandle = null;
+            productIdClientHandle    = null;
+            camFileClientHandle      = null;
+            machineStateClientHandle = null;
 
             try
             {
@@ -1203,6 +1256,12 @@ namespace OpcUaViewer
 
                     if (node.Name.IndexOf(ProductIdNameMatch, StringComparison.OrdinalIgnoreCase) >= 0)
                         productIdClientHandle = item.ClientHandle;
+
+                    if (node.Name.IndexOf("CAMFileInProcess", StringComparison.OrdinalIgnoreCase) >= 0)
+                        camFileClientHandle = item.ClientHandle;
+
+                    if (node.Name.IndexOf("CurrentMachineState", StringComparison.OrdinalIgnoreCase) >= 0)
+                        machineStateClientHandle = item.ClientHandle;
                 }
 
                 session.AddSubscription(subscription);
@@ -1225,10 +1284,186 @@ namespace OpcUaViewer
             {
                 UpdateRow(item.ClientHandle, v);
 
+                string strVal = v.Value?.ToString() ?? "";
+
                 if (productIdClientHandle.HasValue && item.ClientHandle == productIdClientHandle.Value)
-                    OpenProductPdf(v.Value?.ToString());
+                {
+                    OpenProductPdf(strVal);
+                    BeginInvokeIfRequired(() => { _activeProductId = strVal; ApplyRunningLockState(); });
+                }
+                else if (camFileClientHandle.HasValue && item.ClientHandle == camFileClientHandle.Value)
+                {
+                    BeginInvokeIfRequired(() => OnCamFileChanged(strVal));
+                }
+                else if (machineStateClientHandle.HasValue && item.ClientHandle == machineStateClientHandle.Value)
+                {
+                    if (int.TryParse(strVal, out int state))
+                        BeginInvokeIfRequired(() => OnMachineStateChanged(state));
+                }
             }
         }
+
+        private void BeginInvokeIfRequired(Action action)
+        {
+            if (IsDisposed) return;
+            if (InvokeRequired) BeginInvoke(action);
+            else action();
+        }
+
+        private void OnCamFileChanged(string camFileName)
+        {
+            _activeCamFileName = camFileName;
+            ApplyRunningLockState();
+        }
+
+        private void HighlightActiveProduct(string productId)
+        {
+            _activeProductId = productId;
+            bool hasActive = !string.IsNullOrEmpty(productId);
+
+            _productRowStates.Clear();
+            for (int i = 0; i < productsDataGridView.Rows.Count; i++)
+            {
+                var row = productsDataGridView.Rows[i];
+                string rowPath = row.Cells["prodPathColumn"].Value?.ToString() ?? "";
+                string rowId   = row.Cells["prodListIdColumn"].Value?.ToString() ?? "";
+                bool match = hasActive &&
+                             (string.Equals(rowPath, productId, StringComparison.OrdinalIgnoreCase) ||
+                              string.Equals(rowId,   productId, StringComparison.OrdinalIgnoreCase) ||
+                              rowPath.IndexOf(productId, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                              productId.IndexOf(rowId,   StringComparison.OrdinalIgnoreCase) >= 0);
+                _productRowStates[i] = match ? RowState.Active : RowState.Dim;
+            }
+
+            // If nothing matched, don't grey everything — just leave normal
+            if (!_productRowStates.Values.Any(s => s == RowState.Active))
+                _productRowStates.Clear();
+
+            productsDataGridView.Invalidate();
+        }
+
+        private void OrdersGrid_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (!_orderRowStates.TryGetValue(e.RowIndex, out var state)) return;
+            switch (state)
+            {
+                case RowState.Active:
+                    e.CellStyle.BackColor          = RowActiveBg;
+                    e.CellStyle.ForeColor          = RowActiveFg;
+                    e.CellStyle.SelectionBackColor = RowActiveSelBg;
+                    e.CellStyle.SelectionForeColor = RowActiveFg;
+                    break;
+                case RowState.Dim:
+                    e.CellStyle.BackColor          = RowDimBg;
+                    e.CellStyle.ForeColor          = RowDimFg;
+                    e.CellStyle.SelectionBackColor = RowDimBg;
+                    e.CellStyle.SelectionForeColor = RowDimFg;
+                    break;
+            }
+        }
+
+        private void ProductsGrid_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (!_productRowStates.TryGetValue(e.RowIndex, out var state)) return;
+            switch (state)
+            {
+                case RowState.Active:
+                    e.CellStyle.BackColor          = RowActiveProductBg;
+                    e.CellStyle.ForeColor          = RowActiveProductFg;
+                    e.CellStyle.SelectionBackColor = RowActiveProductBg;
+                    e.CellStyle.SelectionForeColor = RowActiveProductFg;
+                    break;
+                case RowState.Dim:
+                    e.CellStyle.BackColor          = RowDimBg;
+                    e.CellStyle.ForeColor          = RowDimFg;
+                    e.CellStyle.SelectionBackColor = RowDimBg;
+                    e.CellStyle.SelectionForeColor = RowDimFg;
+                    break;
+            }
+        }
+
+        private void OnMachineStateChanged(int state)
+        {
+            _machineState = state;
+            ApplyRunningLockState();
+        }
+
+        /// <summary>
+        /// Single source of truth for the "machine running" locked state.
+        /// Locked = machineState==3 AND a CAM file is active.
+        /// </summary>
+        private void ApplyRunningLockState()
+        {
+            bool locked = IsRunningLocked();
+
+            newGroupButton.Visible    = !locked;
+            editGroupButton.Visible   = !locked;
+            deleteGroupButton.Visible = !locked;
+            runGroupButton.Visible    = !locked;
+            cancelGroupButton.Visible = !locked;
+
+            _orderRowStates.Clear();
+            _productRowStates.Clear();
+
+            if (locked)
+            {
+                int matchIdx = -1;
+                for (int i = 0; i < ordersDataGridView.Rows.Count; i++)
+                {
+                    string rowFile = ordersDataGridView.Rows[i].Cells["ordersCustomerColumn"].Value?.ToString() ?? "";
+                    bool match = FileNamesMatch(rowFile, _activeCamFileName);
+                    _orderRowStates[i] = match ? RowState.Active : RowState.Dim;
+                    if (match) matchIdx = i;
+                }
+                _activeCamRowIndex = matchIdx;
+
+                if (matchIdx >= 0 && matchIdx < _camOrders.Count)
+                {
+                    _lockingSelection = true;
+                    try
+                    {
+                        ordersDataGridView.CurrentCell = ordersDataGridView.Rows[matchIdx].Cells[0];
+                        ordersDataGridView.FirstDisplayedScrollingRowIndex = matchIdx;
+                    }
+                    catch { }
+                    finally { _lockingSelection = false; }
+
+                    // Load the matching order's products so the right group is shown
+                    var order = _camOrders[matchIdx];
+                    PopulateProductsGrid(order);
+                    infoFileNameBox.Text  = order.FileName;
+                    infoCustomerBox.Text  = order.CustomerName;
+                    infoOrderIdBox.Text   = order.OrderId;
+                    infoQtyBox.Text       = order.Quantity.ToString();
+                    infoCompletedBox.Text = order.Completed.ToString();
+                    infoInfoTextBox.Text  = order.InfoText;
+                }
+
+                HighlightActiveProduct(_activeProductId);
+            }
+            else
+            {
+                _activeCamRowIndex = -1;
+            }
+
+            ordersDataGridView.Invalidate();
+            productsDataGridView.Invalidate();
+        }
+
+
+        private bool IsRunningLocked() =>
+            _machineState == 3 && !string.IsNullOrEmpty(_activeCamFileName);
+
+        private static bool FileNamesMatch(string a, string b) =>
+            string.Equals(Path.GetFileNameWithoutExtension(a),
+                          Path.GetFileNameWithoutExtension(b),
+                          StringComparison.OrdinalIgnoreCase);
+
+        private static System.Drawing.Color Lighten(System.Drawing.Color c, int amt) =>
+            System.Drawing.Color.FromArgb(
+                Math.Min(255, c.R + amt),
+                Math.Min(255, c.G + amt),
+                Math.Min(255, c.B + amt));
 
         private void UpdateRow(uint clientHandle, DataValue value)
         {
@@ -1364,7 +1599,22 @@ namespace OpcUaViewer
                 session = null;
                 rowsByClientHandle.Clear();
                 monitoredNodes.Clear();
-                productIdClientHandle = null;
+                productIdClientHandle    = null;
+                camFileClientHandle      = null;
+                machineStateClientHandle = null;
+                _activeCamFileName       = null;
+                _activeProductId         = null;
+                _machineState            = -1;
+                _activeCamRowIndex       = -1;
+                newGroupButton.Visible    = true;
+                editGroupButton.Visible   = true;
+                deleteGroupButton.Visible = true;
+                runGroupButton.Visible    = true;
+                cancelGroupButton.Visible = true;
+                _orderRowStates.Clear();
+                _productRowStates.Clear();
+                ordersDataGridView.Invalidate();
+                productsDataGridView.Invalidate();
                 dataGridView1.Rows.Clear();
                 UpdateStatus("Disconnected");
             }
