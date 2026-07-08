@@ -39,7 +39,8 @@ namespace OpcUaViewer
             endpointTextBox = new System.Windows.Forms.TextBox();
             connectButton = new System.Windows.Forms.Button();
             statusLabel = new System.Windows.Forms.Label();
-            fullscreenCheckBox = new System.Windows.Forms.CheckBox();
+            fullscreenToggle = new ToggleSwitch();
+            keyboardToggle   = new ToggleSwitch();
             camFolderGroupBox = new System.Windows.Forms.GroupBox();
             camFolderLabel = new System.Windows.Forms.Label();
             camFolderTextBox = new System.Windows.Forms.TextBox();
@@ -486,7 +487,8 @@ namespace OpcUaViewer
             settingsPanel.Controls.Add(pdfGroupBox);
             settingsPanel.Controls.Add(camFolderGroupBox);
             settingsPanel.Controls.Add(camOutputGroupBox);
-            settingsPanel.Controls.Add(fullscreenCheckBox);
+            settingsPanel.Controls.Add(fullscreenToggle);
+            settingsPanel.Controls.Add(keyboardToggle);
             settingsPanel.Location = new System.Drawing.Point(106, 0);
             settingsPanel.Name = "settingsPanel";
             settingsPanel.Size = new System.Drawing.Size(994, 660);
@@ -738,20 +740,28 @@ namespace OpcUaViewer
             camFolderBrowseButton.UseVisualStyleBackColor = false;
             camFolderBrowseButton.Click += camFolderBrowseButton_Click;
             //
-            // fullscreenCheckBox
+            // fullscreenToggle
             //
-            fullscreenCheckBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left;
-            fullscreenCheckBox.AutoSize = true;
-            fullscreenCheckBox.Font = new System.Drawing.Font("Segoe UI", 11F);
-            fullscreenCheckBox.ForeColor = System.Drawing.Color.FromArgb(200, 200, 200);
-            fullscreenCheckBox.Location = new System.Drawing.Point(20, 474);
-            fullscreenCheckBox.Name = "fullscreenCheckBox";
-            fullscreenCheckBox.Size = new System.Drawing.Size(160, 24);
-            fullscreenCheckBox.TabIndex = 2;
-            fullscreenCheckBox.Text = "Full screen on startup";
-            fullscreenCheckBox.UseVisualStyleBackColor = false;
-            fullscreenCheckBox.BackColor = System.Drawing.Color.Transparent;
-            fullscreenCheckBox.CheckedChanged += new System.EventHandler(this.fullscreenCheckBox_CheckedChanged);
+            fullscreenToggle.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left;
+            fullscreenToggle.Font = new System.Drawing.Font("Segoe UI", 11F);
+            fullscreenToggle.ForeColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            fullscreenToggle.Location = new System.Drawing.Point(20, 474);
+            fullscreenToggle.Name = "fullscreenToggle";
+            fullscreenToggle.Size = new System.Drawing.Size(340, 44);
+            fullscreenToggle.TabIndex = 5;
+            fullscreenToggle.Text = "Full screen on startup";
+            fullscreenToggle.CheckedChanged += fullscreenToggle_CheckedChanged;
+            //
+            // keyboardToggle
+            //
+            keyboardToggle.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left;
+            keyboardToggle.Font = new System.Drawing.Font("Segoe UI", 11F);
+            keyboardToggle.ForeColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            keyboardToggle.Location = new System.Drawing.Point(20, 526);
+            keyboardToggle.Name = "keyboardToggle";
+            keyboardToggle.Size = new System.Drawing.Size(340, 44);
+            keyboardToggle.TabIndex = 6;
+            keyboardToggle.Text = "On-screen keyboard";
             //
             // Form1
             //
@@ -819,7 +829,8 @@ namespace OpcUaViewer
         private System.Windows.Forms.TextBox endpointTextBox;
         private System.Windows.Forms.Button connectButton;
         private System.Windows.Forms.Label statusLabel;
-        private System.Windows.Forms.CheckBox fullscreenCheckBox;
+        private ToggleSwitch fullscreenToggle;
+        private ToggleSwitch keyboardToggle;
         private System.Windows.Forms.GroupBox pdfGroupBox;
         private System.Windows.Forms.Label pdfFolderLabel;
         private System.Windows.Forms.TextBox pdfFolderTextBox;

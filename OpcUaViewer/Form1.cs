@@ -48,6 +48,9 @@ namespace OpcUaViewer
         private static readonly System.Drawing.Color NavTextOn   = System.Drawing.Color.White;
         private static readonly System.Drawing.Color NavTextOff  = System.Drawing.Color.FromArgb(170, 170, 170);
 
+        // Prevents the keyboard re-opening when focus returns after dismissal.
+        private bool _suppressKeyboard;
+
         public Form1()
         {
             InitializeComponent();
@@ -55,6 +58,53 @@ namespace OpcUaViewer
             Shown        += Form1_Shown;
             LoadSettings();
             docViewer.ClearPreview("Waiting for a product id...");
+
+            HookKeyboard(endpointTextBox);
+            HookKeyboard(pdfFolderTextBox);
+            HookKeyboard(camFolderTextBox);
+            HookKeyboard(camOutputTextBox);
+            productsDataGridView.CellBeginEdit += productsDataGridView_CellBeginEdit;
+        }
+
+        private void HookKeyboard(TextBox tb)
+        {
+            // Record when focus arrives so Click can distinguish the focusing tap
+            // from a subsequent tap. On touchscreens Enter fires before MouseDown,
+            // so checking tb.Focused in MouseDown is unreliable.
+            DateTime focusedAt = DateTime.MinValue;
+            tb.Enter += (s, e) => focusedAt = DateTime.UtcNow;
+
+            tb.Click += (s, e) =>
+            {
+                // Skip if this click is what gave us focus (within ~300 ms of Enter).
+                if ((DateTime.UtcNow - focusedAt).TotalMilliseconds < 300) return;
+                if (_suppressKeyboard || !keyboardToggle.Checked) return;
+                _suppressKeyboard = true;
+                string result = TouchKeyboard.Show(this, tb.Text);
+                if (result != null) tb.Text = result;
+                BeginInvoke(new Action(() => _suppressKeyboard = false));
+            };
+        }
+
+        private void productsDataGridView_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+        {
+            if (productsDataGridView.Columns[e.ColumnIndex].Name != "prodRunQtyColumn") return;
+            if (!keyboardToggle.Checked) return;
+            e.Cancel = true;
+
+            string current = productsDataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString() ?? "0";
+            string result  = TouchKeyboard.Show(this, current, numericOnly: true);
+
+            if (result != null && int.TryParse(result, out int val) && val >= 0)
+            {
+                productsDataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = val;
+                if (ordersDataGridView.SelectedRows.Count > 0)
+                {
+                    int orderIdx = ordersDataGridView.SelectedRows[0].Index;
+                    if (orderIdx < _camOrders.Count && e.RowIndex < _camOrders[orderIdx].Products.Count)
+                        _camOrders[orderIdx].Products[e.RowIndex].RunQuantity = val;
+                }
+            }
         }
 
         private async void Form1_Shown(object sender, EventArgs e)
@@ -315,6 +365,8 @@ namespace OpcUaViewer
             if (!string.IsNullOrWhiteSpace(savedCamOutput))
                 camOutputTextBox.Text = savedCamOutput;
 
+            keyboardToggle.Checked = Properties.Settings.Default.KeyboardEnabled;
+
             RestoreWindowPlacement();
         }
 
@@ -323,7 +375,8 @@ namespace OpcUaViewer
             Properties.Settings.Default.PdfFolderPath  = pdfFolderTextBox.Text.Trim();
             Properties.Settings.Default.EndpointUrl    = endpointTextBox.Text.Trim();
             Properties.Settings.Default.CamFolderPath  = camFolderTextBox.Text.Trim();
-            Properties.Settings.Default.CamOutputPath  = camOutputTextBox.Text.Trim();
+            Properties.Settings.Default.CamOutputPath   = camOutputTextBox.Text.Trim();
+            Properties.Settings.Default.KeyboardEnabled = keyboardToggle.Checked;
             SaveWindowPlacement();
             Properties.Settings.Default.Save();
         }
@@ -351,12 +404,12 @@ namespace OpcUaViewer
             if (System.Enum.TryParse(s.WindowState, out FormWindowState state) && state == FormWindowState.Maximized)
                 SetFullscreen(true);
 
-            fullscreenCheckBox.Checked = (WindowState == FormWindowState.Maximized);
+            fullscreenToggle.Checked = (WindowState == FormWindowState.Maximized);
         }
 
-        private void fullscreenCheckBox_CheckedChanged(object sender, EventArgs e)
+        private void fullscreenToggle_CheckedChanged(object sender, EventArgs e)
         {
-            SetFullscreen(fullscreenCheckBox.Checked);
+            SetFullscreen(fullscreenToggle.Checked);
         }
 
         private void SetFullscreen(bool fullscreen)
