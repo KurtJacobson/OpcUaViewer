@@ -80,6 +80,7 @@ namespace OpcUaViewer
         {
             InitializeComponent();
             BuildGroupInfoPanel();
+            SetupScrollBars();
             ordersDataGridView.CellFormatting   += OrdersGrid_CellFormatting;
             productsDataGridView.CellFormatting += ProductsGrid_CellFormatting;
             productsDataGridView.SelectionChanged += (s, e) =>
@@ -204,6 +205,99 @@ namespace OpcUaViewer
             foreach (var tb in new[] { infoFileNameBox, infoOrderIdBox, infoQtyBox,
                                        infoCustomerBox, infoInfoTextBox })
                 HookKeyboard(tb);
+        }
+
+        // ── touch-friendly dark scrollbars ───────────────────────────────────────
+
+        private const int ScrollBarW = 36;
+
+        private void SetupScrollBars()
+        {
+            AttachScrollBar(dataGridView1);
+            AttachScrollBar(ordersDataGridView);
+            AttachScrollBar(productsDataGridView);
+            SetupSettingsScroll();
+        }
+
+        private void AttachScrollBar(System.Windows.Forms.DataGridView dgv)
+        {
+            var parent = dgv.Parent;
+            dgv.ScrollBars = System.Windows.Forms.ScrollBars.None;
+
+            // Height taken by any top-docked siblings (e.g. groupInfoPanel above the products grid)
+            int topOffset = parent.Controls
+                .Cast<System.Windows.Forms.Control>()
+                .Where(c => c != dgv && c.Dock == System.Windows.Forms.DockStyle.Top)
+                .Sum(c => c.Height);
+
+            // Shrink the DGV to leave room for our scrollbar
+            if (dgv.Dock == System.Windows.Forms.DockStyle.Fill)
+            {
+                dgv.Dock   = System.Windows.Forms.DockStyle.None;
+                dgv.Anchor = System.Windows.Forms.AnchorStyles.Top    |
+                             System.Windows.Forms.AnchorStyles.Bottom  |
+                             System.Windows.Forms.AnchorStyles.Left    |
+                             System.Windows.Forms.AnchorStyles.Right;
+                dgv.SetBounds(0, topOffset,
+                    parent.ClientSize.Width - ScrollBarW,
+                    parent.ClientSize.Height - topOffset);
+            }
+            else
+            {
+                dgv.Width -= ScrollBarW;
+            }
+
+            var sb = new DarkScrollBar
+            {
+                Left          = parent.ClientSize.Width - ScrollBarW,
+                Top           = topOffset,
+                Height        = parent.ClientSize.Height - topOffset,
+                Anchor        = System.Windows.Forms.AnchorStyles.Top   |
+                                System.Windows.Forms.AnchorStyles.Bottom |
+                                System.Windows.Forms.AnchorStyles.Right,
+                HeaderHeight    = dgv.ColumnHeadersHeight,
+                HeaderBackColor = dgv.ColumnHeadersDefaultCellStyle.BackColor,
+            };
+            parent.Controls.Add(sb);
+            sb.BringToFront();
+
+            void UpdateRange()
+            {
+                int visible = Math.Max(1, dgv.DisplayedRowCount(false));
+                int total   = dgv.Rows.Count;
+                sb.LargeChange = visible;
+                sb.Maximum     = Math.Max(0, total - visible);
+                // Always visible — thumb disappears when nothing to scroll
+            }
+
+            sb.Scroll += (s, e) =>
+            {
+                if (dgv.Rows.Count > 0)
+                    dgv.FirstDisplayedScrollingRowIndex =
+                        Math.Min(sb.Value, dgv.Rows.Count - 1);
+            };
+
+            dgv.Scroll      += (s, e) => { sb.Value = dgv.FirstDisplayedScrollingRowIndex; };
+            dgv.RowsAdded   += (s, e) => UpdateRange();
+            dgv.RowsRemoved += (s, e) => UpdateRange();
+            dgv.Resize      += (s, e) => UpdateRange();
+            dgv.MouseWheel  += (s, e) =>
+            {
+                sb.HandleWheel(e.Delta);
+                if (dgv.Rows.Count > 0)
+                    dgv.FirstDisplayedScrollingRowIndex =
+                        Math.Min(sb.Value, dgv.Rows.Count - 1);
+            };
+
+            UpdateRange();
+        }
+
+        private void SetupSettingsScroll()
+        {
+            // AutoScroll handles overflow without touching any designer controls.
+            // Controls anchored Left+Right resize naturally; native OS scrollbar
+            // appears only when content is taller than the visible area.
+            settingsPanel.AutoScroll = true;
         }
 
         private void SetInfoEditStyle(bool editing)
