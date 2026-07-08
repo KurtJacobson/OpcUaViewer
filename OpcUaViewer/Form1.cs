@@ -43,6 +43,9 @@ namespace OpcUaViewer
         private uint? productIdClientHandle;
         private uint? camFileClientHandle;
         private uint? machineStateClientHandle;
+        private uint? operatorActionClientHandle;
+
+        private Label _operatorActionLabel;
 
         // Last-known values from the three monitoring nodes.
         private string _activeCamFileName;
@@ -80,6 +83,7 @@ namespace OpcUaViewer
         {
             InitializeComponent();
             BuildGroupInfoPanel();
+            BuildOperatorActionLabel();
             SetupScrollBars();
             ordersDataGridView.CellFormatting   += OrdersGrid_CellFormatting;
             productsDataGridView.CellFormatting += ProductsGrid_CellFormatting;
@@ -207,6 +211,44 @@ namespace OpcUaViewer
                                        infoCustomerBox, infoInfoTextBox })
                 HookKeyboard(tb);
             HookKeyboard(infoQtyBox, numericOnly: true);
+        }
+
+        // ── operator action status label ─────────────────────────────────────────
+
+        private void BuildOperatorActionLabel()
+        {
+            _operatorActionLabel = new Label
+            {
+                Visible     = false,
+                Anchor      = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom,
+                Location    = new System.Drawing.Point(8, 8),
+                Size        = new System.Drawing.Size(groupsButtonPanel.Width - 16, groupsButtonPanel.Height - 16),
+                Font        = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold),
+                TextAlign   = System.Drawing.ContentAlignment.MiddleCenter,
+                BackColor   = System.Drawing.Color.FromArgb(20, 80, 30),
+                ForeColor   = System.Drawing.Color.FromArgb(120, 220, 120),
+                Text        = "Processing taking place automatically",
+                BorderStyle = BorderStyle.None,
+            };
+            groupsButtonPanel.Controls.Add(_operatorActionLabel);
+            _operatorActionLabel.BringToFront();
+        }
+
+        private void UpdateOperatorActionLabel(bool waiting)
+        {
+            if (_machineState != 3) return;
+            if (waiting)
+            {
+                _operatorActionLabel.BackColor = System.Drawing.Color.FromArgb(100, 75, 0);
+                _operatorActionLabel.ForeColor = System.Drawing.Color.FromArgb(255, 220, 60);
+                _operatorActionLabel.Text      = "Waiting for operator action...";
+            }
+            else
+            {
+                _operatorActionLabel.BackColor = System.Drawing.Color.FromArgb(20, 80, 30);
+                _operatorActionLabel.ForeColor = System.Drawing.Color.FromArgb(120, 220, 120);
+                _operatorActionLabel.Text      = "Processing taking place automatically";
+            }
         }
 
         // ── touch-friendly dark scrollbars ───────────────────────────────────────
@@ -1360,6 +1402,19 @@ namespace OpcUaViewer
                         machineStateClientHandle = item.ClientHandle;
                 }
 
+                // Extra hardcoded node — not in the browsed monitoring list
+                operatorActionClientHandle = null;
+                var opActionItem = new MonitoredItem(subscription.DefaultItem)
+                {
+                    DisplayName      = "OperatorActionRequested",
+                    StartNodeId      = new NodeId("::AsGlobalPV:Monitoring.OperatorActionRequested", 6),
+                    AttributeId      = Attributes.Value,
+                    SamplingInterval = 500
+                };
+                opActionItem.Notification += OnValueChanged;
+                subscription.AddItem(opActionItem);
+                operatorActionClientHandle = opActionItem.ClientHandle;
+
                 session.AddSubscription(subscription);
                 subscription.Create();
 
@@ -1395,6 +1450,11 @@ namespace OpcUaViewer
                 {
                     if (int.TryParse(strVal, out int state))
                         BeginInvokeIfRequired(() => OnMachineStateChanged(state));
+                }
+                else if (operatorActionClientHandle.HasValue && item.ClientHandle == operatorActionClientHandle.Value)
+                {
+                    bool waiting = v.Value is bool b ? b : strVal == "True";
+                    BeginInvokeIfRequired(() => UpdateOperatorActionLabel(waiting));
                 }
             }
         }
@@ -1490,13 +1550,15 @@ namespace OpcUaViewer
         /// </summary>
         private void ApplyRunningLockState()
         {
-            bool locked = IsRunningLocked();
+            bool locked    = IsRunningLocked();
+            bool machineOn = _machineState == 3;
 
-            newGroupButton.Visible    = !locked;
-            editGroupButton.Visible   = !locked;
-            deleteGroupButton.Visible = !locked;
-            runGroupButton.Visible    = !locked;
-            cancelGroupButton.Visible = !locked;
+            newGroupButton.Visible        = !machineOn;
+            editGroupButton.Visible       = !machineOn;
+            deleteGroupButton.Visible     = !machineOn;
+            runGroupButton.Visible        = !machineOn;
+            cancelGroupButton.Visible     = !machineOn;
+            _operatorActionLabel.Visible  = machineOn;
 
             _orderRowStates.Clear();
             _productRowStates.Clear();
@@ -1695,18 +1757,20 @@ namespace OpcUaViewer
                 session = null;
                 rowsByClientHandle.Clear();
                 monitoredNodes.Clear();
-                productIdClientHandle    = null;
-                camFileClientHandle      = null;
-                machineStateClientHandle = null;
-                _activeCamFileName       = null;
-                _activeProductId         = null;
-                _machineState            = -1;
-                _activeCamRowIndex       = -1;
-                newGroupButton.Visible    = true;
-                editGroupButton.Visible   = true;
-                deleteGroupButton.Visible = true;
-                runGroupButton.Visible    = true;
-                cancelGroupButton.Visible = true;
+                productIdClientHandle       = null;
+                camFileClientHandle         = null;
+                machineStateClientHandle    = null;
+                operatorActionClientHandle  = null;
+                _activeCamFileName          = null;
+                _activeProductId            = null;
+                _machineState               = -1;
+                _activeCamRowIndex          = -1;
+                newGroupButton.Visible          = true;
+                editGroupButton.Visible         = true;
+                deleteGroupButton.Visible       = true;
+                runGroupButton.Visible          = true;
+                cancelGroupButton.Visible       = true;
+                _operatorActionLabel.Visible    = false;
                 _orderRowStates.Clear();
                 _productRowStates.Clear();
                 ordersDataGridView.Invalidate();
