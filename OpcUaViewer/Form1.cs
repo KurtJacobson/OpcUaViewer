@@ -574,9 +574,9 @@ namespace OpcUaViewer
                     _camOrders.Add(order);
                     ordersDataGridView.Rows.Add(order.OrderId, order.FileName, order.Quantity);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // skip malformed files silently
+                    System.Diagnostics.Debug.WriteLine($"Skipping malformed CAM file '{file}': {ex.Message}");
                 }
             }
 
@@ -599,12 +599,15 @@ namespace OpcUaViewer
         }
 
         // Returns auto-incremented (fileName, orderId) for a new group based on existing names.
+        private static readonly System.Text.RegularExpressions.Regex _fileOrderRx =
+            new(@"- Order (\d+)\s*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex _orderIdRx =
+            new(@"^O(\d+)$",         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
+
         private (string fileName, string orderId) NextOrderDefaults()
         {
-            var fileRx    = new System.Text.RegularExpressions.Regex(
-                @"- Order (\d+)\s*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            var orderIdRx = new System.Text.RegularExpressions.Regex(
-                @"^O(\d+)$",         System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var fileRx    = _fileOrderRx;
+            var orderIdRx = _orderIdRx;
 
             int maxNum = 0;
             foreach (var o in _camOrders)
