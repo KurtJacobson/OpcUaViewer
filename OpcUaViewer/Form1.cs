@@ -5,9 +5,11 @@ using Opc.Ua.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace OpcUaViewer
 {
@@ -54,6 +56,7 @@ namespace OpcUaViewer
         public Form1()
         {
             InitializeComponent();
+            BuildGroupInfoPanel();
             FormClosing += Form1_FormClosing;
             Shown        += Form1_Shown;
             LoadSettings();
@@ -63,7 +66,212 @@ namespace OpcUaViewer
             HookKeyboard(pdfFolderTextBox);
             HookKeyboard(camFolderTextBox);
             HookKeyboard(camOutputTextBox);
+            HookKeyboard(camProductsTextBox);
             productsDataGridView.CellBeginEdit += productsDataGridView_CellBeginEdit;
+        }
+
+        // ── edit mode state ───────────────────────────────────────────────────────
+        private bool   _editMode;
+        private string _editingFilePath; // null when creating a new group
+
+        private static readonly System.Drawing.Color InfoPanelBg     = System.Drawing.Color.FromArgb(36, 36, 36);
+        private static readonly System.Drawing.Color InfoPanelEditBg = System.Drawing.Color.FromArgb(30, 36, 30);
+        private static readonly System.Drawing.Color InfoFieldBg     = System.Drawing.Color.FromArgb(50, 50, 50);
+        private static readonly System.Drawing.Color InfoFieldFg     = System.Drawing.Color.FromArgb(230, 230, 230);
+
+        private void BuildGroupInfoPanel()
+        {
+            var keyFont  = new System.Drawing.Font("Segoe UI", 9F);
+            var valFont  = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            var keyColor = System.Drawing.Color.FromArgb(160, 160, 160);
+
+            groupInfoPanel.Dock      = System.Windows.Forms.DockStyle.Top;
+            groupInfoPanel.Height    = 125;
+            groupInfoPanel.BackColor = InfoPanelBg;
+            groupInfoPanel.Padding   = new System.Windows.Forms.Padding(6, 6, 6, 6);
+
+            // Separator strip — same colour as the SplitContainer splitter, slightly wider for visual parity
+            var sep = new System.Windows.Forms.Panel
+            {
+                Dock      = System.Windows.Forms.DockStyle.Bottom,
+                Height    = 6,
+                BackColor = System.Drawing.Color.FromArgb(55, 55, 55),
+            };
+            groupInfoPanel.Controls.Add(sep);
+
+            // TableLayoutPanel: 3 rows × 6 columns
+            var tlp = new System.Windows.Forms.TableLayoutPanel
+            {
+                Dock        = System.Windows.Forms.DockStyle.Fill,
+                ColumnCount = 6,
+                RowCount    = 3,
+                BackColor   = InfoPanelBg,
+                Padding     = new System.Windows.Forms.Padding(0, 0, 0, 0),
+            };
+            // Column styles: label|value|label|value|label|value
+            tlp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.AutoSize));
+            tlp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 40F));
+            tlp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.AutoSize));
+            tlp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+            tlp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.AutoSize));
+            tlp.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 70F));
+            tlp.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33F));
+            tlp.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33F));
+            tlp.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 34F));
+
+            // Labels and TextBoxes share the same top margin so their baselines align.
+            // TextBoxes use Anchor rather than Dock so they keep their natural single-line height.
+            const int rowTop = 6;
+
+            System.Windows.Forms.Label K(string t) => new System.Windows.Forms.Label
+            {
+                Text      = t, Font = keyFont, ForeColor = keyColor, AutoSize = false,
+                TextAlign = System.Drawing.ContentAlignment.TopRight,
+                Dock      = System.Windows.Forms.DockStyle.Fill,
+                Margin    = new System.Windows.Forms.Padding(4, rowTop + 3, 2, 0),
+            };
+
+            System.Windows.Forms.TextBox V(bool numericOnly = false)
+            {
+                var tb = new System.Windows.Forms.TextBox
+                {
+                    ReadOnly    = true,
+                    BorderStyle = System.Windows.Forms.BorderStyle.None,
+                    BackColor   = InfoPanelBg,
+                    ForeColor   = InfoFieldFg,
+                    Font        = valFont,
+                    TabStop     = false,
+                    Dock        = System.Windows.Forms.DockStyle.Fill,
+                    Margin      = new System.Windows.Forms.Padding(0, rowTop, 8, 0),
+                };
+                return tb;
+            }
+
+            // Row 0: File name | Order ID
+            tlp.Controls.Add(K("File:"),       0, 0);
+            infoFileNameBox = V();             tlp.Controls.Add(infoFileNameBox, 1, 0);
+            tlp.Controls.Add(K("Order:"),      2, 0);
+            infoOrderIdBox  = V();             tlp.Controls.Add(infoOrderIdBox,  3, 0);
+            // span remaining two columns for visual balance
+            tlp.SetColumnSpan(infoOrderIdBox, 3);
+
+            // Row 1: Customer | Qty Ordered | Qty Produced
+            tlp.Controls.Add(K("Customer:"),   0, 1);
+            infoCustomerBox = V();             tlp.Controls.Add(infoCustomerBox, 1, 1);
+            tlp.Controls.Add(K("Qty Ord:"),    2, 1);
+            infoQtyBox      = V(true);         tlp.Controls.Add(infoQtyBox,      3, 1);
+            tlp.Controls.Add(K("Qty Prod:"),   4, 1);
+            infoCompletedBox = V();            tlp.Controls.Add(infoCompletedBox, 5, 1);
+
+            // Row 2: Info text spanning all value columns
+            tlp.Controls.Add(K("Info:"),       0, 2);
+            infoInfoTextBox = V();             tlp.Controls.Add(infoInfoTextBox, 1, 2);
+            tlp.SetColumnSpan(infoInfoTextBox, 5);
+
+            groupInfoPanel.Controls.Add(tlp);
+
+            // Keyboard hooks (guard in HookKeyboard skips ReadOnly boxes)
+            foreach (var tb in new[] { infoFileNameBox, infoOrderIdBox, infoQtyBox,
+                                       infoCustomerBox, infoInfoTextBox })
+                HookKeyboard(tb);
+        }
+
+        private void SetInfoEditStyle(bool editing)
+        {
+            var bg = editing ? InfoFieldBg : InfoPanelBg;
+            var border = editing ? System.Windows.Forms.BorderStyle.FixedSingle
+                                 : System.Windows.Forms.BorderStyle.None;
+            foreach (var tb in new[] { infoFileNameBox, infoOrderIdBox, infoQtyBox,
+                                       infoCustomerBox, infoInfoTextBox })
+            {
+                tb.ReadOnly    = !editing;
+                tb.BorderStyle = border;
+                tb.BackColor   = bg;
+                tb.TabStop     = editing;
+            }
+            var panelBg = editing ? InfoPanelEditBg : InfoPanelBg;
+            groupInfoPanel.BackColor = panelBg;
+            // Propagate to TableLayoutPanel so the label gaps change colour too
+            foreach (System.Windows.Forms.Control c in groupInfoPanel.Controls)
+                if (c is System.Windows.Forms.TableLayoutPanel)
+                    c.BackColor = panelBg;
+        }
+
+        private void EnterEditMode(CamOrder existing)
+        {
+            _editMode        = true;
+            _editingFilePath = existing?.FilePath;
+
+            if (existing != null)
+            {
+                infoFileNameBox.Text  = existing.FileName;
+                infoOrderIdBox.Text   = existing.OrderId;
+                infoQtyBox.Text       = existing.Quantity.ToString();
+                infoCompletedBox.Text = existing.Completed.ToString();
+                infoCustomerBox.Text  = existing.CustomerName;
+                infoInfoTextBox.Text  = existing.InfoText;
+                // Products already in the grid — they stay
+            }
+            else
+            {
+                var (defName, defId) = NextOrderDefaults();
+                infoFileNameBox.Text  = defName;
+                infoOrderIdBox.Text   = defId;
+                infoQtyBox.Text       = "1";
+                infoCompletedBox.Text = "0";
+                infoCustomerBox.Text  = "";
+                infoInfoTextBox.Text  = "";
+                productsDataGridView.Rows.Clear();
+            }
+
+            SetInfoEditStyle(true);
+
+            // Make relevant product columns editable
+            productsDataGridView.Columns["prodListIdColumn"].ReadOnly = false;
+            productsDataGridView.Columns["prodNameColumn"].ReadOnly   = false;
+            productsDataGridView.Columns["prodQtyColumn"].ReadOnly    = false;
+            productsDataGridView.Columns["prodHintColumn"].ReadOnly   = false;
+
+            // Swap buttons
+            newGroupButton.Visible       = false;
+            editGroupButton.Visible      = false;
+            deleteGroupButton.Visible    = false;
+            runGroupButton.Visible       = false;
+            cancelGroupButton.Visible    = false;
+            saveGroupButton.Visible      = true;
+            cancelEditButton.Visible     = true;
+            addProductsButton.Visible    = true;
+            removeProductsButton.Visible = true;
+
+            ordersDataGridView.Enabled = false;
+        }
+
+        private void ExitEditMode(bool reload)
+        {
+            string pathToRestore = _editingFilePath;
+            _editMode        = false;
+            _editingFilePath = null;
+
+            SetInfoEditStyle(false);
+
+            productsDataGridView.Columns["prodListIdColumn"].ReadOnly = true;
+            productsDataGridView.Columns["prodNameColumn"].ReadOnly   = true;
+            productsDataGridView.Columns["prodQtyColumn"].ReadOnly    = true;
+            productsDataGridView.Columns["prodHintColumn"].ReadOnly   = true;
+
+            newGroupButton.Visible       = true;
+            editGroupButton.Visible      = true;
+            deleteGroupButton.Visible    = true;
+            runGroupButton.Visible       = true;
+            cancelGroupButton.Visible    = true;
+            saveGroupButton.Visible      = false;
+            cancelEditButton.Visible     = false;
+            addProductsButton.Visible    = false;
+            removeProductsButton.Visible = false;
+
+            ordersDataGridView.Enabled = true;
+
+            if (reload) LoadCamFiles(pathToRestore);
         }
 
         private void HookKeyboard(TextBox tb)
@@ -76,6 +284,7 @@ namespace OpcUaViewer
 
             tb.Click += (s, e) =>
             {
+                if (tb.ReadOnly) return; // don't open keyboard for display-mode fields
                 // Skip if this click is what gave us focus (within ~300 ms of Enter).
                 if ((DateTime.UtcNow - focusedAt).TotalMilliseconds < 300) return;
                 if (_suppressKeyboard || !keyboardToggle.Checked) return;
@@ -88,22 +297,42 @@ namespace OpcUaViewer
 
         private void productsDataGridView_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
         {
-            if (productsDataGridView.Columns[e.ColumnIndex].Name != "prodRunQtyColumn") return;
             if (!keyboardToggle.Checked) return;
-            e.Cancel = true;
+            string col = productsDataGridView.Columns[e.ColumnIndex].Name;
 
-            string current = productsDataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString() ?? "0";
-            string result  = TouchKeyboard.Show(this, current, numericOnly: true);
-
-            if (result != null && int.TryParse(result, out int val) && val >= 0)
+            if (col == "prodRunQtyColumn")
             {
-                productsDataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = val;
-                if (ordersDataGridView.SelectedRows.Count > 0)
+                e.Cancel = true;
+                string current = productsDataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString() ?? "0";
+                string result  = TouchKeyboard.Show(this, current, numericOnly: true);
+                if (result != null && int.TryParse(result, out int val) && val >= 0)
                 {
-                    int orderIdx = ordersDataGridView.SelectedRows[0].Index;
-                    if (orderIdx < _camOrders.Count && e.RowIndex < _camOrders[orderIdx].Products.Count)
-                        _camOrders[orderIdx].Products[e.RowIndex].RunQuantity = val;
+                    productsDataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex].Value = val;
+                    if (ordersDataGridView.SelectedRows.Count > 0)
+                    {
+                        int orderIdx = ordersDataGridView.SelectedRows[0].Index;
+                        if (orderIdx < _camOrders.Count && e.RowIndex < _camOrders[orderIdx].Products.Count)
+                            _camOrders[orderIdx].Products[e.RowIndex].RunQuantity = val;
+                    }
                 }
+            }
+            else if (_editMode && (col == "prodQtyColumn" || col == "prodListIdColumn" ||
+                                   col == "prodNameColumn" || col == "prodHintColumn"))
+            {
+                e.Cancel = true;
+                int row = e.RowIndex, colIdx = e.ColumnIndex;
+                bool numeric = col == "prodQtyColumn";
+                BeginInvoke(new Action(() =>
+                {
+                    var cell = productsDataGridView.Rows[row].Cells[colIdx];
+                    string cur = cell.Value?.ToString() ?? "";
+                    string result = numeric
+                        ? TouchKeyboard.Show(this, cur, numericOnly: true)
+                        : TouchKeyboard.Show(this, cur);
+                    if (result == null) return;
+                    if (numeric && int.TryParse(result, out int v)) cell.Value = v;
+                    else if (!numeric) cell.Value = result;
+                }));
             }
         }
 
@@ -152,7 +381,7 @@ namespace OpcUaViewer
             }
         }
 
-        private void LoadCamFiles()
+        private void LoadCamFiles(string preserveFilePath = null)
         {
             string folder = camFolderTextBox.Text.Trim();
             if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
@@ -175,7 +404,7 @@ namespace OpcUaViewer
                 {
                     var order = new CamOrder(file);
                     _camOrders.Add(order);
-                    ordersDataGridView.Rows.Add(order.OrderId, order.CustomerName, order.Quantity);
+                    ordersDataGridView.Rows.Add(order.OrderId, order.FileName, order.Quantity);
                 }
                 catch
                 {
@@ -183,16 +412,61 @@ namespace OpcUaViewer
                 }
             }
 
-            if (ordersDataGridView.Rows.Count > 0)
-                ordersDataGridView.Rows[0].Selected = true;
+            if (ordersDataGridView.Rows.Count == 0) return;
+
+            // Restore previously selected file if it still exists, else fall back to row 0.
+            if (preserveFilePath != null)
+            {
+                for (int i = 0; i < _camOrders.Count; i++)
+                {
+                    if (string.Equals(_camOrders[i].FilePath, preserveFilePath,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        ordersDataGridView.Rows[i].Selected = true;
+                        return;
+                    }
+                }
+            }
+            ordersDataGridView.Rows[0].Selected = true;
+        }
+
+        // Returns auto-incremented (fileName, orderId) for a new group based on existing names.
+        private (string fileName, string orderId) NextOrderDefaults()
+        {
+            var fileRx    = new System.Text.RegularExpressions.Regex(
+                @"- Order (\d+)\s*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var orderIdRx = new System.Text.RegularExpressions.Regex(
+                @"^O(\d+)$",         System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            int maxNum = 0;
+            foreach (var o in _camOrders)
+            {
+                var m = fileRx.Match(o.FileName);
+                if (m.Success && int.TryParse(m.Groups[1].Value, out int n))
+                    maxNum = Math.Max(maxNum, n);
+                m = orderIdRx.Match(o.OrderId);
+                if (m.Success && int.TryParse(m.Groups[1].Value, out int n2))
+                    maxNum = Math.Max(maxNum, n2);
+            }
+
+            int next = maxNum + 1;
+            string date = DateTime.Today.ToString("yyyy-MM-dd");
+            return ($"{date} - Order {next:D3}", $"O{next:D3}");
         }
 
         private void ordersDataGridView_SelectionChanged(object sender, EventArgs e)
         {
             if (ordersDataGridView.SelectedRows.Count == 0) return;
             int idx = ordersDataGridView.SelectedRows[0].Index;
-            if (idx >= 0 && idx < _camOrders.Count)
-                PopulateProductsGrid(_camOrders[idx]);
+            if (idx < 0 || idx >= _camOrders.Count) return;
+            var order = _camOrders[idx];
+            PopulateProductsGrid(order);
+            infoFileNameBox.Text = order.FileName;
+            infoCustomerBox.Text = order.CustomerName;
+            infoOrderIdBox.Text  = order.OrderId;
+            infoQtyBox.Text       = order.Quantity.ToString();
+            infoCompletedBox.Text = order.Completed.ToString();
+            infoInfoTextBox.Text  = order.InfoText;
         }
 
         private void PopulateProductsGrid(CamOrder order)
@@ -201,14 +475,10 @@ namespace OpcUaViewer
             foreach (var p in order.Products)
             {
                 productsDataGridView.Rows.Add(
-                    p.ListId,
-                    p.DisplayName,
-                    p.Parameters,
-                    p.MaterialId,
-                    p.MaterialThickness,
-                    p.Quantity,
-                    p.RunQuantity,
-                    p.OperatorHint);
+                    p.ListId, p.DisplayName,
+                    p.MaterialId, p.MaterialThickness,
+                    p.Quantity, p.RunQuantity, p.OperatorHint,
+                    p.ProductId);   // hidden prodPathColumn
             }
         }
 
@@ -246,6 +516,192 @@ namespace OpcUaViewer
                 camFolderTextBox.Text = dialog.SelectedPath;
                 SaveSettings();
                 LoadCamFiles();
+            }
+        }
+
+        private void camProductsBrowseButton_Click(object sender, EventArgs e)
+        {
+            using var dialog = new FolderBrowserDialog();
+            if (Directory.Exists(camProductsTextBox.Text))
+                dialog.SelectedPath = camProductsTextBox.Text;
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+            {
+                camProductsTextBox.Text = dialog.SelectedPath;
+                SaveSettings();
+            }
+        }
+
+        private void newGroupButton_Click(object sender, EventArgs e)
+        {
+            EnterEditMode(null);
+        }
+
+        private void editGroupButton_Click(object sender, EventArgs e)
+        {
+            if (ordersDataGridView.SelectedRows.Count == 0)
+            {
+                DarkMessageBox.Show(this, "Please select a product group to edit.",
+                    "Edit Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            int idx = ordersDataGridView.SelectedRows[0].Index;
+            EnterEditMode(_camOrders[idx]);
+        }
+
+        private void saveGroupButton_Click(object sender, EventArgs e)
+        {
+            string fileName = infoFileNameBox.Text.Trim();
+            if (string.IsNullOrEmpty(fileName))
+            {
+                DarkMessageBox.Show(this, "Please enter a file name.", "Save",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            string camFolder = camFolderTextBox.Text.Trim();
+            if (string.IsNullOrEmpty(camFolder) || !Directory.Exists(camFolder))
+            {
+                DarkMessageBox.Show(this, "CAM folder not configured. Set it in Settings.",
+                    "Save", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (!int.TryParse(infoQtyBox.Text.Trim(), out int qty) || qty < 0) qty = 1;
+            if (!int.TryParse(infoCompletedBox.Text.Trim(), out int completed) || completed < 0) completed = 0;
+
+            XNamespace ns = "http://eu.schroedergroup.de/xml-schemas/P3CAMSchema.xsd";
+            var root = new XElement(ns + "POS3000CAMData",
+                new XAttribute("InfoText",     infoInfoTextBox.Text.Trim()),
+                new XAttribute("OrderId",      infoOrderIdBox.Text.Trim()),
+                new XAttribute("CustomerName", infoCustomerBox.Text.Trim()),
+                new XAttribute("Quantity",     qty),
+                new XAttribute("Completed",    completed));
+
+            foreach (DataGridViewRow row in productsDataGridView.Rows)
+            {
+                string listId = row.Cells["prodListIdColumn"].Value?.ToString() ?? "";
+                string prodId = row.Cells["prodPathColumn"].Value?.ToString() ?? "";
+                string hint   = row.Cells["prodHintColumn"].Value?.ToString() ?? "";
+                int.TryParse(row.Cells["prodQtyColumn"].Value?.ToString(), out int rowQty);
+                if (rowQty <= 0) rowQty = 1;
+                root.Add(new XElement(ns + "Product",
+                    new XAttribute("ListId",       listId),
+                    new XAttribute("ProductId",    prodId),
+                    new XAttribute("Quantity",     rowQty),
+                    new XAttribute("Completed",    0),
+                    new XAttribute("LoadError",    0),
+                    new XAttribute("InfoText",     ""),
+                    new XAttribute("DetailsHtml",  ""),
+                    new XAttribute("OperatorHint", hint),
+                    new XAttribute("UserData",     "")));
+            }
+
+            if (!fileName.EndsWith(".p3cam", StringComparison.OrdinalIgnoreCase))
+                fileName += ".p3cam";
+
+            string savePath;
+            if (_editingFilePath != null &&
+                string.Equals(Path.GetFileNameWithoutExtension(_editingFilePath),
+                              Path.GetFileNameWithoutExtension(fileName),
+                              StringComparison.OrdinalIgnoreCase))
+            {
+                savePath = _editingFilePath;
+            }
+            else
+            {
+                savePath = Path.Combine(camFolder, fileName);
+                if (File.Exists(savePath) && savePath != _editingFilePath)
+                {
+                    if (DarkMessageBox.Show(this, $"'{fileName}' already exists. Overwrite?",
+                            "Save", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+                        return;
+                }
+            }
+
+            try
+            {
+                new XDocument(new XDeclaration("1.0", "utf-8", null), root).Save(savePath);
+                ExitEditMode(false);
+                LoadCamFiles(savePath);
+            }
+            catch (Exception ex)
+            {
+                DarkMessageBox.Show(this, "Failed to save:\n\n" + ex.Message,
+                    "Save", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void cancelEditButton_Click(object sender, EventArgs e)
+        {
+            ExitEditMode(true);
+        }
+
+        private void addProductsButton_Click(object sender, EventArgs e)
+        {
+            string prodFolder = camProductsTextBox.Text.Trim();
+            if (string.IsNullOrEmpty(prodFolder) || !Directory.Exists(prodFolder))
+            {
+                DarkMessageBox.Show(this,
+                    "Please configure the CAM Products Folder in Settings first.",
+                    "Add Products", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            using var dlg = new OpenFileDialog
+            {
+                Title = "Select product .zip files",
+                InitialDirectory = prodFolder,
+                Filter = "CAM Product files (*.zip)|*.zip",
+                Multiselect = true
+            };
+            if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+            string prefix = camProductPrefixTextBox.Text;
+            // Ensure prefix ends with a backslash
+            if (!string.IsNullOrEmpty(prefix) && !prefix.EndsWith('\\'))
+                prefix += '\\';
+
+            foreach (string path in dlg.FileNames)
+            {
+                // Path relative to the products folder, preserving any subdirectory structure
+                string relative = Path.GetRelativePath(prodFolder, path);
+                string listId   = Path.GetFileNameWithoutExtension(path);
+                string prodId   = prefix + relative;
+                bool dup = productsDataGridView.Rows.Cast<DataGridViewRow>()
+                    .Any(r => r.Cells["prodListIdColumn"].Value?.ToString() == listId);
+                if (!dup)
+                    productsDataGridView.Rows.Add(listId, listId, "", "", 1, 1, "", prodId);
+            }
+        }
+
+        private void removeProductsButton_Click(object sender, EventArgs e)
+        {
+            var toRemove = productsDataGridView.SelectedRows.Cast<DataGridViewRow>()
+                .OrderByDescending(r => r.Index).ToList();
+            foreach (var row in toRemove)
+                productsDataGridView.Rows.Remove(row);
+        }
+
+        private void deleteGroupButton_Click(object sender, EventArgs e)
+        {
+            if (ordersDataGridView.SelectedRows.Count == 0)
+            {
+                DarkMessageBox.Show(this, "Please select a product group to delete.",
+                    "Delete Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            int idx   = ordersDataGridView.SelectedRows[0].Index;
+            var order = _camOrders[idx];
+            var ans   = DarkMessageBox.Show(this,
+                $"Delete '{order.FileName}'?\n\nThis cannot be undone.",
+                "Delete Group", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (ans != DialogResult.Yes) return;
+            try
+            {
+                File.Delete(order.FilePath);
+                LoadCamFiles();
+            }
+            catch (Exception ex)
+            {
+                DarkMessageBox.Show(this, "Failed to delete:\n\n" + ex.Message,
+                    "Delete Group", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -365,6 +821,12 @@ namespace OpcUaViewer
             if (!string.IsNullOrWhiteSpace(savedCamOutput))
                 camOutputTextBox.Text = savedCamOutput;
 
+            string savedCamProducts = Properties.Settings.Default.CamProductsPath;
+            if (!string.IsNullOrWhiteSpace(savedCamProducts))
+                camProductsTextBox.Text = savedCamProducts;
+
+            camProductPrefixTextBox.Text = Properties.Settings.Default.ProductPathPrefix;
+
             keyboardToggle.Checked = Properties.Settings.Default.KeyboardEnabled;
 
             RestoreWindowPlacement();
@@ -375,7 +837,9 @@ namespace OpcUaViewer
             Properties.Settings.Default.PdfFolderPath  = pdfFolderTextBox.Text.Trim();
             Properties.Settings.Default.EndpointUrl    = endpointTextBox.Text.Trim();
             Properties.Settings.Default.CamFolderPath  = camFolderTextBox.Text.Trim();
-            Properties.Settings.Default.CamOutputPath   = camOutputTextBox.Text.Trim();
+            Properties.Settings.Default.CamOutputPath    = camOutputTextBox.Text.Trim();
+            Properties.Settings.Default.CamProductsPath    = camProductsTextBox.Text.Trim();
+            Properties.Settings.Default.ProductPathPrefix  = camProductPrefixTextBox.Text;
             Properties.Settings.Default.KeyboardEnabled = keyboardToggle.Checked;
             SaveWindowPlacement();
             Properties.Settings.Default.Save();
@@ -909,7 +1373,26 @@ namespace OpcUaViewer
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             SaveSettings();
-            DisconnectClient();
+
+            // session.Close() is a blocking network call — if the server is unreachable it
+            // can stall for the full socket timeout.  Cancel the CTS immediately, then fire
+            // the cleanup on a background thread and let the process exit without waiting.
+            cts?.Cancel();
+
+            var sessionToClose   = session;
+            var subToDispose     = subscription;
+            session      = null;
+            subscription = null;
+
+            if (sessionToClose != null)
+            {
+                Task.Run(() =>
+                {
+                    try { subToDispose?.Dispose(); } catch { }
+                    try { sessionToClose.Close();   } catch { }
+                    try { sessionToClose.Dispose(); } catch { }
+                });
+            }
         }
     }
 }

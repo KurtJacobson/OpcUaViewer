@@ -49,8 +49,17 @@ namespace OpcUaViewer
             camOutputLabel = new System.Windows.Forms.Label();
             camOutputTextBox = new System.Windows.Forms.TextBox();
             camOutputBrowseButton = new System.Windows.Forms.Button();
+            camProductsGroupBox = new System.Windows.Forms.GroupBox();
+            camProductsLabel = new System.Windows.Forms.Label();
+            camProductsTextBox      = new System.Windows.Forms.TextBox();
+            camProductPrefixLabel   = new System.Windows.Forms.Label();
+            camProductPrefixTextBox = new System.Windows.Forms.TextBox();
+            camProductsBrowseButton = new System.Windows.Forms.Button();
             groupsNavButton = new System.Windows.Forms.Button();
             groupsButtonPanel = new System.Windows.Forms.Panel();
+            newGroupButton = new System.Windows.Forms.Button();
+            editGroupButton = new System.Windows.Forms.Button();
+            deleteGroupButton = new System.Windows.Forms.Button();
             runGroupButton = new System.Windows.Forms.Button();
             cancelGroupButton = new System.Windows.Forms.Button();
             ordersDataGridView = new System.Windows.Forms.DataGridView();
@@ -59,10 +68,21 @@ namespace OpcUaViewer
             ordersQtyColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             groupsPanel = new System.Windows.Forms.Panel();
             groupsSplitContainer = new System.Windows.Forms.SplitContainer();
+            groupInfoPanel      = new System.Windows.Forms.Panel();
+            infoFileNameBox     = new System.Windows.Forms.TextBox();
+            infoCustomerBox     = new System.Windows.Forms.TextBox();
+            infoOrderIdBox      = new System.Windows.Forms.TextBox();
+            infoQtyBox          = new System.Windows.Forms.TextBox();
+            infoInfoTextBox     = new System.Windows.Forms.TextBox();
+            infoCompletedBox    = new System.Windows.Forms.TextBox();
+            saveGroupButton     = new System.Windows.Forms.Button();
+            cancelEditButton    = new System.Windows.Forms.Button();
+            addProductsButton   = new System.Windows.Forms.Button();
+            removeProductsButton= new System.Windows.Forms.Button();
+            prodPathColumn      = new System.Windows.Forms.DataGridViewTextBoxColumn();
             productsDataGridView = new System.Windows.Forms.DataGridView();
             prodListIdColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             prodNameColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            prodParametersColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             prodMaterialColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             prodThicknessColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             prodQtyColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -87,6 +107,7 @@ namespace OpcUaViewer
             ((System.ComponentModel.ISupportInitialize)productsDataGridView).BeginInit();
             camFolderGroupBox.SuspendLayout();
             camOutputGroupBox.SuspendLayout();
+            camProductsGroupBox.SuspendLayout();
             settingsPanel.SuspendLayout();
             connectionGroupBox.SuspendLayout();
             pdfGroupBox.SuspendLayout();
@@ -314,12 +335,135 @@ namespace OpcUaViewer
             //
             groupsButtonPanel.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             groupsButtonPanel.BackColor = System.Drawing.Color.FromArgb(28, 28, 28);
+            groupsButtonPanel.Controls.Add(newGroupButton);
+            groupsButtonPanel.Controls.Add(editGroupButton);
+            groupsButtonPanel.Controls.Add(deleteGroupButton);
+            groupsButtonPanel.Controls.Add(saveGroupButton);
+            groupsButtonPanel.Controls.Add(cancelEditButton);
+            groupsButtonPanel.Controls.Add(addProductsButton);
+            groupsButtonPanel.Controls.Add(removeProductsButton);
             groupsButtonPanel.Controls.Add(runGroupButton);
             groupsButtonPanel.Controls.Add(cancelGroupButton);
             groupsButtonPanel.Location = new System.Drawing.Point(0, 604);
             groupsButtonPanel.Name = "groupsButtonPanel";
             groupsButtonPanel.Size = new System.Drawing.Size(1000, 56);
             groupsButtonPanel.TabIndex = 1;
+            //
+            // newGroupButton
+            //
+            newGroupButton.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            newGroupButton.BackColor = System.Drawing.Color.FromArgb(50, 50, 100);
+            newGroupButton.FlatAppearance.BorderSize = 0;
+            newGroupButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            newGroupButton.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            newGroupButton.ForeColor = System.Drawing.Color.White;
+            newGroupButton.Location = new System.Drawing.Point(8, 8);
+            newGroupButton.Name = "newGroupButton";
+            newGroupButton.Size = new System.Drawing.Size(180, 40);
+            newGroupButton.TabIndex = 2;
+            newGroupButton.Text = "+ New Group";
+            newGroupButton.UseVisualStyleBackColor = false;
+            newGroupButton.Click += newGroupButton_Click;
+            //
+            // editGroupButton
+            //
+            editGroupButton.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            editGroupButton.BackColor = System.Drawing.Color.FromArgb(60, 60, 60);
+            editGroupButton.FlatAppearance.BorderSize = 0;
+            editGroupButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            editGroupButton.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            editGroupButton.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            editGroupButton.Location = new System.Drawing.Point(196, 8);
+            editGroupButton.Name = "editGroupButton";
+            editGroupButton.Size = new System.Drawing.Size(180, 40);
+            editGroupButton.TabIndex = 3;
+            editGroupButton.Text = "✎ Edit Group";
+            editGroupButton.UseVisualStyleBackColor = false;
+            editGroupButton.Click += editGroupButton_Click;
+            //
+            // deleteGroupButton
+            //
+            deleteGroupButton.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            deleteGroupButton.BackColor = System.Drawing.Color.FromArgb(140, 40, 40);
+            deleteGroupButton.FlatAppearance.BorderSize = 0;
+            deleteGroupButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            deleteGroupButton.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            deleteGroupButton.ForeColor = System.Drawing.Color.White;
+            deleteGroupButton.Location = new System.Drawing.Point(384, 8);
+            deleteGroupButton.Name = "deleteGroupButton";
+            deleteGroupButton.Size = new System.Drawing.Size(180, 40);
+            deleteGroupButton.TabIndex = 4;
+            deleteGroupButton.Text = "🗑 Delete Group";
+            deleteGroupButton.UseVisualStyleBackColor = false;
+            deleteGroupButton.Click += deleteGroupButton_Click;
+            //
+            // saveGroupButton (edit mode — hidden by default)
+            //
+            saveGroupButton.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            saveGroupButton.BackColor = System.Drawing.Color.FromArgb(255, 140, 0);
+            saveGroupButton.FlatAppearance.BorderSize = 0;
+            saveGroupButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            saveGroupButton.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            saveGroupButton.ForeColor = System.Drawing.Color.White;
+            saveGroupButton.Location = new System.Drawing.Point(8, 8);
+            saveGroupButton.Name = "saveGroupButton";
+            saveGroupButton.Size = new System.Drawing.Size(155, 40);
+            saveGroupButton.TabIndex = 10;
+            saveGroupButton.Text = "💾 Save";
+            saveGroupButton.UseVisualStyleBackColor = false;
+            saveGroupButton.Visible = false;
+            saveGroupButton.Click += saveGroupButton_Click;
+            //
+            // cancelEditButton (edit mode — hidden by default)
+            //
+            cancelEditButton.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            cancelEditButton.BackColor = System.Drawing.Color.FromArgb(70, 70, 70);
+            cancelEditButton.FlatAppearance.BorderSize = 0;
+            cancelEditButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            cancelEditButton.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            cancelEditButton.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            cancelEditButton.Location = new System.Drawing.Point(171, 8);
+            cancelEditButton.Name = "cancelEditButton";
+            cancelEditButton.Size = new System.Drawing.Size(155, 40);
+            cancelEditButton.TabIndex = 11;
+            cancelEditButton.Text = "✕ Cancel Edit";
+            cancelEditButton.UseVisualStyleBackColor = false;
+            cancelEditButton.Visible = false;
+            cancelEditButton.Click += cancelEditButton_Click;
+            //
+            // addProductsButton (edit mode — hidden by default)
+            //
+            addProductsButton.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            addProductsButton.BackColor = System.Drawing.Color.FromArgb(50, 50, 100);
+            addProductsButton.FlatAppearance.BorderSize = 0;
+            addProductsButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            addProductsButton.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            addProductsButton.ForeColor = System.Drawing.Color.White;
+            addProductsButton.Location = new System.Drawing.Point(334, 8);
+            addProductsButton.Name = "addProductsButton";
+            addProductsButton.Size = new System.Drawing.Size(165, 40);
+            addProductsButton.TabIndex = 12;
+            addProductsButton.Text = "+ Add Products";
+            addProductsButton.UseVisualStyleBackColor = false;
+            addProductsButton.Visible = false;
+            addProductsButton.Click += addProductsButton_Click;
+            //
+            // removeProductsButton (edit mode — hidden by default)
+            //
+            removeProductsButton.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            removeProductsButton.BackColor = System.Drawing.Color.FromArgb(140, 40, 40);
+            removeProductsButton.FlatAppearance.BorderSize = 0;
+            removeProductsButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            removeProductsButton.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            removeProductsButton.ForeColor = System.Drawing.Color.White;
+            removeProductsButton.Location = new System.Drawing.Point(507, 8);
+            removeProductsButton.Name = "removeProductsButton";
+            removeProductsButton.Size = new System.Drawing.Size(175, 40);
+            removeProductsButton.TabIndex = 13;
+            removeProductsButton.Text = "Remove Selected";
+            removeProductsButton.UseVisualStyleBackColor = false;
+            removeProductsButton.Visible = false;
+            removeProductsButton.Click += removeProductsButton_Click;
             //
             // runGroupButton
             //
@@ -364,7 +508,9 @@ namespace OpcUaViewer
             groupsSplitContainer.SplitterWidth = 3;
             groupsSplitContainer.TabIndex = 0;
             groupsSplitContainer.Panel1.Controls.Add(ordersDataGridView);
+            // groupInfoPanel added last so it's processed first (DockStyle.Top before Fill).
             groupsSplitContainer.Panel2.Controls.Add(productsDataGridView);
+            groupsSplitContainer.Panel2.Controls.Add(groupInfoPanel);
             //
             // ordersDataGridView
             //
@@ -409,9 +555,9 @@ namespace OpcUaViewer
             ordersCellStyle.SelectionForeColor = System.Drawing.Color.White;
             ordersDataGridView.DefaultCellStyle = ordersCellStyle;
 
-            ordersOrderColumn.HeaderText = "Order";        ordersOrderColumn.Name = "ordersOrderColumn";       ordersOrderColumn.Width = 90;
-            ordersCustomerColumn.HeaderText = "Customer";  ordersCustomerColumn.Name = "ordersCustomerColumn";  ordersCustomerColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            ordersQtyColumn.HeaderText = "Qty";            ordersQtyColumn.Name = "ordersQtyColumn";            ordersQtyColumn.Width = 45;
+            ordersOrderColumn.HeaderText = "Order";     ordersOrderColumn.Name = "ordersOrderColumn";      ordersOrderColumn.Width = 90;
+            ordersCustomerColumn.HeaderText = "File";   ordersCustomerColumn.Name = "ordersCustomerColumn"; ordersCustomerColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            ordersQtyColumn.HeaderText = "Qty";         ordersQtyColumn.Name = "ordersQtyColumn";           ordersQtyColumn.Width = 45;
 
             ordersDataGridView.SelectionChanged += ordersDataGridView_SelectionChanged;
             //
@@ -419,7 +565,7 @@ namespace OpcUaViewer
             //
             productsDataGridView.AllowUserToAddRows = false;
             productsDataGridView.AllowUserToDeleteRows = false;
-            productsDataGridView.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            productsDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
             productsDataGridView.BackgroundColor = System.Drawing.Color.FromArgb(28, 28, 28);
             productsDataGridView.BorderStyle = System.Windows.Forms.BorderStyle.None;
             productsDataGridView.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal;
@@ -438,9 +584,13 @@ namespace OpcUaViewer
             productsDataGridView.TabIndex = 0;
             productsDataGridView.AllowUserToResizeRows = false;
             productsDataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-                prodListIdColumn, prodNameColumn, prodParametersColumn,
+                prodListIdColumn, prodNameColumn,
                 prodMaterialColumn, prodThicknessColumn, prodQtyColumn,
-                prodRunQtyColumn, prodHintColumn });
+                prodRunQtyColumn, prodHintColumn, prodPathColumn });
+            prodPathColumn.HeaderText = "Product Path"; prodPathColumn.Name = "prodPathColumn";
+            prodPathColumn.ReadOnly = true;
+            prodPathColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            productsDataGridView.AllowUserToResizeColumns = true;
 
             var prodHeaderStyle = new System.Windows.Forms.DataGridViewCellStyle();
             prodHeaderStyle.BackColor = System.Drawing.Color.FromArgb(45, 45, 45);
@@ -470,7 +620,6 @@ namespace OpcUaViewer
 
             prodListIdColumn.HeaderText = "List ID";         prodListIdColumn.Name = "prodListIdColumn";     prodListIdColumn.ReadOnly = true;  prodListIdColumn.Width = 110;
             prodNameColumn.HeaderText = "Product";           prodNameColumn.Name = "prodNameColumn";         prodNameColumn.ReadOnly = true;  prodNameColumn.Width = 200;
-            prodParametersColumn.HeaderText = "Parameters";  prodParametersColumn.Name = "prodParametersColumn"; prodParametersColumn.ReadOnly = true;  prodParametersColumn.Width = 160;
             prodMaterialColumn.HeaderText = "Material";      prodMaterialColumn.Name = "prodMaterialColumn"; prodMaterialColumn.ReadOnly = true;  prodMaterialColumn.Width = 90;
             prodThicknessColumn.HeaderText = "Thickness";    prodThicknessColumn.Name = "prodThicknessColumn"; prodThicknessColumn.ReadOnly = true; prodThicknessColumn.Width = 80;
             prodQtyColumn.HeaderText = "Order Qty";          prodQtyColumn.Name = "prodQtyColumn";           prodQtyColumn.ReadOnly = true;  prodQtyColumn.Width = 80;
@@ -487,6 +636,7 @@ namespace OpcUaViewer
             settingsPanel.Controls.Add(pdfGroupBox);
             settingsPanel.Controls.Add(camFolderGroupBox);
             settingsPanel.Controls.Add(camOutputGroupBox);
+            settingsPanel.Controls.Add(camProductsGroupBox);
             settingsPanel.Controls.Add(fullscreenToggle);
             settingsPanel.Controls.Add(keyboardToggle);
             settingsPanel.Location = new System.Drawing.Point(106, 0);
@@ -685,6 +835,84 @@ namespace OpcUaViewer
             camOutputBrowseButton.UseVisualStyleBackColor = false;
             camOutputBrowseButton.Click += camOutputBrowseButton_Click;
             //
+            // camProductsGroupBox
+            //
+            camProductsGroupBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            camProductsGroupBox.BackColor = System.Drawing.Color.FromArgb(36, 36, 36);
+            camProductsGroupBox.Controls.Add(camProductsLabel);
+            camProductsGroupBox.Controls.Add(camProductsTextBox);
+            camProductsGroupBox.Controls.Add(camProductsBrowseButton);
+            camProductsGroupBox.Controls.Add(camProductPrefixLabel);
+            camProductsGroupBox.Controls.Add(camProductPrefixTextBox);
+            camProductsGroupBox.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            camProductsGroupBox.ForeColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            camProductsGroupBox.Location = new System.Drawing.Point(20, 474);
+            camProductsGroupBox.Name = "camProductsGroupBox";
+            camProductsGroupBox.Size = new System.Drawing.Size(960, 125);
+            camProductsGroupBox.TabIndex = 6;
+            camProductsGroupBox.TabStop = false;
+            camProductsGroupBox.Text = "CAM Products Folder (.zip product files)";
+            //
+            // camProductsLabel
+            //
+            camProductsLabel.AutoSize = true;
+            camProductsLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
+            camProductsLabel.ForeColor = System.Drawing.Color.FromArgb(190, 190, 190);
+            camProductsLabel.Location = new System.Drawing.Point(16, 40);
+            camProductsLabel.Name = "camProductsLabel";
+            camProductsLabel.TabIndex = 0;
+            camProductsLabel.Text = "Folder:";
+            //
+            // camProductsTextBox
+            //
+            camProductsTextBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            camProductsTextBox.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            camProductsTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            camProductsTextBox.Font = new System.Drawing.Font("Segoe UI", 11F);
+            camProductsTextBox.ForeColor = System.Drawing.Color.FromArgb(230, 230, 230);
+            camProductsTextBox.Location = new System.Drawing.Point(72, 36);
+            camProductsTextBox.Name = "camProductsTextBox";
+            camProductsTextBox.Size = new System.Drawing.Size(738, 27);
+            camProductsTextBox.TabIndex = 1;
+            //
+            // camProductsBrowseButton
+            //
+            camProductsBrowseButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            camProductsBrowseButton.BackColor = System.Drawing.Color.FromArgb(65, 65, 65);
+            camProductsBrowseButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            camProductsBrowseButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            camProductsBrowseButton.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            camProductsBrowseButton.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            camProductsBrowseButton.Location = new System.Drawing.Point(820, 32);
+            camProductsBrowseButton.Name = "camProductsBrowseButton";
+            camProductsBrowseButton.Size = new System.Drawing.Size(130, 38);
+            camProductsBrowseButton.TabIndex = 2;
+            camProductsBrowseButton.Text = "Browse...";
+            camProductsBrowseButton.UseVisualStyleBackColor = false;
+            camProductsBrowseButton.Click += camProductsBrowseButton_Click;
+            //
+            // camProductPrefixLabel
+            //
+            camProductPrefixLabel.AutoSize = true;
+            camProductPrefixLabel.Font = new System.Drawing.Font("Segoe UI", 11F);
+            camProductPrefixLabel.ForeColor = System.Drawing.Color.FromArgb(190, 190, 190);
+            camProductPrefixLabel.Location = new System.Drawing.Point(16, 80);
+            camProductPrefixLabel.Name = "camProductPrefixLabel";
+            camProductPrefixLabel.TabIndex = 3;
+            camProductPrefixLabel.Text = "Path Prefix:";
+            //
+            // camProductPrefixTextBox
+            //
+            camProductPrefixTextBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            camProductPrefixTextBox.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            camProductPrefixTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            camProductPrefixTextBox.Font = new System.Drawing.Font("Segoe UI", 11F);
+            camProductPrefixTextBox.ForeColor = System.Drawing.Color.FromArgb(230, 230, 230);
+            camProductPrefixTextBox.Location = new System.Drawing.Point(110, 76);
+            camProductPrefixTextBox.Name = "camProductPrefixTextBox";
+            camProductPrefixTextBox.Size = new System.Drawing.Size(840, 27);
+            camProductPrefixTextBox.TabIndex = 4;
+            //
             // camFolderGroupBox
             //
             camFolderGroupBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
@@ -745,7 +973,7 @@ namespace OpcUaViewer
             fullscreenToggle.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left;
             fullscreenToggle.Font = new System.Drawing.Font("Segoe UI", 11F);
             fullscreenToggle.ForeColor = System.Drawing.Color.FromArgb(200, 200, 200);
-            fullscreenToggle.Location = new System.Drawing.Point(20, 474);
+            fullscreenToggle.Location = new System.Drawing.Point(20, 615);
             fullscreenToggle.Name = "fullscreenToggle";
             fullscreenToggle.Size = new System.Drawing.Size(340, 44);
             fullscreenToggle.TabIndex = 5;
@@ -757,7 +985,7 @@ namespace OpcUaViewer
             keyboardToggle.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left;
             keyboardToggle.Font = new System.Drawing.Font("Segoe UI", 11F);
             keyboardToggle.ForeColor = System.Drawing.Color.FromArgb(200, 200, 200);
-            keyboardToggle.Location = new System.Drawing.Point(20, 526);
+            keyboardToggle.Location = new System.Drawing.Point(20, 659);
             keyboardToggle.Name = "keyboardToggle";
             keyboardToggle.Size = new System.Drawing.Size(340, 44);
             keyboardToggle.TabIndex = 6;
@@ -795,6 +1023,8 @@ namespace OpcUaViewer
             camFolderGroupBox.PerformLayout();
             camOutputGroupBox.ResumeLayout(false);
             camOutputGroupBox.PerformLayout();
+            camProductsGroupBox.ResumeLayout(false);
+            camProductsGroupBox.PerformLayout();
             settingsPanel.ResumeLayout(false);
             settingsPanel.PerformLayout();
             connectionGroupBox.ResumeLayout(false);
@@ -844,13 +1074,33 @@ namespace OpcUaViewer
         private System.Windows.Forms.Label camOutputLabel;
         private System.Windows.Forms.TextBox camOutputTextBox;
         private System.Windows.Forms.Button camOutputBrowseButton;
+        private System.Windows.Forms.GroupBox camProductsGroupBox;
+        private System.Windows.Forms.Label camProductsLabel;
+        private System.Windows.Forms.TextBox camProductsTextBox;
+        private System.Windows.Forms.Label   camProductPrefixLabel;
+        private System.Windows.Forms.TextBox camProductPrefixTextBox;
+        private System.Windows.Forms.Button camProductsBrowseButton;
 
         private System.Windows.Forms.Button groupsNavButton;
         private System.Windows.Forms.Panel groupsButtonPanel;
+        private System.Windows.Forms.Button newGroupButton;
+        private System.Windows.Forms.Button editGroupButton;
+        private System.Windows.Forms.Button deleteGroupButton;
         private System.Windows.Forms.Button runGroupButton;
         private System.Windows.Forms.Button cancelGroupButton;
         private System.Windows.Forms.Panel groupsPanel;
         private System.Windows.Forms.SplitContainer groupsSplitContainer;
+        private System.Windows.Forms.Panel  groupInfoPanel;
+        private System.Windows.Forms.TextBox infoFileNameBox;
+        private System.Windows.Forms.TextBox infoCustomerBox;
+        private System.Windows.Forms.TextBox infoOrderIdBox;
+        private System.Windows.Forms.TextBox infoQtyBox;
+        private System.Windows.Forms.TextBox infoInfoTextBox;
+        private System.Windows.Forms.TextBox infoCompletedBox;
+        private System.Windows.Forms.Button  saveGroupButton;
+        private System.Windows.Forms.Button  cancelEditButton;
+        private System.Windows.Forms.Button  addProductsButton;
+        private System.Windows.Forms.Button  removeProductsButton;
         private System.Windows.Forms.DataGridView ordersDataGridView;
         private System.Windows.Forms.DataGridViewTextBoxColumn ordersOrderColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn ordersCustomerColumn;
@@ -858,11 +1108,11 @@ namespace OpcUaViewer
         private System.Windows.Forms.DataGridView productsDataGridView;
         private System.Windows.Forms.DataGridViewTextBoxColumn prodListIdColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn prodNameColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn prodParametersColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn prodMaterialColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn prodThicknessColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn prodQtyColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn prodRunQtyColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn prodHintColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn prodPathColumn;
     }
 }
