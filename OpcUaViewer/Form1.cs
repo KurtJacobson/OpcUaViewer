@@ -1787,6 +1787,12 @@ namespace OpcUaViewer
         {
             _statsPage.UpdateBendingNow(bending);
 
+            if (bending && !_isBendingNow && _machineState == 3)
+            {
+                _statsStore.IncrementBendCount();
+                _statsPage.UpdateTotalBends(_statsStore.TotalBendCount);
+            }
+
             if (bending && !_isBendingNow && _waitingForFirstBend && _setupStartTime != DateTime.MinValue)
             {
                 // First bend — close setup phase, open bending phase
@@ -1814,11 +1820,6 @@ namespace OpcUaViewer
 
             if (!int.TryParse(step, out int stepNum)) return;
 
-            if (_machineState == 3 && stepNum > _lastProductionStep && _lastProductionStep >= 0)
-            {
-                _statsStore.IncrementBendCount();
-                _statsPage.UpdateTotalBends(_statsStore.TotalBendCount);
-            }
             _lastProductionStep = stepNum;
 
             if (_machineState != 3) return;
