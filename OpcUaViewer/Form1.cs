@@ -29,6 +29,22 @@ namespace OpcUaViewer
         /// </summary>
         private const string ProductIdNameMatch = "ProductId";
 
+        // Hardcoded OPC UA nodes. Namespace index 6 is the application namespace on
+        // this server — update OperatorActionNamespaceIndex if the server config changes.
+        private const ushort OperatorActionNamespaceIndex = 6;
+        private const string OperatorActionNodeId         = "::AsGlobalPV:Monitoring.OperatorActionRequested";
+
+        // Statistics nodes (same namespace)
+        private const string StatsAutoModeNodeId       = "::AsGlobalPV:Monitoring.AutomaticMode";
+        private const string StatsManualModeNodeId     = "::AsGlobalPV:Monitoring.ManualMode";
+        private const string StatsSetupModeNodeId      = "::AsGlobalPV:Monitoring.SetupMode";
+        private const string StatsTotalHoursNodeId     = "::AsGlobalPV:Monitoring.TotalOperatingHours";
+        private const string StatsProducingHoursNodeId = "::AsGlobalPV:Monitoring.TotalOperatingHoursProducing";
+
+        private const string StatsPartCountNodeId      = "::AsGlobalPV:Monitoring.CurrentProductCount";
+        private const string StatsCurrentStepNodeId    = "::AsGlobalPV:Monitoring.CurrentProductionStep";
+        private const string StatsBendingNowNodeId     = "::AsGlobalPV:Monitoring.BendingNow";
+
         private ISession session;
         private Subscription subscription;
         private CancellationTokenSource cts;
@@ -44,8 +60,28 @@ namespace OpcUaViewer
         private uint? camFileClientHandle;
         private uint? machineStateClientHandle;
         private uint? operatorActionClientHandle;
+        private uint? statsAutoModeHandle, statsManualModeHandle, statsSetupModeHandle;
+        private uint? statsTotalHoursHandle, statsProducingHoursHandle;
+        private uint? statsPartCountHandle, statsCurrentStepHandle;
 
-        private Label _operatorActionLabel;
+        private uint? statsBendingNowHandle;
+
+        // ── implied timing state machine ──────────────────────────────────────────
+        // All timestamps are UTC; all fields written only on the UI thread.
+        // Setup phase: armed by step→0 or product-id change; closed by first bend.
+        // Bending phase: from first bend to step→0.
+        private bool     _waitingForFirstBend = false;
+        private DateTime _setupStartTime      = DateTime.MinValue; // start of setup phase
+        private bool     _firstBendHappened   = false;             // true once first bend seen
+        private DateTime _firstBendTime       = DateTime.MinValue; // when first bend started
+
+        private bool     _isBendingNow        = false;
+
+        private Label     _operatorActionLabel;
+        private StatsStore _statsStore;
+        private StatsPage  _statsPage;
+        private Button     _statsNavButton;
+        private Panel      _statsContentPanel;
 
         // Last-known values from the three monitoring nodes.
         private string _activeCamFileName;
@@ -84,6 +120,7 @@ namespace OpcUaViewer
             InitializeComponent();
             BuildGroupInfoPanel();
             BuildOperatorActionLabel();
+            BuildStatsPanel();
             SetupScrollBars();
             ordersDataGridView.CellFormatting   += OrdersGrid_CellFormatting;
             productsDataGridView.CellFormatting += ProductsGrid_CellFormatting;
@@ -252,6 +289,51 @@ namespace OpcUaViewer
                 _operatorActionLabel.ForeColor = System.Drawing.Color.FromArgb(120, 220, 120);
                 _operatorActionLabel.Text      = "Processing taking place automatically";
             }
+        }
+
+        // ── statistics tab ───────────────────────────────────────────────────────
+
+        private void BuildStatsPanel()
+        {
+            // Nav button — sits after groupsNavButton (y=341) and before settings (bottom-anchored)
+            _statsNavButton = new Button
+            {
+                Text      = "Statistics",
+                Anchor    = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+                Location  = new System.Drawing.Point(0, 344),
+                Size      = new System.Drawing.Size(100, 90),
+                BackColor = NavInactive,
+                ForeColor = NavTextOff,
+                FlatStyle = FlatStyle.Flat,
+                Font      = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold),
+                UseVisualStyleBackColor = false,
+            };
+            _statsNavButton.FlatAppearance.BorderSize = 0;
+            _statsNavButton.Click += (s, e) => ShowPage(_statsContentPanel, _statsNavButton);
+            navPanel.Controls.Add(_statsNavButton);
+
+            // Content panel — same position/anchor as all other content panels
+            _statsContentPanel = new Panel
+            {
+                Visible   = false,
+                Anchor    = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                Location  = new System.Drawing.Point(106, 0),
+                Size      = new System.Drawing.Size(994, 660),
+                BackColor = System.Drawing.Color.FromArgb(24, 24, 24),
+            };
+            Controls.Add(_statsContentPanel);
+
+            try
+            {
+                _statsStore = StatsStore.Load();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"StatsStore load failed: {ex.Message}");
+                _statsStore = new StatsStore();
+            }
+            _statsPage = new StatsPage(_statsStore);
+            _statsContentPanel.Controls.Add(_statsPage);
         }
 
         // ── touch-friendly dark scrollbars ───────────────────────────────────────
@@ -539,13 +621,14 @@ namespace OpcUaViewer
 
         private void ShowPage(System.Windows.Forms.Panel page, Button activeButton)
         {
-            monitoringPanel.Visible = false;
-            documentPanel.Visible   = false;
-            settingsPanel.Visible   = false;
-            groupsPanel.Visible     = false;
+            monitoringPanel.Visible    = false;
+            documentPanel.Visible      = false;
+            settingsPanel.Visible      = false;
+            groupsPanel.Visible        = false;
+            _statsContentPanel.Visible = false;
             page.Visible = true;
 
-            foreach (var btn in new[] { monitorNavButton, documentNavButton, settingsNavButton, groupsNavButton })
+            foreach (var btn in new[] { monitorNavButton, documentNavButton, settingsNavButton, groupsNavButton, _statsNavButton })
             {
                 btn.BackColor = btn == activeButton ? NavAccent   : NavInactive;
                 btn.ForeColor = btn == activeButton ? NavTextOn   : NavTextOff;
@@ -962,9 +1045,9 @@ namespace OpcUaViewer
 
             if (IsRunningLocked())
             {
-                // Machine is actively processing — move the file from \processing\ to \canceled\
-                string processingDir  = Path.Combine(outputBase, "processing");
-                string fileName       = Path.GetFileName(_activeCamFileName);
+                // Machine is actively processing — delete the file from \processing\
+                string processingDir = Path.Combine(outputBase, "processing");
+                string fileName      = Path.GetFileName(_activeCamFileName);
                 string processingPath = Path.Combine(processingDir, fileName);
 
                 if (!File.Exists(processingPath))
@@ -975,7 +1058,7 @@ namespace OpcUaViewer
                 }
 
                 var ans = DarkMessageBox.Show(this,
-                    $"Move '{fileName}' from the processing folder to canceled?\n\nThis will interrupt the current run.",
+                    $"Delete '{fileName}' from the processing folder?\n\nThis will interrupt the current run.",
                     "Cancel Group", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (ans != DialogResult.Yes) return;
 
@@ -1021,7 +1104,9 @@ namespace OpcUaViewer
             try
             {
                 Directory.CreateDirectory(canceledDir);
-                File.Move(inPath, Path.Combine(canceledDir, inFileName), overwrite: true);
+                string dest = Path.Combine(canceledDir, inFileName);
+                File.Move(inPath, dest, overwrite: true);
+
                 DarkMessageBox.Show(this, $"Moved '{inFileName}' to:\n{canceledDir}",
                     "Cancel Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -1447,13 +1532,23 @@ namespace OpcUaViewer
                 var opActionItem = new MonitoredItem(subscription.DefaultItem)
                 {
                     DisplayName      = "OperatorActionRequested",
-                    StartNodeId      = new NodeId("::AsGlobalPV:Monitoring.OperatorActionRequested", 6),
+                    StartNodeId      = new NodeId(OperatorActionNodeId, OperatorActionNamespaceIndex),
                     AttributeId      = Attributes.Value,
                     SamplingInterval = 500
                 };
                 opActionItem.Notification += OnValueChanged;
                 subscription.AddItem(opActionItem);
                 operatorActionClientHandle = opActionItem.ClientHandle;
+
+                // Statistics nodes
+                statsAutoModeHandle       = AddStatsItem(subscription, StatsAutoModeNodeId);
+                statsManualModeHandle     = AddStatsItem(subscription, StatsManualModeNodeId);
+                statsSetupModeHandle      = AddStatsItem(subscription, StatsSetupModeNodeId);
+                statsTotalHoursHandle     = AddStatsItem(subscription, StatsTotalHoursNodeId);
+                statsProducingHoursHandle = AddStatsItem(subscription, StatsProducingHoursNodeId);
+                statsPartCountHandle      = AddStatsItem(subscription, StatsPartCountNodeId);
+                statsCurrentStepHandle    = AddStatsItem(subscription, StatsCurrentStepNodeId);
+                statsBendingNowHandle     = AddStatsItem(subscription, StatsBendingNowNodeId);
 
                 session.AddSubscription(subscription);
                 subscription.Create();
@@ -1469,6 +1564,28 @@ namespace OpcUaViewer
             }
         }
 
+        private uint? AddStatsItem(Subscription sub, string nodePath)
+        {
+            try
+            {
+                var it = new MonitoredItem(sub.DefaultItem)
+                {
+                    DisplayName      = nodePath.Split('.').Last(),
+                    StartNodeId      = new NodeId(nodePath, OperatorActionNamespaceIndex),
+                    AttributeId      = Attributes.Value,
+                    SamplingInterval = 500,
+                };
+                it.Notification += OnValueChanged;
+                sub.AddItem(it);
+                return it.ClientHandle;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Stats node subscribe failed '{nodePath}': {ex.Message}");
+                return null;
+            }
+        }
+
         private void OnValueChanged(MonitoredItem item, MonitoredItemNotificationEventArgs e)
         {
             foreach (var v in item.DequeueValues())
@@ -1480,7 +1597,15 @@ namespace OpcUaViewer
                 if (productIdClientHandle.HasValue && item.ClientHandle == productIdClientHandle.Value)
                 {
                     OpenProductPdf(strVal);
-                    BeginInvokeIfRequired(() => { _activeProductId = strVal; ApplyRunningLockState(); });
+                    BeginInvokeIfRequired(() =>
+                    {
+                        bool newPart = strVal != _activeProductId && !string.IsNullOrEmpty(strVal);
+                        _activeProductId = strVal;
+                        _statsPage.SetActiveProduct(StatsStore.ProductKey(strVal));
+                        if (newPart && _machineState == 3)
+                            ArmSetupTimer();
+                        ApplyRunningLockState();
+                    });
                 }
                 else if (camFileClientHandle.HasValue && item.ClientHandle == camFileClientHandle.Value)
                 {
@@ -1493,11 +1618,59 @@ namespace OpcUaViewer
                 }
                 else if (operatorActionClientHandle.HasValue && item.ClientHandle == operatorActionClientHandle.Value)
                 {
-                    bool waiting = v.Value is bool b ? b : strVal == "True";
-                    BeginInvokeIfRequired(() => UpdateOperatorActionLabel(waiting));
+                    bool waiting = v.Value is bool b ? b : v.Value is int wi ? wi != 0 : strVal == "True" || strVal == "1";
+                    BeginInvokeIfRequired(() => { UpdateOperatorActionLabel(waiting); _statsPage.UpdateOperatorWait(waiting); });
+                }
+                else
+                {
+                    RouteStatsValue(item.ClientHandle, v.Value, strVal);
                 }
             }
         }
+
+        private void RouteStatsValue(uint handle, object rawVal, string strVal)
+        {
+            bool   AsBool(object v)   => v is bool b ? b : v is int i ? i != 0 : strVal == "True" || strVal == "1";
+            double AsDouble(object v) => v is double d ? d : v is float f ? f : double.TryParse(strVal, out double r) ? r : 0;
+            int    AsInt(object v)    => v is int i ? i : int.TryParse(strVal, out int r) ? r : 0;
+
+            if      (statsAutoModeHandle.HasValue       && handle == statsAutoModeHandle.Value)
+                BeginInvokeIfRequired(() => _statsPage.UpdateAutoMode(AsBool(rawVal)));
+            else if (statsManualModeHandle.HasValue     && handle == statsManualModeHandle.Value)
+                BeginInvokeIfRequired(() => _statsPage.UpdateManualMode(AsBool(rawVal)));
+            else if (statsSetupModeHandle.HasValue      && handle == statsSetupModeHandle.Value)
+                BeginInvokeIfRequired(() => _statsPage.UpdateSetupMode(AsBool(rawVal)));
+            else if (statsBendingNowHandle.HasValue     && handle == statsBendingNowHandle.Value)
+            {
+                bool bending = AsBool(rawVal);
+                BeginInvokeIfRequired(() => OnBendingNowChanged(bending));
+            }
+            else if (statsTotalHoursHandle.HasValue     && handle == statsTotalHoursHandle.Value)
+            {
+                double total = AsDouble(rawVal);
+                // defer until both values are potentially known; reuse last producing value via closure capture
+                BeginInvokeIfRequired(() => _statsPage.UpdateHours(total, _statsLastProducingHours));
+                _statsLastTotalHours = total;
+            }
+            else if (statsProducingHoursHandle.HasValue && handle == statsProducingHoursHandle.Value)
+            {
+                double producing = AsDouble(rawVal);
+                BeginInvokeIfRequired(() => _statsPage.UpdateHours(_statsLastTotalHours, producing));
+                _statsLastProducingHours = producing;
+            }
+            else if (statsPartCountHandle.HasValue      && handle == statsPartCountHandle.Value)
+            {
+                int count = AsInt(rawVal);
+                BeginInvokeIfRequired(() => OnPartCountChanged(count));
+            }
+            else if (statsCurrentStepHandle.HasValue    && handle == statsCurrentStepHandle.Value)
+            {
+                BeginInvokeIfRequired(() => OnProductionStepChanged(strVal));
+            }
+        }
+
+        private double _statsLastTotalHours;
+        private double _statsLastProducingHours;
 
         private void BeginInvokeIfRequired(Action action)
         {
@@ -1509,6 +1682,7 @@ namespace OpcUaViewer
         private void OnCamFileChanged(string camFileName)
         {
             _activeCamFileName = camFileName;
+            _statsPage.SetJob(StatsStore.JobKey(camFileName));
             ApplyRunningLockState();
         }
 
@@ -1581,7 +1755,81 @@ namespace OpcUaViewer
         private void OnMachineStateChanged(int state)
         {
             _machineState = state;
+            if (state == 3)
+            {
+                // Arm setup timer when entering state 3, but only if we're not already mid-cycle.
+                // This handles: connect while running, or machine enters state 3 after connect.
+                if (!_waitingForFirstBend && !_firstBendHappened)
+                    ArmSetupTimer();
+            }
+            else
+            {
+                _waitingForFirstBend = false;
+                _firstBendHappened   = false;
+                _statsPage.StopLiveTimers();
+            }
             ApplyRunningLockState();
+        }
+
+        // Arms the setup timer — called on step→0 or product-id change.
+        private void ArmSetupTimer()
+        {
+            _setupStartTime      = DateTime.UtcNow;
+            _waitingForFirstBend = true;
+            _firstBendHappened   = false;
+            _firstBendTime       = DateTime.MinValue;
+            _statsPage.StartSetupTimer(_setupStartTime);
+        }
+
+        private void OnBendingNowChanged(bool bending)
+        {
+            _statsPage.UpdateBendingNow(bending);
+
+            if (bending && !_isBendingNow && _waitingForFirstBend && _setupStartTime != DateTime.MinValue)
+            {
+                // First bend — close setup phase, open bending phase
+                double setup      = (DateTime.UtcNow - _setupStartTime).TotalSeconds;
+                string productKey = StatsStore.ProductKey(_activeProductId);
+                _statsStore.AddSetupTime(StatsStore.JobKey(_activeCamFileName), productKey, setup);
+                _statsPage.UpdateSetupTime(productKey, setup);
+                _waitingForFirstBend = false;
+                _firstBendTime       = DateTime.UtcNow;
+                _firstBendHappened   = true;
+                _statsPage.StartPartTimer(_firstBendTime);
+            }
+
+            _isBendingNow = bending;
+        }
+
+        private void OnPartCountChanged(int count)
+        {
+            _statsPage.UpdatePartCount(count);
+        }
+
+        private void OnProductionStepChanged(string step)
+        {
+            _statsPage.UpdateProductionStep(step);
+
+            if (_machineState != 3) return;
+            if (!int.TryParse(step, out int stepNum) || stepNum != 0) return;
+
+            // Step reset to 0 — close bending phase and record times
+            if (_firstBendHappened && _firstBendTime != DateTime.MinValue)
+            {
+                string productKey = StatsStore.ProductKey(_activeProductId);
+                double bendTime   = (DateTime.UtcNow - _firstBendTime).TotalSeconds;
+                _statsStore.AddBendingTime(StatsStore.JobKey(_activeCamFileName), productKey, bendTime);
+                _statsPage.UpdateBendingTime(productKey, bendTime);
+
+                if (_setupStartTime != DateTime.MinValue)
+                {
+                    double totalTime = (DateTime.UtcNow - _setupStartTime).TotalSeconds;
+                    _statsPage.UpdateLastCycleTime(productKey, totalTime);
+                }
+            }
+
+            // Arm setup timer for the next part
+            ArmSetupTimer();
         }
 
         /// <summary>
@@ -1596,6 +1844,7 @@ namespace OpcUaViewer
             newGroupButton.Visible        = !machineOn;
             editGroupButton.Visible       = !machineOn;
             deleteGroupButton.Visible     = !machineOn;
+
             runGroupButton.Enabled        = !locked;
             cancelGroupButton.Enabled     = true;
             runGroupButton.BackColor      = locked
@@ -1806,6 +2055,17 @@ namespace OpcUaViewer
                 camFileClientHandle         = null;
                 machineStateClientHandle    = null;
                 operatorActionClientHandle  = null;
+                statsAutoModeHandle = statsManualModeHandle = statsSetupModeHandle = null;
+                statsTotalHoursHandle = statsProducingHoursHandle = null;
+                statsPartCountHandle = statsCurrentStepHandle = null;
+                statsBendingNowHandle = null;
+                _statsLastTotalHours = 0; _statsLastProducingHours = 0;
+                _waitingForFirstBend = false;
+                _firstBendHappened   = false;
+                _setupStartTime      = DateTime.MinValue;
+                _firstBendTime       = DateTime.MinValue;
+                _isBendingNow        = false;
+                _statsPage.Reset();
                 _activeCamFileName          = null;
                 _activeProductId            = null;
                 _machineState               = -1;
