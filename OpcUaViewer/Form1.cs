@@ -220,9 +220,9 @@ namespace OpcUaViewer
             _operatorActionLabel = new Label
             {
                 Visible     = false,
-                Anchor      = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top | AnchorStyles.Bottom,
+                Anchor      = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Bottom,
                 Location    = new System.Drawing.Point(8, 8),
-                Size        = new System.Drawing.Size(groupsButtonPanel.Width - 16, groupsButtonPanel.Height - 16),
+                Size        = new System.Drawing.Size(runGroupButton.Left - 16, groupsButtonPanel.Height - 16),
                 Font        = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold),
                 TextAlign   = System.Drawing.ContentAlignment.MiddleCenter,
                 BackColor   = System.Drawing.Color.FromArgb(20, 80, 30),
@@ -232,6 +232,9 @@ namespace OpcUaViewer
             };
             groupsButtonPanel.Controls.Add(_operatorActionLabel);
             _operatorActionLabel.BringToFront();
+
+            groupsButtonPanel.Resize += (s, e) =>
+                _operatorActionLabel.Width = runGroupButton.Left - 16;
         }
 
         private void UpdateOperatorActionLabel(bool waiting)
@@ -949,32 +952,68 @@ namespace OpcUaViewer
 
         private void cancelGroupButton_Click(object sender, EventArgs e)
         {
-            if (ordersDataGridView.SelectedRows.Count == 0)
-            {
-                DarkMessageBox.Show(this,"Please select a product group first.", "Cancel Group",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
             string outputBase = camOutputTextBox.Text.Trim();
             if (string.IsNullOrEmpty(outputBase))
             {
-                DarkMessageBox.Show(this,"Please set the CAM Output Directory in Settings first.", "Cancel Group",
+                DarkMessageBox.Show(this, "Please set the CAM Output Directory in Settings first.", "Cancel Group",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (IsRunningLocked())
+            {
+                // Machine is actively processing — move the file from \processing\ to \canceled\
+                string processingDir  = Path.Combine(outputBase, "processing");
+                string fileName       = Path.GetFileName(_activeCamFileName);
+                string processingPath = Path.Combine(processingDir, fileName);
+
+                if (!File.Exists(processingPath))
+                {
+                    DarkMessageBox.Show(this, $"'{fileName}' was not found in the 'processing' folder.",
+                        "Cancel Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                var ans = DarkMessageBox.Show(this,
+                    $"Move '{fileName}' from the processing folder to canceled?\n\nThis will interrupt the current run.",
+                    "Cancel Group", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (ans != DialogResult.Yes) return;
+
+                try
+                {
+                    string cancelDir = Path.Combine(outputBase, "canceled");
+                    Directory.CreateDirectory(cancelDir);
+                    File.Move(processingPath, Path.Combine(cancelDir, fileName), overwrite: true);
+                    DarkMessageBox.Show(this, $"Moved '{fileName}' to:\n{cancelDir}",
+                        "Cancel Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    DarkMessageBox.Show(this, "Failed to move CAM file:\n\n" + ex.Message, "Cancel Group",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                return;
+            }
+
+            // Normal (not running): move selected group's file out of \in\
+            if (ordersDataGridView.SelectedRows.Count == 0)
+            {
+                DarkMessageBox.Show(this, "Please select a product group first.", "Cancel Group",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
             int idx = ordersDataGridView.SelectedRows[0].Index;
             var order = _camOrders[idx];
-            string fileName = Path.GetFileName(order.FilePath);
+            string inFileName = Path.GetFileName(order.FilePath);
 
-            string inDir        = Path.Combine(outputBase, "in");
-            string canceledDir  = Path.Combine(outputBase, "canceled");
-            string inPath       = Path.Combine(inDir, fileName);
+            string inDir       = Path.Combine(outputBase, "in");
+            string canceledDir = Path.Combine(outputBase, "canceled");
+            string inPath      = Path.Combine(inDir, inFileName);
 
             if (!File.Exists(inPath))
             {
-                DarkMessageBox.Show(this,$"'{fileName}' is not currently in the 'in' folder — nothing to cancel.",
+                DarkMessageBox.Show(this, $"'{inFileName}' is not currently in the 'in' folder — nothing to cancel.",
                     "Cancel Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -982,15 +1021,13 @@ namespace OpcUaViewer
             try
             {
                 Directory.CreateDirectory(canceledDir);
-                string dest = Path.Combine(canceledDir, fileName);
-                File.Move(inPath, dest, overwrite: true);
-
-                DarkMessageBox.Show(this,$"Moved '{fileName}' to:\n{canceledDir}",
+                File.Move(inPath, Path.Combine(canceledDir, inFileName), overwrite: true);
+                DarkMessageBox.Show(this, $"Moved '{inFileName}' to:\n{canceledDir}",
                     "Cancel Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                DarkMessageBox.Show(this,"Failed to move CAM file:\n\n" + ex.Message, "Cancel Group",
+                DarkMessageBox.Show(this, "Failed to move CAM file:\n\n" + ex.Message, "Cancel Group",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -1559,8 +1596,13 @@ namespace OpcUaViewer
             newGroupButton.Visible        = !machineOn;
             editGroupButton.Visible       = !machineOn;
             deleteGroupButton.Visible     = !machineOn;
-            runGroupButton.Visible        = !machineOn;
-            cancelGroupButton.Visible     = !machineOn;
+            runGroupButton.Enabled        = !locked;
+            cancelGroupButton.Enabled     = true;
+            runGroupButton.BackColor      = locked
+                ? System.Drawing.Color.FromArgb(25, 80, 25)
+                : System.Drawing.Color.FromArgb(34, 139, 34);
+            cancelGroupButton.BackColor   = System.Drawing.Color.FromArgb(180, 50, 50);
+
             _operatorActionLabel.Visible  = machineOn;
 
             _orderRowStates.Clear();
@@ -1771,8 +1813,8 @@ namespace OpcUaViewer
                 newGroupButton.Visible          = true;
                 editGroupButton.Visible         = true;
                 deleteGroupButton.Visible       = true;
-                runGroupButton.Visible          = true;
-                cancelGroupButton.Visible       = true;
+                runGroupButton.Enabled          = true;
+                runGroupButton.BackColor        = System.Drawing.Color.FromArgb(34, 139, 34);
                 _operatorActionLabel.Visible    = false;
                 _orderRowStates.Clear();
                 _productRowStates.Clear();
