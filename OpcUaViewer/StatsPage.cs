@@ -46,7 +46,7 @@ namespace OpcUaViewer
 
         // ── metric cards ─────────────────────────────────────────────────────────
         private Label _totalHoursValue, _producingHoursValue, _efficiencyValue;
-        private Label _partCountValue, _currentStepValue;
+        private Label _partCountValue, _totalBendsValue;
 
         // ── parts grid ────────────────────────────────────────────────────────────
         private DataGridView _partsGrid;
@@ -73,6 +73,9 @@ namespace OpcUaViewer
             BackColor = BgColor;
             Dock      = DockStyle.Fill;
             Build();
+            // Seed counters from persisted store on startup
+            if (_store.TotalPartCount > 0) _partCountValue.Text = _store.TotalPartCount.ToString("N0");
+            if (_store.TotalBendCount > 0) _totalBendsValue.Text = _store.TotalBendCount.ToString("N0");
         }
 
         private void Build()
@@ -201,69 +204,58 @@ namespace OpcUaViewer
             {
                 Dock        = DockStyle.Fill,
                 BackColor   = BgColor,
-                ColumnCount = 6,
+                ColumnCount = 5,
                 RowCount    = 1,
                 Padding     = new Padding(0, 0, 0, 10),
                 Margin      = Padding.Empty,
             };
             for (int i = 0; i < 5; i++)
-                row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 19));
-            row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 5));
+                row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20));
             row.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            (_totalHoursValue,     var c0) = MakeCard("Total Op Hours",  "—", OrangeAccent);
-            (_producingHoursValue, var c1) = MakeCard("Producing Hours", "—", BlueAccent);
-            (_efficiencyValue,     var c2) = MakeCard("Efficiency",      "—", GreenAccent);
-            (_partCountValue,      var c3) = MakeCard("Parts This Run",  "—", PurpleAccent);
-            (_currentStepValue,    var c4) = MakeCard("Production Step", "—", TextSecondary);
+            void ResetHours()
+            {
+                var r = DarkMessageBox.Show(FindForm(),
+                    "Zero out the hour and calculated efficiency displays?\r\n\r\n" +
+                    "The machine's actual counters are not affected.\r\n" +
+                    "This offset is saved and applied on every restart.",
+                    "Reset Operating Hours", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (r != DialogResult.Yes) return;
+                _store.ResetHours(_rawTotalHours, _rawProducingHours);
+                _totalHoursValue.Text     = FormatHours(0);
+                _producingHoursValue.Text = FormatHours(0);
+                _efficiencyValue.Text     = "0.0%";
+            }
+
+            (_totalHoursValue,     var c0) = MakeCard("Total Op Hours",  "—", OrangeAccent,  ResetHours);
+            (_producingHoursValue, var c1) = MakeCard("Producing Hours", "—", BlueAccent,    ResetHours);
+            (_efficiencyValue,     var c2) = MakeCard("Efficiency",      "—", GreenAccent,   ResetHours);
+            (_partCountValue,      var c3) = MakeCard("Total Parts",     "—", PurpleAccent,  () =>
+            {
+                var r = DarkMessageBox.Show(FindForm(), "Reset total part count to zero?",
+                    "Reset Parts", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (r != DialogResult.Yes) return;
+                _store.ResetPartCount();
+                _partCountValue.Text = "0";
+            });
+            (_totalBendsValue,     var c4) = MakeCard("Total Bends",     "—", TextSecondary, () =>
+            {
+                var r = DarkMessageBox.Show(FindForm(), "Reset total bend count to zero?",
+                    "Reset Bends", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (r != DialogResult.Yes) return;
+                _store.ResetBendCount();
+                _totalBendsValue.Text = "0";
+            });
 
             row.Controls.Add(c0, 0, 0);
             row.Controls.Add(c1, 1, 0);
             row.Controls.Add(c2, 2, 0);
             row.Controls.Add(c3, 3, 0);
             row.Controls.Add(c4, 4, 0);
-            row.Controls.Add(BuildResetButton(), 5, 0);
             return row;
         }
 
-        private Panel BuildResetButton()
-        {
-            var wrap = new Panel { Dock = DockStyle.Fill, BackColor = BgColor, Margin = Padding.Empty };
-            var btn  = new Button
-            {
-                Text      = "⟳\r\nReset\r\nHrs",
-                Dock      = DockStyle.Fill,
-                BackColor = ResetBg,
-                ForeColor = ResetFg,
-                FlatStyle = FlatStyle.Flat,
-                Font      = new Font("Segoe UI", 8F, FontStyle.Bold),
-                Cursor    = Cursors.Hand,
-            };
-            btn.FlatAppearance.BorderSize = 0;
-            btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(100, 60, 15);
-            btn.Click += ResetHours_Click;
-            wrap.Controls.Add(btn);
-            return wrap;
-        }
-
-        private void ResetHours_Click(object sender, EventArgs e)
-        {
-            var result = DarkMessageBox.Show(
-                FindForm(),
-                "Zero out the displayed operating hours?\r\n\r\n" +
-                "The machine's actual counters are not affected.\r\n" +
-                "This offset is saved and applied on every restart.",
-                "Reset Operating Hours",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-            if (result != DialogResult.Yes) return;
-            _store.ResetHours(_rawTotalHours, _rawProducingHours);
-            _totalHoursValue.Text     = FormatHours(0);
-            _producingHoursValue.Text = FormatHours(0);
-            _efficiencyValue.Text     = "0.0%";
-        }
-
-        private (Label valueLabel, Panel card) MakeCard(string title, string initial, Color accent)
+        private (Label valueLabel, Panel card) MakeCard(string title, string initial, Color accent, Action onReset = null)
         {
             var card = new Panel
             {
@@ -300,6 +292,29 @@ namespace OpcUaViewer
             };
             card.Controls.Add(valueLbl);
             card.Controls.Add(titleLbl);
+
+            if (onReset != null)
+            {
+                var resetBtn = new Button
+                {
+                    Text      = "⟳",
+                    Size      = new Size(22, 22),
+                    BackColor = ResetBg,
+                    ForeColor = ResetFg,
+                    FlatStyle = FlatStyle.Flat,
+                    Font      = new Font("Segoe UI", 9F, FontStyle.Bold),
+                    Cursor    = Cursors.Hand,
+                    TabStop   = false,
+                };
+                resetBtn.FlatAppearance.BorderSize = 0;
+                resetBtn.FlatAppearance.MouseOverBackColor = Color.FromArgb(100, 60, 15);
+                resetBtn.Click += (s, e) => onReset();
+                card.Controls.Add(resetBtn);
+                resetBtn.BringToFront();
+                card.Resize += (s, e) =>
+                    resetBtn.Location = new Point(card.Width - resetBtn.Width - 4, card.Height - resetBtn.Height - 4);
+            }
+
             return (valueLbl, card);
         }
 
@@ -452,11 +467,12 @@ namespace OpcUaViewer
             _efficiencyValue.Text     = $"{(t > 0 ? p / t * 100.0 : 0):F1}%";
         }
 
-        public void UpdatePartCount(int count) =>
-            _partCountValue.Text = count > 0 ? count.ToString("N0") : "—";
+        public void UpdatePartCount(int count) { } // driven by cycle count instead
 
-        public void UpdateProductionStep(string step) =>
-            _currentStepValue.Text = string.IsNullOrWhiteSpace(step) ? "—" : step;
+        public void UpdateProductionStep(string step) { } // card replaced by Total Bends
+
+        public void UpdateTotalBends(int count) =>
+            _totalBendsValue.Text = count.ToString("N0");
 
         public void SetActiveProduct(string productKey)
         {
@@ -480,6 +496,7 @@ namespace OpcUaViewer
         {
             if (cycleTime <= 0) return;
             _store.AddCycleTime(_currentJobKey, productKey, cycleTime);
+            _partCountValue.Text = _store.TotalPartCount.ToString("N0");
             AddOrUpdateRow(productKey);
         }
 
@@ -500,8 +517,8 @@ namespace OpcUaViewer
             _totalHoursValue.Text     = "—";
             _producingHoursValue.Text = "—";
             _efficiencyValue.Text     = "—";
-            _partCountValue.Text      = "—";
-            _currentStepValue.Text    = "—";
+            _partCountValue.Text  = _store.TotalPartCount > 0 ? _store.TotalPartCount.ToString("N0") : "—";
+            _totalBendsValue.Text = _store.TotalBendCount > 0 ? _store.TotalBendCount.ToString("N0") : "—";
             _currentJobKey            = "";
             _activeProductKey         = "";
             _partsGrid.Rows.Clear();

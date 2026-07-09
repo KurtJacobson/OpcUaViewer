@@ -76,6 +76,7 @@ namespace OpcUaViewer
         private DateTime _firstBendTime       = DateTime.MinValue; // when first bend started
 
         private bool     _isBendingNow        = false;
+        private int      _lastProductionStep  = -1;
 
         private Label     _operatorActionLabel;
         private StatsStore _statsStore;
@@ -1766,6 +1767,7 @@ namespace OpcUaViewer
             {
                 _waitingForFirstBend = false;
                 _firstBendHappened   = false;
+                _lastProductionStep  = -1;
                 _statsPage.StopLiveTimers();
             }
             ApplyRunningLockState();
@@ -1810,8 +1812,17 @@ namespace OpcUaViewer
         {
             _statsPage.UpdateProductionStep(step);
 
+            if (!int.TryParse(step, out int stepNum)) return;
+
+            if (_machineState == 3 && stepNum > _lastProductionStep && _lastProductionStep >= 0)
+            {
+                _statsStore.IncrementBendCount();
+                _statsPage.UpdateTotalBends(_statsStore.TotalBendCount);
+            }
+            _lastProductionStep = stepNum;
+
             if (_machineState != 3) return;
-            if (!int.TryParse(step, out int stepNum) || stepNum != 0) return;
+            if (stepNum != 0) return;
 
             // Step reset to 0 — close bending phase and record times
             if (_firstBendHappened && _firstBendTime != DateTime.MinValue)
@@ -2065,6 +2076,7 @@ namespace OpcUaViewer
                 _setupStartTime      = DateTime.MinValue;
                 _firstBendTime       = DateTime.MinValue;
                 _isBendingNow        = false;
+                _lastProductionStep  = -1;
                 _statsPage.Reset();
                 _activeCamFileName          = null;
                 _activeProductId            = null;

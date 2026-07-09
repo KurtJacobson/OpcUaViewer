@@ -19,6 +19,10 @@ namespace OpcUaViewer
         public double BaselineTotalHours     { get; set; }
         public double BaselineProducingHours { get; set; }
 
+        // Accumulating counters — persist until manually reset
+        public int TotalPartCount { get; set; } = 0;
+        public int TotalBendCount { get; set; } = 0;
+
         public List<double> GlobalCycleTimes      { get; set; } = new();
         public List<double> GlobalSetupTimes      { get; set; } = new();
         public List<double> GlobalPartToPartTimes { get; set; } = new();
@@ -90,8 +94,15 @@ namespace OpcUaViewer
 
         // ── mutations ─────────────────────────────────────────────────────────
 
-        public void AddCycleTime(string jobKey, string productKey, double t) =>
+        public void AddCycleTime(string jobKey, string productKey, double t)
+        {
+            TotalPartCount++;
             AddTo(GlobalCycleTimes, JobCycleTimes, ProductCycleTimes, jobKey, productKey, t);
+        }
+
+        public void IncrementBendCount() { TotalBendCount++; Save(); }
+        public void ResetPartCount()     { TotalPartCount = 0; Save(); }
+        public void ResetBendCount()     { TotalBendCount = 0; Save(); }
 
         public void AddSetupTime(string jobKey, string productKey, double t) =>
             AddTo(GlobalSetupTimes, JobSetupTimes, ProductSetupTimes, jobKey, productKey, t);
