@@ -589,6 +589,9 @@ namespace OpcUaViewer
             }
         }
 
+        private bool _autoRetrying = false;
+        private const int RetryIntervalSeconds = 10;
+
         private async void Form1_Shown(object sender, EventArgs e)
         {
             // Initialise WebView2 in the background — must not block OPC UA connect.
@@ -600,17 +603,40 @@ namespace OpcUaViewer
 
             string url = endpointTextBox.Text.Trim();
             if (string.IsNullOrEmpty(url)) return;
+            await AutoConnectWithRetry(url);
+        }
 
-            connectButton.Enabled   = false;
-            endpointTextBox.Enabled = false;
-            UpdateStatus("Auto-connecting...");
-
-            cts = new CancellationTokenSource();
-            await StartClient(url, cts.Token);
-
+        private async Task AutoConnectWithRetry(string url)
+        {
+            _autoRetrying        = true;
+            connectButton.Text   = "Cancel";
             connectButton.Enabled = true;
-            connectButton.Text    = session != null ? "Disconnect" : "Connect";
+            endpointTextBox.Enabled = false;
+            cts = new CancellationTokenSource();
+
+            int attempt = 0;
+            while (session == null && !cts.IsCancellationRequested)
+            {
+                attempt++;
+                UpdateStatus(attempt == 1 ? "Connecting..." : $"Reconnecting... (attempt {attempt})");
+                await StartClient(url, cts.Token, silent: true);
+
+                if (session != null || cts.IsCancellationRequested) break;
+
+                for (int i = RetryIntervalSeconds; i > 0; i--)
+                {
+                    if (cts.IsCancellationRequested) break;
+                    UpdateStatus($"Connection failed — retrying in {i}s...");
+                    try { await Task.Delay(1000, cts.Token); } catch (OperationCanceledException) { break; }
+                }
+            }
+
+            _autoRetrying           = false;
+            connectButton.Text      = session != null ? "Disconnect" : "Connect";
+            connectButton.Enabled   = true;
             endpointTextBox.Enabled = session == null;
+            if (session == null && cts.IsCancellationRequested)
+                UpdateStatus("Not connected");
         }
 
         // Loaded .p3cam orders; index matches groupsListView item index.
@@ -1249,6 +1275,12 @@ namespace OpcUaViewer
 
         private async void connectButton_Click(object sender, EventArgs e)
         {
+            if (_autoRetrying)
+            {
+                cts?.Cancel();
+                return;
+            }
+
             if (session != null)
             {
                 DisconnectClient();
@@ -1277,7 +1309,7 @@ namespace OpcUaViewer
             endpointTextBox.Enabled = session == null;
         }
 
-        private async Task StartClient(string endpointUrl, CancellationToken cancellationToken)
+        private async Task StartClient(string endpointUrl, CancellationToken cancellationToken, bool silent = false)
         {
             try
             {
@@ -1329,8 +1361,9 @@ namespace OpcUaViewer
             {
                 string brief = ex.InnerException?.Message ?? ex.Message;
                 UpdateStatus("Not connected");
-                DarkMessageBox.Show(this, $"Could not connect to the OPC UA server.\n\n{brief}",
-                    "Connection Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!silent)
+                    DarkMessageBox.Show(this, $"Could not connect to the OPC UA server.\n\n{brief}",
+                        "Connection Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
