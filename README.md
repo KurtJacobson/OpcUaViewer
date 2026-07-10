@@ -13,7 +13,7 @@ A Windows desktop application that connects to an OPC UA server, monitors live v
 ## Requirements
 
 - Windows 7 or later (x64)
-- The bundled `WebView2Runtime\` folder next to the EXE (see [Distribution](#distribution))
+- [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/?form=MA13LH#download) installed on the target machine (included with Microsoft Edge; or install the **Evergreen Bootstrapper** from that page)
 - .NET 9 runtime is **not** required — the EXE is self-contained
 
 ## Usage
@@ -53,22 +53,23 @@ dotnet build OpcUaViewer\OpcUaViewer.csproj -c Release
 dotnet publish OpcUaViewer\OpcUaViewer.csproj -r win-x64 -c Release --self-contained -p:PublishSingleFile=true -o publish-standalone
 ```
 
-### 2. Add the WebView2 fixed-version runtime
+### 2. Prepare the target machine
 
-The app uses a **fixed-version** WebView2 runtime bundled alongside the EXE so the target machine does not need Edge or the Evergreen WebView2 Runtime installed.
+The app uses the **Evergreen** WebView2 Runtime (shipped with Microsoft Edge). If the target machine already has Edge installed, nothing else is needed. Otherwise, download and run the **Evergreen Bootstrapper** (~2 MB) from:
 
-1. Download the **Fixed Version** x64 runtime (version `1.0.4022.49`) from the [Microsoft WebView2 page](https://developer.microsoft.com/microsoft-edge/webview2/)
-2. Extract it into a folder named `WebView2Runtime\` placed next to `OpcUaViewer.exe`
+> https://developer.microsoft.com/en-us/microsoft-edge/webview2/?form=MA13LH#download
+
+Run `MicrosoftEdgeWebview2Setup.exe` as administrator once; it installs and self-updates silently from then on.
 
 ### 3. Ship the output folder
 
 ```
 publish-standalone\
-  OpcUaViewer.exe          (~121 MB, self-contained)
+  OpcUaViewer.exe          (self-contained, no .NET install needed)
   WebView2Loader.dll
-  WebView2Runtime\         (~150 MB, fixed WebView2 runtime)
+  Microsoft.Web.WebView2.Core.dll
+  Microsoft.Web.WebView2.WinForms.dll
   runtimes\
-  OpcUaViewer.dll.config
 ```
 
 No installer required — copy the folder to the target machine and run `OpcUaViewer.exe`.

@@ -133,7 +133,6 @@ namespace OpcUaViewer
             FormClosing += Form1_FormClosing;
             Shown        += Form1_Shown;
             LoadSettings();
-            docViewer.ClearPreview("Waiting for a product id...");
 
             HookKeyboard(endpointTextBox);
             HookKeyboard(pdfFolderTextBox);
@@ -592,6 +591,13 @@ namespace OpcUaViewer
 
         private async void Form1_Shown(object sender, EventArgs e)
         {
+            // Initialise WebView2 in the background — must not block OPC UA connect.
+            _ = docViewer.EnsureCoreWebView2Async();
+            docViewer.CoreWebView2InitializationCompleted += (s2, e2) =>
+            {
+                if (e2.IsSuccess) SetPdfStatus("Waiting for a product id...");
+            };
+
             string url = endpointTextBox.Text.Trim();
             if (string.IsNullOrEmpty(url)) return;
 
@@ -1996,7 +2002,18 @@ namespace OpcUaViewer
 
             try
             {
-                docViewer.PreviewFile(fullPath);
+                var uri = new Uri(fullPath).AbsoluteUri;
+                docViewer.CoreWebView2?.Navigate(uri);
+                if (docViewer.CoreWebView2 == null)
+                {
+                    docViewer.CoreWebView2InitializationCompleted += OnCoreReady;
+                    _ = docViewer.EnsureCoreWebView2Async();
+                    void OnCoreReady(object s, Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs e)
+                    {
+                        docViewer.CoreWebView2InitializationCompleted -= OnCoreReady;
+                        if (e.IsSuccess) docViewer.CoreWebView2.Navigate(new Uri(fullPath).AbsoluteUri);
+                    }
+                }
                 SetPdfStatus($"Showing: {fileName}");
             }
             catch (Exception ex)
@@ -2007,7 +2024,7 @@ namespace OpcUaViewer
 
         private void ClearPdfView(string statusText)
         {
-            docViewer.ClearPreview(statusText);
+            docViewer.CoreWebView2?.Navigate("about:blank");
             SetPdfStatus(statusText);
         }
 

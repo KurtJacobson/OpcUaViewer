@@ -32,7 +32,7 @@ namespace OpcUaViewer
             statusColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             timestampColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             documentPanel = new System.Windows.Forms.Panel();
-            docViewer = new ShellPreviewPanel();
+            docViewer = new Microsoft.Web.WebView2.WinForms.WebView2();
             settingsPanel = new System.Windows.Forms.Panel();
             connectionGroupBox = new System.Windows.Forms.GroupBox();
             endpointLabel = new System.Windows.Forms.Label();
@@ -96,6 +96,7 @@ namespace OpcUaViewer
             navPanel.SuspendLayout();
             monitoringPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)docViewer).BeginInit();
             documentPanel.SuspendLayout();
             groupsPanel.SuspendLayout();
             groupsButtonPanel.SuspendLayout();
@@ -298,11 +299,8 @@ namespace OpcUaViewer
             //
             // docViewer
             //
-            docViewer.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            docViewer.BackColor = System.Drawing.Color.White;
-            docViewer.Location = new System.Drawing.Point(0, 0);
+            docViewer.Dock = System.Windows.Forms.DockStyle.Fill;
             docViewer.Name = "docViewer";
-            docViewer.Size = new System.Drawing.Size(1000, 660);
             docViewer.TabIndex = 0;
             //
             // documentPanel
@@ -1011,6 +1009,7 @@ namespace OpcUaViewer
             navPanel.ResumeLayout(false);
             monitoringPanel.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)docViewer).EndInit();
             documentPanel.ResumeLayout(false);
             groupsPanel.ResumeLayout(false);
             groupsButtonPanel.ResumeLayout(false);
@@ -1051,7 +1050,7 @@ namespace OpcUaViewer
         private System.Windows.Forms.DataGridViewTextBoxColumn timestampColumn;
 
         private System.Windows.Forms.Panel documentPanel;
-        private ShellPreviewPanel docViewer;
+        private Microsoft.Web.WebView2.WinForms.WebView2 docViewer;
 
         private System.Windows.Forms.Panel settingsPanel;
         private System.Windows.Forms.GroupBox connectionGroupBox;
