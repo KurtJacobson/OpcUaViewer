@@ -12,7 +12,7 @@ namespace OpcUaViewer.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "18.6.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "18.7.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -34,10 +34,10 @@ namespace OpcUaViewer.Properties {
                 this["PdfFolderPath"] = value;
             }
         }
-
+        
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("opc.tcp://10.10.0.102:4840")]
+        [global::System.Configuration.DefaultSettingValueAttribute("opc.tcp://10.10.10.102:4840")]
         public string EndpointUrl {
             get {
                 return ((string)(this["EndpointUrl"]));
@@ -49,82 +49,122 @@ namespace OpcUaViewer.Properties {
 
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("-1")]
-        public int WindowLeft {
-            get { return ((int)(this["WindowLeft"])); }
-            set { this["WindowLeft"] = value; }
-        }
-
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("-1")]
-        public int WindowTop {
-            get { return ((int)(this["WindowTop"])); }
-            set { this["WindowTop"] = value; }
-        }
-
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1100")]
-        public int WindowWidth {
-            get { return ((int)(this["WindowWidth"])); }
-            set { this["WindowWidth"] = value; }
-        }
-
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("660")]
-        public int WindowHeight {
-            get { return ((int)(this["WindowHeight"])); }
-            set { this["WindowHeight"] = value; }
-        }
-
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string CamFolderPath {
-            get { return ((string)(this["CamFolderPath"])); }
-            set { this["CamFolderPath"] = value; }
+            get {
+                return ((string)(this["CamFolderPath"]));
+            }
+            set {
+                this["CamFolderPath"] = value;
+            }
         }
 
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string CamOutputPath {
-            get { return ((string)(this["CamOutputPath"])); }
-            set { this["CamOutputPath"] = value; }
-        }
-
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool KeyboardEnabled {
-            get { return ((bool)(this["KeyboardEnabled"])); }
-            set { this["KeyboardEnabled"] = value; }
+            get {
+                return ((string)(this["CamOutputPath"]));
+            }
+            set {
+                this["CamOutputPath"] = value;
+            }
         }
 
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string CamProductsPath {
-            get { return ((string)(this["CamProductsPath"])); }
-            set { this["CamProductsPath"] = value; }
+            get {
+                return ((string)(this["CamProductsPath"]));
+            }
+            set {
+                this["CamProductsPath"] = value;
+            }
         }
 
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute(@"$(ProductDir)\..\Products.CAM\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string ProductPathPrefix {
-            get { return ((string)(this["ProductPathPrefix"])); }
-            set { this["ProductPathPrefix"] = value; }
+            get {
+                return ((string)(this["ProductPathPrefix"]));
+            }
+            set {
+                this["ProductPathPrefix"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool KeyboardEnabled {
+            get {
+                return ((bool)(this["KeyboardEnabled"]));
+            }
+            set {
+                this["KeyboardEnabled"] = value;
+            }
         }
 
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Normal")]
         public string WindowState {
-            get { return ((string)(this["WindowState"])); }
-            set { this["WindowState"] = value; }
+            get {
+                return ((string)(this["WindowState"]));
+            }
+            set {
+                this["WindowState"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("-1")]
+        public int WindowLeft {
+            get {
+                return ((int)(this["WindowLeft"]));
+            }
+            set {
+                this["WindowLeft"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("-1")]
+        public int WindowTop {
+            get {
+                return ((int)(this["WindowTop"]));
+            }
+            set {
+                this["WindowTop"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1100")]
+        public int WindowWidth {
+            get {
+                return ((int)(this["WindowWidth"]));
+            }
+            set {
+                this["WindowWidth"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("660")]
+        public int WindowHeight {
+            get {
+                return ((int)(this["WindowHeight"]));
+            }
+            set {
+                this["WindowHeight"] = value;
+            }
         }
     }
 }
