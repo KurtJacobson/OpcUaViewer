@@ -595,11 +595,12 @@ namespace OpcUaViewer
         private async void Form1_Shown(object sender, EventArgs e)
         {
             // Initialise WebView2 in the background — must not block OPC UA connect.
-            _ = docViewer.EnsureCoreWebView2Async();
             docViewer.CoreWebView2InitializationCompleted += (s2, e2) =>
             {
-                if (e2.IsSuccess) SetPdfStatus("Waiting for a product id...");
+                if (e2.IsSuccess)
+                    ClearPdfView("Waiting for a product ID...");
             };
+            _ = docViewer.EnsureCoreWebView2Async();
 
             string url = endpointTextBox.Text.Trim();
             if (string.IsNullOrEmpty(url)) return;
@@ -2057,7 +2058,20 @@ namespace OpcUaViewer
 
         private void ClearPdfView(string statusText)
         {
-            docViewer.CoreWebView2?.Navigate("about:blank");
+            if (docViewer.CoreWebView2 != null)
+            {
+                string htmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "no-document.html");
+                if (File.Exists(htmlPath))
+                {
+                    string escaped = System.Security.SecurityElement.Escape(statusText) ?? statusText;
+                    string html = File.ReadAllText(htmlPath).Replace("{{MESSAGE}}", escaped);
+                    docViewer.CoreWebView2.NavigateToString(html);
+                }
+                else
+                {
+                    docViewer.CoreWebView2.Navigate("about:blank");
+                }
+            }
             SetPdfStatus(statusText);
         }
 
