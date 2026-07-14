@@ -13,19 +13,17 @@
     <SupportedOSPlatformVersion>6.1</SupportedOSPlatformVersion>
     <!-- CA1416: Windows-only API use — this app is Windows-only by design -->
     <!-- CS0618: OPC UA sync helpers marked obsolete in favour of async overloads; safe to keep for now -->
-    <NoWarn>$(NoWarn);CA1416;CS0618</NoWarn>
+    <!-- CA1416: Windows-only APIs — app is Windows-only by design -->
+    <!-- CS0618: OPC UA sync helpers marked obsolete; safe to keep -->
+    <!-- MSB3277: WebView2 ships WPF+WinForms assemblies; WPF one causes a version conflict we don't care about -->
+    <NoWarn>$(NoWarn);CA1416;CS0618;MSB3277</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BitFaster.Caching" Version="2.6.0" />
-    <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4078.44" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.5.378.145" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Configuration" Version="1.5.378.145" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Core" Version="1.5.378.145" />
-    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Security.Certificates" Version="1.5.378.145" />
-    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Types" Version="1.5.378.145" />
   </ItemGroup>
 
   <ItemGroup>
