@@ -2,6 +2,10 @@
 
 A Windows desktop application that connects to an OPC UA server, monitors live variable values, and automatically displays the PDF document matching the current product ID.
 
+## Download
+
+[**Download latest installer**](https://github.com/kurtjacobson/OpcUaViewer-releases/releases/latest/download/OpcUaViewer-Setup.exe)
+
 ## Features
 
 - Connects to any OPC UA server endpoint (anonymous / no security)

@@ -64,6 +64,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          repository: kurtjacobson/OpcUaViewer-releases
+          token: ${{ secrets.RELEASES_TOKEN }}
           files: installer/OpcUaViewer-Setup.exe
           name: OPC UA Viewer ${{ steps.version.outputs.version }}
+          tag_name: ${{ github.ref_name }}
           generate_release_notes: true
