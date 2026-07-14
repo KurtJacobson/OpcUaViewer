@@ -6,7 +6,7 @@
 AppName=OPC UA Viewer
 AppVersion={#MyAppVersion}
 AppPublisher=Metalforming Inc.
-DefaultDirName={autopf}\OPC UA Viewer
+DefaultDirName={localappdata}\OPC UA Viewer
 DefaultGroupName=OPC UA Viewer
 OutputBaseFilename=OpcUaViewer-Setup
 OutputDir=installer
@@ -16,6 +16,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 WizardStyle=modern
 SetupIconFile=OpcUaViewer\Resources\app.ico
 UninstallDisplayIcon={app}\OpcUaViewer.exe
+PrivilegesRequired=lowest
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -28,7 +29,7 @@ Name: "startup"; Description: "Launch OPC UA Viewer when Windows &starts"; Group
 Source: "OpcUaViewer\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "Application Files\*"
 
 [Icons]
-Name: "{group}\OPC UA Viewer"; Filename: "{app}\OpcUaViewer.exe"
+Name: "{userprograms}\OPC UA Viewer"; Filename: "{app}\OpcUaViewer.exe"
 Name: "{userdesktop}\OPC UA Viewer"; Filename: "{app}\OpcUaViewer.exe"; Tasks: desktopicon
 Name: "{userstartup}\OPC UA Viewer"; Filename: "{app}\OpcUaViewer.exe"; Tasks: startup
 
