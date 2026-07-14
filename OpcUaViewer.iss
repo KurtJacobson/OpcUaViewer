@@ -5,7 +5,7 @@
 [Setup]
 AppName=OPC UA Viewer
 AppVersion={#MyAppVersion}
-AppPublisher=Metalforming Inc.
+AppPublisher=MetalForming LLC
 DefaultDirName={localappdata}\OPC UA Viewer
 DefaultGroupName=OPC UA Viewer
 OutputBaseFilename=OpcUaViewer-Setup
