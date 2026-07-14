@@ -600,7 +600,12 @@ namespace OpcUaViewer
                 if (e2.IsSuccess)
                     ClearPdfView("Waiting for a product ID...");
             };
-            _ = docViewer.EnsureCoreWebView2Async();
+            string userDataFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "OpcUaViewer", "WebView2");
+            var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(
+                browserExecutableFolder: null, userDataFolder: userDataFolder);
+            _ = docViewer.EnsureCoreWebView2Async(env);
 
             string url = endpointTextBox.Text.Trim();
             if (string.IsNullOrEmpty(url)) return;

@@ -45,31 +45,30 @@ Requires the [.NET 9 SDK](https://dotnet.microsoft.com/download).
 dotnet build OpcUaViewer\OpcUaViewer.csproj -c Release
 ```
 
+## Building the Installer
+
+Requires the [.NET 9 SDK](https://dotnet.microsoft.com/download) and [Inno Setup 6](https://jrsoftware.org/isinfo.php) (free).
+
+```
+.\build-installer.ps1
+```
+
+The script publishes the app and compiles the installer in one step. The installer is output to `installer\OpcUaViewer-Setup.exe`.
+
+The version is derived from git automatically:
+- If HEAD is exactly on a tag and the working tree is clean → uses the tag (e.g. `1.2.0`)
+- Otherwise → appends the short commit hash (e.g. `1.2.0-a3f9c1d`)
+
+Pass `-SkipPublish` to recompile the installer without republishing the app.
+
+The installer will:
+- Install to `Program Files\OPC UA Viewer\`
+- Add a Start Menu shortcut
+- Optionally add a Windows startup entry (user's choice during install)
+- Check for the WebView2 Runtime and show an error with a download link if missing
+
 ## Distribution
-
-### 1. Build the standalone EXE
-
-```
-dotnet publish OpcUaViewer\OpcUaViewer.csproj -r win-x64 -c Release --self-contained -p:PublishSingleFile=true -o publish-standalone
-```
-
-### 2. Prepare the target machine
 
 The app uses the **Evergreen** WebView2 Runtime (shipped with Microsoft Edge). If the target machine already has Edge installed, nothing else is needed. Otherwise, download and run the **Evergreen Bootstrapper** (~2 MB) from:
 
 > https://developer.microsoft.com/en-us/microsoft-edge/webview2/?form=MA13LH#download
-
-Run `MicrosoftEdgeWebview2Setup.exe` as administrator once; it installs and self-updates silently from then on.
-
-### 3. Ship the output folder
-
-```
-publish-standalone\
-  OpcUaViewer.exe          (self-contained, no .NET install needed)
-  WebView2Loader.dll
-  Microsoft.Web.WebView2.Core.dll
-  Microsoft.Web.WebView2.WinForms.dll
-  runtimes\
-```
-
-No installer required — copy the folder to the target machine and run `OpcUaViewer.exe`.
