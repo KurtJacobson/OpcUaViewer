@@ -1284,6 +1284,9 @@ namespace OpcUaViewer
             if (_autoRetrying)
             {
                 cts?.Cancel();
+                connectButton.Enabled   = false;
+                endpointTextBox.Enabled = true;
+                UpdateStatus("Cancelling...");
                 return;
             }
 
@@ -1326,10 +1329,13 @@ namespace OpcUaViewer
                 // to anything internet-facing. Swap for proper trust-list handling in production.
                 config.CertificateValidator.CertificateValidation += (s, ce) => { ce.Accept = true; };
 
-                // SelectEndpoint does a synchronous network probe — run it off the UI thread.
-                var endpointDescription = await Task.Run(
-                    () => CoreClientUtils.SelectEndpoint(config, endpointUrl, useSecurity: false),
-                    cancellationToken);
+                // SelectEndpoint is a synchronous network probe that ignores cancellation internally.
+                // Race it against the token so Cancel responds immediately; the probe is abandoned.
+                var probeTask = Task.Run(
+                    () => CoreClientUtils.SelectEndpoint(config, endpointUrl, useSecurity: false));
+                await Task.WhenAny(probeTask, Task.Delay(Timeout.Infinite, cancellationToken));
+                cancellationToken.ThrowIfCancellationRequested();
+                var endpointDescription = await probeTask;
 
                 var configuredEndpoint = new ConfiguredEndpoint(
                     null,
