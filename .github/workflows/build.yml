@@ -69,4 +69,5 @@ jobs:
           files: installer/OpcUaViewer-Setup.exe
           name: OPC UA Viewer ${{ steps.version.outputs.version }}
           tag_name: ${{ github.ref_name }}
-          generate_release_notes: true
+          target_commitish: main
+          generate_release_notes: false

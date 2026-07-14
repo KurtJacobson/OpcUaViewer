@@ -53,15 +53,17 @@ begin
 end;
 
 function InitializeSetup: Boolean;
+var
+  ErrorCode: Integer;
 begin
   if not WebView2IsInstalled then
   begin
     MsgBox(
       'Microsoft Edge WebView2 Runtime is required but was not found.' + #13#10 + #13#10 +
-      'Please install the Evergreen Bootstrapper from:' + #13#10 +
-      'https://developer.microsoft.com/microsoft-edge/webview2/' + #13#10 + #13#10 +
-      'Then retry this installer.',
+      'The download page will open in your browser.' + #13#10 +
+      'Install the Evergreen Bootstrapper, then retry this installer.',
       mbError, MB_OK);
+    ShellExec('open', 'https://developer.microsoft.com/microsoft-edge/webview2/', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
     Result := False;
   end
   else
