@@ -69,7 +69,6 @@ The installer will:
 - Install to `Program Files\OPC UA Viewer\`
 - Add a Start Menu shortcut
 - Optionally add a Windows startup entry (user's choice during install)
-- Check for the WebView2 Runtime and show an error with a download link if missing
 
 ## Distribution
 

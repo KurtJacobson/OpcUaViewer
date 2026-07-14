@@ -36,36 +36,3 @@ Name: "{userstartup}\OPC UA Viewer"; Filename: "{app}\OpcUaViewer.exe"; Tasks: s
 [Run]
 Filename: "{app}\OpcUaViewer.exe"; Description: "Launch OPC UA Viewer"; Flags: nowait postinstall skipifsilent
 
-[Code]
-function WebView2IsInstalled: Boolean;
-var
-  Version: String;
-begin
-  if RegQueryStringValue(HKEY_LOCAL_MACHINE,
-      'SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}',
-      'pv', Version) then begin Result := True; Exit; end;
-  if RegQueryStringValue(HKEY_LOCAL_MACHINE,
-      'SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}',
-      'pv', Version) then begin Result := True; Exit; end;
-  Result := RegQueryStringValue(HKEY_CURRENT_USER,
-      'Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}',
-      'pv', Version);
-end;
-
-function InitializeSetup: Boolean;
-var
-  ErrorCode: Integer;
-begin
-  if not WebView2IsInstalled then
-  begin
-    MsgBox(
-      'Microsoft Edge WebView2 Runtime is required but was not found.' + #13#10 + #13#10 +
-      'The download page will open in your browser.' + #13#10 +
-      'Install the Evergreen Bootstrapper, then retry this installer.',
-      mbError, MB_OK);
-    ShellExec('open', 'https://developer.microsoft.com/microsoft-edge/webview2/', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
-    Result := False;
-  end
-  else
-    Result := True;
-end;

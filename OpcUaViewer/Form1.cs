@@ -599,6 +599,8 @@ namespace OpcUaViewer
             {
                 if (e2.IsSuccess)
                     ClearPdfView("Waiting for a product ID...");
+                else
+                    ShowWebView2MissingPanel();
             };
             string userDataFolder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -2065,6 +2067,53 @@ namespace OpcUaViewer
             {
                 ClearPdfView("Failed to open PDF: " + ex.Message);
             }
+        }
+
+        private void ShowWebView2MissingPanel()
+        {
+            if (documentPanel.InvokeRequired)
+            {
+                documentPanel.Invoke(new Action(ShowWebView2MissingPanel));
+                return;
+            }
+
+            docViewer.Visible = false;
+
+            var panel = new System.Windows.Forms.Panel
+            {
+                Dock    = System.Windows.Forms.DockStyle.Fill,
+                Padding = new System.Windows.Forms.Padding(24),
+                BackColor = System.Drawing.Color.FromArgb(30, 30, 30),
+            };
+
+            var label = new System.Windows.Forms.Label
+            {
+                Text      = "Microsoft Edge WebView2 Runtime is required to display documents.\nPlease download and install it, then restart the application.",
+                ForeColor = System.Drawing.Color.FromArgb(200, 200, 200),
+                AutoSize  = false,
+                Dock      = System.Windows.Forms.DockStyle.Top,
+                Height    = 60,
+                TextAlign = System.Drawing.ContentAlignment.MiddleLeft,
+            };
+
+            var link = new System.Windows.Forms.LinkLabel
+            {
+                Text      = "Download WebView2 Runtime",
+                AutoSize  = true,
+                LinkColor = System.Drawing.Color.FromArgb(100, 180, 255),
+                Dock      = System.Windows.Forms.DockStyle.Top,
+                Padding   = new System.Windows.Forms.Padding(0, 8, 0, 0),
+            };
+            link.LinkClicked += (s, e) =>
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+                    "https://developer.microsoft.com/microsoft-edge/webview2/") { UseShellExecute = true });
+
+            panel.Controls.Add(link);
+            panel.Controls.Add(label);
+            documentPanel.Controls.Add(panel);
+            panel.BringToFront();
+
+            SetPdfStatus("WebView2 Runtime not installed");
         }
 
         private void ClearPdfView(string statusText)
