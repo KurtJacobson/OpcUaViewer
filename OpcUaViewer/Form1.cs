@@ -602,12 +602,20 @@ namespace OpcUaViewer
                 else
                     ShowWebView2MissingPanel();
             };
-            string userDataFolder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "OpcUaViewer", "WebView2");
-            var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(
-                browserExecutableFolder: null, userDataFolder: userDataFolder);
-            _ = docViewer.EnsureCoreWebView2Async(env);
+            try
+            {
+                string userDataFolder = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "OpcUaViewer", "WebView2");
+                var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(
+                    browserExecutableFolder: null, userDataFolder: userDataFolder);
+                _ = docViewer.EnsureCoreWebView2Async(env);
+            }
+            catch
+            {
+                // WebView2 Runtime not installed — show the fallback panel instead of crashing.
+                ShowWebView2MissingPanel();
+            }
 
             string url = endpointTextBox.Text.Trim();
             if (string.IsNullOrEmpty(url)) return;
