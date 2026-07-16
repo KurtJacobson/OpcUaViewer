@@ -2087,39 +2087,58 @@ namespace OpcUaViewer
 
             docViewer.Visible = false;
 
-            var panel = new System.Windows.Forms.Panel
+            var outer = new System.Windows.Forms.Panel
             {
-                Dock    = System.Windows.Forms.DockStyle.Fill,
-                Padding = new System.Windows.Forms.Padding(24),
-                BackColor = System.Drawing.Color.FromArgb(30, 30, 30),
+                Dock      = System.Windows.Forms.DockStyle.Fill,
+                BackColor = System.Drawing.Color.FromArgb(24, 24, 24),
+            };
+
+            var inner = new System.Windows.Forms.FlowLayoutPanel
+            {
+                AutoSize      = true,
+                AutoSizeMode  = System.Windows.Forms.AutoSizeMode.GrowAndShrink,
+                FlowDirection = System.Windows.Forms.FlowDirection.TopDown,
+                WrapContents  = false,
+                BackColor     = System.Drawing.Color.Transparent,
             };
 
             var label = new System.Windows.Forms.Label
             {
-                Text      = "Microsoft Edge WebView2 Runtime is required to display documents.\nPlease download and install it, then restart the application.",
-                ForeColor = System.Drawing.Color.FromArgb(200, 200, 200),
-                AutoSize  = false,
-                Dock      = System.Windows.Forms.DockStyle.Top,
-                Height    = 60,
-                TextAlign = System.Drawing.ContentAlignment.MiddleLeft,
+                Text      = "Microsoft Edge WebView2 Runtime is required to display documents.\r\nPlease download and install it, then restart the application.",
+                ForeColor = System.Drawing.Color.FromArgb(90, 90, 90),
+                AutoSize  = true,
+                TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
+                Margin    = new System.Windows.Forms.Padding(0, 0, 0, 8),
             };
 
             var link = new System.Windows.Forms.LinkLabel
             {
                 Text      = "Download WebView2 Runtime",
                 AutoSize  = true,
-                LinkColor = System.Drawing.Color.FromArgb(100, 180, 255),
-                Dock      = System.Windows.Forms.DockStyle.Top,
-                Padding   = new System.Windows.Forms.Padding(0, 8, 0, 0),
+                LinkColor = System.Drawing.Color.FromArgb(70, 120, 180),
+                TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
             };
             link.LinkClicked += (s, e) =>
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
                     "https://developer.microsoft.com/microsoft-edge/webview2/") { UseShellExecute = true });
 
-            panel.Controls.Add(link);
-            panel.Controls.Add(label);
-            documentPanel.Controls.Add(panel);
-            panel.BringToFront();
+            inner.Controls.Add(label);
+            inner.Controls.Add(link);
+            outer.Controls.Add(inner);
+
+            void CenterInner()
+            {
+                inner.Location = new System.Drawing.Point(
+                    (outer.ClientSize.Width  - inner.Width)  / 2,
+                    (outer.ClientSize.Height - inner.Height) / 2);
+            }
+
+            outer.Resize        += (s, e) => CenterInner();
+            inner.Resize        += (s, e) => CenterInner();
+            outer.HandleCreated += (s, e) => CenterInner();
+
+            documentPanel.Controls.Add(outer);
+            outer.BringToFront();
 
             SetPdfStatus("WebView2 Runtime not installed");
         }
