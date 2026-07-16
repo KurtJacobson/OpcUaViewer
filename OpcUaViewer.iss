@@ -3,6 +3,7 @@
 #endif
 
 [Setup]
+AppId={{A3F7C2B1-4D8E-4F9A-B6C3-2E1D5A7F8B9C}
 AppName=OPC UA Viewer
 AppVersion={#MyAppVersion}
 AppPublisher=MetalForming LLC
@@ -17,6 +18,7 @@ WizardStyle=modern
 SetupIconFile=OpcUaViewer\Resources\app.ico
 UninstallDisplayIcon={app}\OpcUaViewer.exe
 PrivilegesRequired=lowest
+CloseApplications=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
