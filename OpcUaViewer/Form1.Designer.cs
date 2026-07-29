@@ -60,6 +60,7 @@ namespace OpcUaViewer
             newGroupButton = new System.Windows.Forms.Button();
             editGroupButton = new System.Windows.Forms.Button();
             deleteGroupButton = new System.Windows.Forms.Button();
+            importCsvButton   = new System.Windows.Forms.Button();
             runGroupButton = new System.Windows.Forms.Button();
             cancelGroupButton = new System.Windows.Forms.Button();
             ordersDataGridView = new System.Windows.Forms.DataGridView();
@@ -338,6 +339,7 @@ namespace OpcUaViewer
             groupsButtonPanel.Controls.Add(newGroupButton);
             groupsButtonPanel.Controls.Add(editGroupButton);
             groupsButtonPanel.Controls.Add(deleteGroupButton);
+            groupsButtonPanel.Controls.Add(importCsvButton);
             groupsButtonPanel.Controls.Add(saveGroupButton);
             groupsButtonPanel.Controls.Add(cancelEditButton);
             groupsButtonPanel.Controls.Add(addProductsButton);
@@ -396,6 +398,22 @@ namespace OpcUaViewer
             deleteGroupButton.Text = "🗑 Delete Group";
             deleteGroupButton.UseVisualStyleBackColor = false;
             deleteGroupButton.Click += deleteGroupButton_Click;
+            //
+            // importCsvButton
+            //
+            importCsvButton.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            importCsvButton.BackColor = System.Drawing.Color.FromArgb(50, 80, 50);
+            importCsvButton.FlatAppearance.BorderSize = 0;
+            importCsvButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            importCsvButton.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            importCsvButton.ForeColor = System.Drawing.Color.White;
+            importCsvButton.Location = new System.Drawing.Point(572, 8);
+            importCsvButton.Name = "importCsvButton";
+            importCsvButton.Size = new System.Drawing.Size(160, 40);
+            importCsvButton.TabIndex = 5;
+            importCsvButton.Text = "⬆ Import CSV...";
+            importCsvButton.UseVisualStyleBackColor = false;
+            importCsvButton.Click += importCsvButton_Click;
             //
             // saveGroupButton (edit mode — hidden by default)
             //
@@ -1089,6 +1107,7 @@ namespace OpcUaViewer
         private System.Windows.Forms.Button newGroupButton;
         private System.Windows.Forms.Button editGroupButton;
         private System.Windows.Forms.Button deleteGroupButton;
+        private System.Windows.Forms.Button importCsvButton;
         private System.Windows.Forms.Button runGroupButton;
         private System.Windows.Forms.Button cancelGroupButton;
         private System.Windows.Forms.Panel groupsPanel;

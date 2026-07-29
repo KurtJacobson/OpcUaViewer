@@ -1092,6 +1092,121 @@ namespace OpcUaViewer
             }
         }
 
+        private void importCsvButton_Click(object sender, EventArgs e)
+        {
+            string camFolder = camFolderTextBox.Text.Trim();
+            if (string.IsNullOrEmpty(camFolder) || !Directory.Exists(camFolder))
+            {
+                DarkMessageBox.Show(this, "CAM folder not configured. Set it in Settings.",
+                    "Import CSV", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string prodFolder = camProductsTextBox.Text.Trim();
+
+            using var dlg = new CsvImportDialog();
+            if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+            List<CsvImportDialog.CsvRow> rows;
+            try
+            {
+                rows = CsvImportDialog.ParseCsv(dlg.CsvFilePath, dlg.ColPartName, dlg.ColLength, dlg.ColWidth);
+            }
+            catch (Exception ex)
+            {
+                DarkMessageBox.Show(this, "Failed to read CSV:\n\n" + ex.Message,
+                    "Import CSV", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (rows.Count == 0)
+            {
+                DarkMessageBox.Show(this,
+                    $"No rows found. Make sure the column name \"{dlg.ColPartName}\" matches your CSV header.",
+                    "Import CSV", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Build .p3cam XML
+            var ns = System.Xml.Linq.XNamespace.Get("http://eu.schroedergroup.de/xml-schemas/P3CAMSchema.xsd");
+            var root = new System.Xml.Linq.XElement(ns + "POS3000CAMData",
+                new System.Xml.Linq.XAttribute("OrderId",      dlg.GroupName),
+                new System.Xml.Linq.XAttribute("CustomerName", ""),
+                new System.Xml.Linq.XAttribute("InfoText",     ""),
+                new System.Xml.Linq.XAttribute("Quantity",     rows.Count),
+                new System.Xml.Linq.XAttribute("Completed",    0));
+
+            int skipped = 0;
+            foreach (var row in rows)
+            {
+                // Try to find matching zip in products folder
+                string prodId = row.PartName;
+                if (!string.IsNullOrEmpty(prodFolder) && Directory.Exists(prodFolder))
+                {
+                    string candidate = Path.Combine(prodFolder, row.PartName + ".zip");
+                    if (File.Exists(candidate))
+                        prodId = Path.GetFileName(candidate);
+                    else
+                    {
+                        // Try case-insensitive search
+                        var match = Directory.GetFiles(prodFolder, "*.zip")
+                            .FirstOrDefault(f => string.Equals(
+                                Path.GetFileNameWithoutExtension(f), row.PartName,
+                                StringComparison.OrdinalIgnoreCase));
+                        if (match != null) prodId = Path.GetFileName(match);
+                    }
+                }
+
+                // Build Parameters: convert inches → mm for storage
+                var lwParts = new System.Collections.Generic.List<string>();
+                if (!string.IsNullOrEmpty(row.Length)) lwParts.Add($"L={InToMm(row.Length)}");
+                if (!string.IsNullOrEmpty(row.Width))  lwParts.Add($"W={InToMm(row.Width)}");
+                string parameters = string.Join(";", lwParts);
+
+                var product = new System.Xml.Linq.XElement(ns + "Product",
+                    new System.Xml.Linq.XAttribute("ListId",       row.PartName),
+                    new System.Xml.Linq.XAttribute("ProductId",    prodId),
+                    new System.Xml.Linq.XAttribute("Quantity",     1),
+                    new System.Xml.Linq.XAttribute("Completed",    0),
+                    new System.Xml.Linq.XAttribute("LoadError",    0),
+                    new System.Xml.Linq.XAttribute("InfoText",     ""),
+                    new System.Xml.Linq.XAttribute("DetailsHtml",  ""),
+                    new System.Xml.Linq.XAttribute("OperatorHint", ""),
+                    new System.Xml.Linq.XAttribute("UserData",     ""));
+
+                if (!string.IsNullOrEmpty(parameters))
+                {
+                    product.Add(new System.Xml.Linq.XElement(ns + "Modifications",
+                        new System.Xml.Linq.XElement(ns + "Property",
+                            new System.Xml.Linq.XAttribute("Parameters",         parameters),
+                            new System.Xml.Linq.XAttribute("PhysicalMaterialId", ""),
+                            new System.Xml.Linq.XAttribute("MaterialThickness",  ""))));
+                }
+
+                root.Add(product);
+            }
+
+            string sanitized = string.Join("_", dlg.GroupName.Split(Path.GetInvalidFileNameChars()));
+            string outPath   = Path.Combine(camFolder, sanitized + ".p3cam");
+
+            try
+            {
+                var doc = new System.Xml.Linq.XDocument(
+                    new System.Xml.Linq.XDeclaration("1.0", "utf-8", null), root);
+                doc.Save(outPath);
+                LoadCamFiles(outPath);
+
+                string msg = $"Created group '{dlg.GroupName}' with {rows.Count} product(s).";
+                if (skipped > 0) msg += $"\n\n{skipped} row(s) skipped (no matching product file).";
+                DarkMessageBox.Show(this, msg, "Import CSV", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                DarkMessageBox.Show(this, "Failed to save group:\n\n" + ex.Message,
+                    "Import CSV", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void camOutputBrowseButton_Click(object sender, EventArgs e)
         {
             using var dialog = new FolderBrowserDialog();

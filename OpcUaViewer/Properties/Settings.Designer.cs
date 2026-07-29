@@ -166,5 +166,29 @@ namespace OpcUaViewer.Properties {
                 this["WindowHeight"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Part Name")]
+        public string CsvPartNameColumn {
+            get { return ((string)(this["CsvPartNameColumn"])); }
+            set { this["CsvPartNameColumn"] = value; }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Length")]
+        public string CsvLengthColumn {
+            get { return ((string)(this["CsvLengthColumn"])); }
+            set { this["CsvLengthColumn"] = value; }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Width")]
+        public string CsvWidthColumn {
+            get { return ((string)(this["CsvWidthColumn"])); }
+            set { this["CsvWidthColumn"] = value; }
+        }
     }
 }
