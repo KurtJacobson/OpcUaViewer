@@ -826,8 +826,8 @@ namespace OpcUaViewer
                 {
                     string key = part[..eq].Trim();
                     string val = part[(eq + 1)..].Trim();
-                    if (key == "L")      length = MmToIn(val);
-                    else if (key == "W") width  = MmToIn(val);
+                    if (key == "L" || key == "Length")     length = MmToIn(val);
+                    else if (key == "W" || key == "Width") width  = MmToIn(val);
                 }
             }
             return (length, width);
@@ -950,8 +950,8 @@ namespace OpcUaViewer
                 string length    = row.Cells["prodLengthColumn"].Value?.ToString() ?? "";
                 string width     = row.Cells["prodWidthColumn"].Value?.ToString()  ?? "";
                 var lwParts      = new System.Collections.Generic.List<string>();
-                if (!string.IsNullOrEmpty(length)) lwParts.Add($"L={InToMm(length)}");
-                if (!string.IsNullOrEmpty(width))  lwParts.Add($"W={InToMm(width)}");
+                if (!string.IsNullOrEmpty(length)) lwParts.Add($"Length={InToMm(length)}");
+                if (!string.IsNullOrEmpty(width))  lwParts.Add($"Width={InToMm(width)}");
                 string parameters = string.Join(";", lwParts);
                 string material   = row.Cells["prodMaterialColumn"].Value?.ToString()  ?? "";
                 string thickness  = InToMm(row.Cells["prodThicknessColumn"].Value?.ToString() ?? "");
@@ -1110,7 +1110,15 @@ namespace OpcUaViewer
             List<CsvImportDialog.CsvRow> rows;
             try
             {
-                rows = CsvImportDialog.ParseCsv(dlg.CsvFilePath, dlg.ColPartName, dlg.ColLength, dlg.ColWidth);
+                rows = CsvImportDialog.ParseCsv(
+                    dlg.CsvFilePath,
+                    dlg.ColPartName,    dlg.ColPartNameRegex,
+                    dlg.ColTemplateFile, dlg.ColTemplateRegex,
+                    dlg.ColQty,          dlg.ColQtyRegex,
+                    dlg.ColMaterial,     dlg.ColMaterialRegex,
+                    dlg.ColThickness,    dlg.ColThicknessRegex,
+                    dlg.ColLength,       dlg.ColLengthRegex,
+                    dlg.ColWidth,        dlg.ColWidthRegex);
             }
             catch (Exception ex)
             {
@@ -1139,19 +1147,20 @@ namespace OpcUaViewer
             int skipped = 0;
             foreach (var row in rows)
             {
-                // Try to find matching zip in products folder
-                string prodId = row.PartName;
+                // Resolve ProductId: use template value if provided, else fall back to ListId
+                string lookupName = !string.IsNullOrEmpty(row.ProductIdRaw) ? row.ProductIdRaw : row.ListId;
+                string prodId     = lookupName;
+
                 if (!string.IsNullOrEmpty(prodFolder) && Directory.Exists(prodFolder))
                 {
-                    string candidate = Path.Combine(prodFolder, row.PartName + ".zip");
+                    string candidate = Path.Combine(prodFolder, lookupName + ".zip");
                     if (File.Exists(candidate))
                         prodId = Path.GetFileName(candidate);
                     else
                     {
-                        // Try case-insensitive search
                         var match = Directory.GetFiles(prodFolder, "*.zip")
                             .FirstOrDefault(f => string.Equals(
-                                Path.GetFileNameWithoutExtension(f), row.PartName,
+                                Path.GetFileNameWithoutExtension(f), lookupName,
                                 StringComparison.OrdinalIgnoreCase));
                         if (match != null) prodId = Path.GetFileName(match);
                     }
@@ -1159,14 +1168,19 @@ namespace OpcUaViewer
 
                 // Build Parameters: convert inches → mm for storage
                 var lwParts = new System.Collections.Generic.List<string>();
-                if (!string.IsNullOrEmpty(row.Length)) lwParts.Add($"L={InToMm(row.Length)}");
-                if (!string.IsNullOrEmpty(row.Width))  lwParts.Add($"W={InToMm(row.Width)}");
+                if (!string.IsNullOrEmpty(row.Length)) lwParts.Add($"Length={InToMm(row.Length)}");
+                if (!string.IsNullOrEmpty(row.Width))  lwParts.Add($"Width={InToMm(row.Width)}");
                 string parameters = string.Join(";", lwParts);
 
+                int.TryParse(row.Qty, out int rowQty);
+                if (rowQty <= 0) rowQty = 1;
+                string material  = row.Material;
+                string thickMm   = InToMm(row.Thickness);
+
                 var product = new System.Xml.Linq.XElement(ns + "Product",
-                    new System.Xml.Linq.XAttribute("ListId",       row.PartName),
+                    new System.Xml.Linq.XAttribute("ListId",       row.ListId),
                     new System.Xml.Linq.XAttribute("ProductId",    prodId),
-                    new System.Xml.Linq.XAttribute("Quantity",     1),
+                    new System.Xml.Linq.XAttribute("Quantity",     rowQty),
                     new System.Xml.Linq.XAttribute("Completed",    0),
                     new System.Xml.Linq.XAttribute("LoadError",    0),
                     new System.Xml.Linq.XAttribute("InfoText",     ""),
@@ -1174,13 +1188,13 @@ namespace OpcUaViewer
                     new System.Xml.Linq.XAttribute("OperatorHint", ""),
                     new System.Xml.Linq.XAttribute("UserData",     ""));
 
-                if (!string.IsNullOrEmpty(parameters))
+                if (!string.IsNullOrEmpty(parameters) || !string.IsNullOrEmpty(material) || !string.IsNullOrEmpty(thickMm))
                 {
                     product.Add(new System.Xml.Linq.XElement(ns + "Modifications",
                         new System.Xml.Linq.XElement(ns + "Property",
                             new System.Xml.Linq.XAttribute("Parameters",         parameters),
-                            new System.Xml.Linq.XAttribute("PhysicalMaterialId", ""),
-                            new System.Xml.Linq.XAttribute("MaterialThickness",  ""))));
+                            new System.Xml.Linq.XAttribute("PhysicalMaterialId", material),
+                            new System.Xml.Linq.XAttribute("MaterialThickness",  thickMm))));
                 }
 
                 root.Add(product);
@@ -1343,54 +1357,47 @@ namespace OpcUaViewer
 
         private void LoadSettings()
         {
-            string savedFolder = Properties.Settings.Default.PdfFolderPath;
-            if (!string.IsNullOrWhiteSpace(savedFolder))
-                pdfFolderTextBox.Text = savedFolder;
+            AppSettings.Load();
+            var s = AppSettings.Current;
 
-            string savedUrl = Properties.Settings.Default.EndpointUrl;
-            if (!string.IsNullOrWhiteSpace(savedUrl))
-                endpointTextBox.Text = savedUrl;
+            if (!string.IsNullOrWhiteSpace(s.PdfFolderPath))
+                pdfFolderTextBox.Text = s.PdfFolderPath;
+            if (!string.IsNullOrWhiteSpace(s.EndpointUrl))
+                endpointTextBox.Text = s.EndpointUrl;
+            if (!string.IsNullOrWhiteSpace(s.CamFolderPath))
+                camFolderTextBox.Text = s.CamFolderPath;
+            if (!string.IsNullOrWhiteSpace(s.CamOutputPath))
+                camOutputTextBox.Text = s.CamOutputPath;
+            if (!string.IsNullOrWhiteSpace(s.CamProductsPath))
+                camProductsTextBox.Text = s.CamProductsPath;
 
-            string savedCamFolder = Properties.Settings.Default.CamFolderPath;
-            if (!string.IsNullOrWhiteSpace(savedCamFolder))
-                camFolderTextBox.Text = savedCamFolder;
-
-            string savedCamOutput = Properties.Settings.Default.CamOutputPath;
-            if (!string.IsNullOrWhiteSpace(savedCamOutput))
-                camOutputTextBox.Text = savedCamOutput;
-
-            string savedCamProducts = Properties.Settings.Default.CamProductsPath;
-            if (!string.IsNullOrWhiteSpace(savedCamProducts))
-                camProductsTextBox.Text = savedCamProducts;
-
-            camProductPrefixTextBox.Text = Properties.Settings.Default.ProductPathPrefix;
-
-            keyboardToggle.Checked = Properties.Settings.Default.KeyboardEnabled;
+            camProductPrefixTextBox.Text = s.ProductPathPrefix;
+            keyboardToggle.Checked       = s.KeyboardEnabled;
 
             RestoreWindowPlacement();
         }
 
         private void SaveSettings()
         {
-            Properties.Settings.Default.PdfFolderPath  = pdfFolderTextBox.Text.Trim();
-            Properties.Settings.Default.EndpointUrl    = endpointTextBox.Text.Trim();
-            Properties.Settings.Default.CamFolderPath  = camFolderTextBox.Text.Trim();
-            Properties.Settings.Default.CamOutputPath    = camOutputTextBox.Text.Trim();
-            Properties.Settings.Default.CamProductsPath    = camProductsTextBox.Text.Trim();
-            Properties.Settings.Default.ProductPathPrefix  = camProductPrefixTextBox.Text;
-            Properties.Settings.Default.KeyboardEnabled = keyboardToggle.Checked;
+            var s = AppSettings.Current;
+            s.PdfFolderPath   = pdfFolderTextBox.Text.Trim();
+            s.EndpointUrl     = endpointTextBox.Text.Trim();
+            s.CamFolderPath   = camFolderTextBox.Text.Trim();
+            s.CamOutputPath   = camOutputTextBox.Text.Trim();
+            s.CamProductsPath = camProductsTextBox.Text.Trim();
+            s.ProductPathPrefix = camProductPrefixTextBox.Text;
+            s.KeyboardEnabled = keyboardToggle.Checked;
             SaveWindowPlacement();
-            Properties.Settings.Default.Save();
+            AppSettings.Save();
         }
 
         private void RestoreWindowPlacement()
         {
-            var s = Properties.Settings.Default;
+            var s = AppSettings.Current;
             if (s.WindowLeft == -1) return; // first run — use designer defaults
 
             var saved = new System.Drawing.Rectangle(s.WindowLeft, s.WindowTop, s.WindowWidth, s.WindowHeight);
 
-            // Only restore if the saved bounds overlap at least one connected screen.
             bool onScreen = false;
             foreach (var screen in Screen.AllScreens)
             {
@@ -1430,10 +1437,9 @@ namespace OpcUaViewer
 
         private void SaveWindowPlacement()
         {
-            var s = Properties.Settings.Default;
+            var s = AppSettings.Current;
             s.WindowState = WindowState.ToString();
 
-            // Save the restored (non-maximised) bounds so we know where to place the window next time.
             var bounds = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
             s.WindowLeft   = bounds.Left;
             s.WindowTop    = bounds.Top;

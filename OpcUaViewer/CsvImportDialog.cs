@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Globalization;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace OpcUaViewer
 {
     internal sealed class CsvImportDialog : Form
     {
-        // ── colours matching the rest of the app ──────────────────────────────
+        // ── colours ───────────────────────────────────────────────────────────
         private static readonly Color BgColor     = Color.FromArgb(52, 52, 52);
         private static readonly Color TitleBg     = Color.FromArgb(36, 36, 36);
         private static readonly Color ButtonBarBg = Color.FromArgb(42, 42, 42);
@@ -20,18 +20,43 @@ namespace OpcUaViewer
         private static readonly Color AccentColor = Color.FromArgb(255, 140, 0);
         private static readonly Color ButtonGray  = Color.FromArgb(70, 70, 70);
 
+        // layout
+        private const int W      = 720;
+        private const int HPad   = 20;
+        private const int LabelW = 158;
+        private const int ColX   = HPad + LabelW;
+        private const int ColW   = 175;
+        private const int RegexX = ColX + ColW + 10;
+        private const int RegexW = W - RegexX - HPad;
+        private const int RowH   = 36;
+
         // ── public results ────────────────────────────────────────────────────
-        public string GroupName      { get; private set; } = "";
-        public string CsvFilePath    { get; private set; } = "";
-        public string ColPartName    { get; private set; } = "";
-        public string ColLength      { get; private set; } = "";
-        public string ColWidth       { get; private set; } = "";
+        public string GroupName           { get; private set; } = "";
+        public string CsvFilePath         { get; private set; } = "";
+        public string ColPartName         { get; private set; } = "";
+        public string ColPartNameRegex    { get; private set; } = "";
+        public string ColTemplateFile     { get; private set; } = "";
+        public string ColTemplateRegex    { get; private set; } = "";
+        public string ColLength           { get; private set; } = "";
+        public string ColLengthRegex      { get; private set; } = "";
+        public string ColWidth            { get; private set; } = "";
+        public string ColWidthRegex       { get; private set; } = "";
+        public string ColQty              { get; private set; } = "";
+        public string ColQtyRegex         { get; private set; } = "";
+        public string ColMaterial         { get; private set; } = "";
+        public string ColMaterialRegex    { get; private set; } = "";
+        public string ColThickness        { get; private set; } = "";
+        public string ColThicknessRegex   { get; private set; } = "";
 
         // ── controls ──────────────────────────────────────────────────────────
         private readonly TextBox _csvPathBox;
-        private readonly TextBox _colPartNameBox;
-        private readonly TextBox _colLengthBox;
-        private readonly TextBox _colWidthBox;
+        private readonly TextBox _colPartNameBox,     _colPartNameRegexBox;
+        private readonly TextBox _colTemplateFileBox, _colTemplateRegexBox;
+        private readonly TextBox _colLengthBox,       _colLengthRegexBox;
+        private readonly TextBox _colWidthBox,        _colWidthRegexBox;
+        private readonly TextBox _colQtyBox,          _colQtyRegexBox;
+        private readonly TextBox _colMaterialBox,     _colMaterialRegexBox;
+        private readonly TextBox _colThicknessBox,    _colThicknessRegexBox;
         private readonly TextBox _groupNameBox;
 
         public CsvImportDialog()
@@ -42,17 +67,17 @@ namespace OpcUaViewer
             Font            = new Font("Segoe UI", 11F);
             ShowInTaskbar   = false;
             KeyPreview      = true;
-            KeyDown        += (s, e) =>
+            KeyDown        += (_, e) =>
             {
                 if (e.KeyCode == Keys.Escape) { DialogResult = DialogResult.Cancel; Close(); }
             };
-            Paint += (s, e) =>
+            Paint += (_, e) =>
             {
                 using var pen = new Pen(BorderColor, 2);
                 e.Graphics.DrawRectangle(pen, 1, 1, Width - 2, Height - 2);
             };
 
-            const int W = 520, hPad = 24, rowH = 36, labelW = 110, inputW = 340;
+            var s = AppSettings.Current;
 
             // ── title bar ─────────────────────────────────────────────────────
             var titleBar = new Panel { Dock = DockStyle.Top, Height = 44, BackColor = TitleBg };
@@ -72,16 +97,15 @@ namespace OpcUaViewer
             var divider = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = BorderColor };
 
             // ── body ──────────────────────────────────────────────────────────
-            int y = 56;
-
-            var body = new Panel { BackColor = BgColor, Location = new Point(0, 0), Size = new Size(W, 1000) };
+            var body = new Panel { BackColor = BgColor, Location = new Point(0, 45), Size = new Size(W, 1000) };
+            int y = HPad;
 
             // CSV file row
-            AddLabel(body, "CSV File:", hPad, y, labelW);
-            _csvPathBox = AddInput(body, hPad + labelW, y, inputW - 56, rowH);
+            AddLabel(body, "CSV File:", HPad, y, LabelW);
+            _csvPathBox = AddInput(body, ColX, y, ColW + 10 + RegexW - 94, RowH);
             _csvPathBox.ReadOnly = true;
-            var browseBtn = DarkButton("Browse...", ButtonGray, hPad + labelW + inputW - 52, y, 90, rowH);
-            browseBtn.Click += (s, e) =>
+            var browseBtn = DarkButton("Browse...", ButtonGray, W - HPad - 86, y, 86, RowH);
+            browseBtn.Click += (_, _) =>
             {
                 using var dlg = new OpenFileDialog
                 {
@@ -92,35 +116,65 @@ namespace OpcUaViewer
                     _csvPathBox.Text = dlg.FileName;
             };
             body.Controls.Add(browseBtn);
-            y += rowH + 8;
+            y += RowH + 12;
 
-            // Section header
-            AddSectionLabel(body, "Column Names", hPad, y);
-            y += 28;
+            // Section: Column Mapping
+            AddSectionLabel(body, "Column Mapping", HPad, y);
+            AddSubHeader(body, "Column Name", ColX, y);
+            AddSubHeader(body, "RegEx — optional, capture group extracts a substring", RegexX, y);
+            y += 24;
 
-            // Column mapping rows
-            AddLabel(body, "Part Name:", hPad, y, labelW);
-            _colPartNameBox = AddInput(body, hPad + labelW, y, 200, rowH);
-            _colPartNameBox.Text = Properties.Settings.Default.CsvPartNameColumn;
-            y += rowH + 8;
+            var tip = new ToolTip { AutoPopDelay = 8000, InitialDelay = 300, ShowAlways = true };
 
-            AddLabel(body, "Length:", hPad, y, labelW);
-            _colLengthBox = AddInput(body, hPad + labelW, y, 200, rowH);
-            _colLengthBox.Text = Properties.Settings.Default.CsvLengthColumn;
-            y += rowH + 8;
+            // helper to add a mapped row
+            (TextBox col, TextBox rx) AddMappedRow(string label, string colVal, string rxVal,
+                string colTip, string rxTip)
+            {
+                AddLabel(body, label, HPad, y, LabelW);
+                var colBox = AddInput(body, ColX,   y, ColW,   RowH, colVal);
+                var rxBox  = AddInput(body, RegexX, y, RegexW, RowH, rxVal);
+                if (!string.IsNullOrEmpty(colTip)) tip.SetToolTip(colBox, colTip);
+                if (!string.IsNullOrEmpty(rxTip))  tip.SetToolTip(rxBox,  rxTip);
+                y += RowH + 8;
+                return (colBox, rxBox);
+            }
 
-            AddLabel(body, "Width:", hPad, y, labelW);
-            _colWidthBox = AddInput(body, hPad + labelW, y, 200, rowH);
-            _colWidthBox.Text = Properties.Settings.Default.CsvWidthColumn;
-            y += rowH + 16;
+            (_colPartNameBox,     _colPartNameRegexBox)  = AddMappedRow("Part Name:",     s.CsvPartNameColumn,     s.CsvPartNameRegex,
+                "",
+                "Applied to the Part Name column value.\nResult becomes the List ID.\nExample: ^([A-Z]+-\\d+)");
 
-            // Section header
-            AddSectionLabel(body, "Group", hPad, y);
-            y += 28;
+            (_colTemplateFileBox, _colTemplateRegexBox)  = AddMappedRow("Template Name:", s.CsvTemplateFileColumn, s.CsvTemplateFileRegex,
+                "Column that identifies the template/product file.\nLeave blank to use Part Name as the Product ID.",
+                "Applied to the Template column value.\nResult is used to look up the product zip.\nExample: ([^\\\\/]+)(?:\\.zip)?$");
 
-            AddLabel(body, "Name:", hPad, y, labelW);
-            _groupNameBox = AddInput(body, hPad + labelW, y, 200, rowH);
-            y += rowH + 20;
+            (_colQtyBox,          _colQtyRegexBox)        = AddMappedRow("Quantity:",      s.CsvQtyColumn,          s.CsvQtyRegex,
+                "",
+                "Applied to the Quantity column value to extract a number.\nExample: (\\d+)");
+
+            (_colMaterialBox,     _colMaterialRegexBox)   = AddMappedRow("Material:",      s.CsvMaterialColumn,     s.CsvMaterialRegex,
+                "",
+                "Applied to the Material column value.\nExample: ^(\\S+)  takes the first word.");
+
+            (_colThicknessBox,    _colThicknessRegexBox)  = AddMappedRow("Thickness:",     s.CsvThicknessColumn,    s.CsvThicknessRegex,
+                "",
+                "Applied to the Thickness column value to extract a number (inches).\nExample: (\\d+\\.?\\d*)");
+
+            (_colLengthBox,       _colLengthRegexBox)     = AddMappedRow("Length:",        s.CsvLengthColumn,       s.CsvLengthRegex,
+                "",
+                "Applied to the Length column value to extract a number (inches).\nExample: L=(\\d+\\.?\\d*)");
+
+            (_colWidthBox,        _colWidthRegexBox)      = AddMappedRow("Width:",         s.CsvWidthColumn,        s.CsvWidthRegex,
+                "",
+                "Applied to the Width column value to extract a number (inches).\nExample: W=(\\d+\\.?\\d*)");
+
+            y += 6;
+
+            // Section: Group
+            AddSectionLabel(body, "Group", HPad, y);
+            y += 24;
+            AddLabel(body, "Name:", HPad, y, LabelW);
+            _groupNameBox = AddInput(body, ColX, y, ColW, RowH);
+            y += RowH + HPad;
 
             body.Size = new Size(W, y);
 
@@ -132,17 +186,16 @@ namespace OpcUaViewer
                 Location  = new Point(0, 44 + 1 + y),
                 Size      = new Size(W, barH)
             };
-            var barDiv = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = BorderColor };
-            buttonBar.Controls.Add(barDiv);
+            buttonBar.Controls.Add(new Panel { Dock = DockStyle.Top, Height = 1, BackColor = BorderColor });
 
-            var cancelBtn = DarkButton("Cancel", ButtonGray, W - 24 - 150, (barH - 44) / 2 + 1, 150, 44);
-            cancelBtn.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
+            var cancelBtn = DarkButton("Cancel", ButtonGray, W - HPad - 150, (barH - 44) / 2 + 1, 150, 44);
+            cancelBtn.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
             buttonBar.Controls.Add(cancelBtn);
 
-            var importBtn = DarkButton("Import", AccentColor, W - 24 - 150 - 10 - 150, (barH - 44) / 2 + 1, 150, 44);
-            importBtn.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            var importBtn = DarkButton("Import", AccentColor, W - HPad - 310, (barH - 44) / 2 + 1, 150, 44);
+            importBtn.Font   = new Font("Segoe UI", 11F, FontStyle.Bold);
             importBtn.Click += ImportBtn_Click;
-            AcceptButton = importBtn;
+            AcceptButton     = importBtn;
             buttonBar.Controls.Add(importBtn);
 
             ClientSize = new Size(W, 44 + 1 + y + barH);
@@ -153,31 +206,75 @@ namespace OpcUaViewer
         {
             if (string.IsNullOrWhiteSpace(_csvPathBox.Text) || !File.Exists(_csvPathBox.Text))
             {
-                DarkMessageBox.Show(this, "Please select a CSV file.", "Import CSV");
-                return;
+                DarkMessageBox.Show(this, "Please select a CSV file.", "Import CSV"); return;
             }
             if (string.IsNullOrWhiteSpace(_colPartNameBox.Text))
             {
-                DarkMessageBox.Show(this, "Part Name column name is required.", "Import CSV");
-                return;
+                DarkMessageBox.Show(this, "Part Name column is required.", "Import CSV"); return;
             }
             if (string.IsNullOrWhiteSpace(_groupNameBox.Text))
             {
-                DarkMessageBox.Show(this, "Please enter a group name.", "Import CSV");
-                return;
+                DarkMessageBox.Show(this, "Please enter a group name.", "Import CSV"); return;
             }
 
-            // Save column settings
-            Properties.Settings.Default.CsvPartNameColumn = _colPartNameBox.Text.Trim();
-            Properties.Settings.Default.CsvLengthColumn   = _colLengthBox.Text.Trim();
-            Properties.Settings.Default.CsvWidthColumn    = _colWidthBox.Text.Trim();
-            Properties.Settings.Default.Save();
+            // Validate all regex fields
+            var regexFields = new[]
+            {
+                (_colPartNameRegexBox,   "Part Name RegEx"),
+                (_colTemplateRegexBox,   "Template RegEx"),
+                (_colQtyRegexBox,        "Quantity RegEx"),
+                (_colMaterialRegexBox,   "Material RegEx"),
+                (_colThicknessRegexBox,  "Thickness RegEx"),
+                (_colLengthRegexBox,     "Length RegEx"),
+                (_colWidthRegexBox,      "Width RegEx"),
+            };
+            foreach (var (box, label) in regexFields)
+            {
+                string pat = box.Text.Trim();
+                if (string.IsNullOrEmpty(pat)) continue;
+                try { _ = new Regex(pat); }
+                catch (ArgumentException ex)
+                {
+                    DarkMessageBox.Show(this, $"Invalid {label}:\n\n{ex.Message}", "Import CSV",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+            }
 
-            GroupName   = _groupNameBox.Text.Trim();
-            CsvFilePath = _csvPathBox.Text.Trim();
-            ColPartName = _colPartNameBox.Text.Trim();
-            ColLength   = _colLengthBox.Text.Trim();
-            ColWidth    = _colWidthBox.Text.Trim();
+            // Persist
+            var s = AppSettings.Current;
+            s.CsvPartNameColumn     = _colPartNameBox.Text.Trim();
+            s.CsvPartNameRegex      = _colPartNameRegexBox.Text.Trim();
+            s.CsvTemplateFileColumn = _colTemplateFileBox.Text.Trim();
+            s.CsvTemplateFileRegex  = _colTemplateRegexBox.Text.Trim();
+            s.CsvQtyColumn          = _colQtyBox.Text.Trim();
+            s.CsvQtyRegex           = _colQtyRegexBox.Text.Trim();
+            s.CsvMaterialColumn     = _colMaterialBox.Text.Trim();
+            s.CsvMaterialRegex      = _colMaterialRegexBox.Text.Trim();
+            s.CsvThicknessColumn    = _colThicknessBox.Text.Trim();
+            s.CsvThicknessRegex     = _colThicknessRegexBox.Text.Trim();
+            s.CsvLengthColumn       = _colLengthBox.Text.Trim();
+            s.CsvLengthRegex        = _colLengthRegexBox.Text.Trim();
+            s.CsvWidthColumn        = _colWidthBox.Text.Trim();
+            s.CsvWidthRegex         = _colWidthRegexBox.Text.Trim();
+            AppSettings.Save();
+
+            GroupName          = _groupNameBox.Text.Trim();
+            CsvFilePath        = _csvPathBox.Text.Trim();
+            ColPartName        = s.CsvPartNameColumn;
+            ColPartNameRegex   = s.CsvPartNameRegex;
+            ColTemplateFile    = s.CsvTemplateFileColumn;
+            ColTemplateRegex   = s.CsvTemplateFileRegex;
+            ColQty             = s.CsvQtyColumn;
+            ColQtyRegex        = s.CsvQtyRegex;
+            ColMaterial        = s.CsvMaterialColumn;
+            ColMaterialRegex   = s.CsvMaterialRegex;
+            ColThickness       = s.CsvThicknessColumn;
+            ColThicknessRegex  = s.CsvThicknessRegex;
+            ColLength          = s.CsvLengthColumn;
+            ColLengthRegex     = s.CsvLengthRegex;
+            ColWidth           = s.CsvWidthColumn;
+            ColWidthRegex      = s.CsvWidthRegex;
 
             DialogResult = DialogResult.OK;
             Close();
@@ -185,18 +282,33 @@ namespace OpcUaViewer
 
         // ── CSV parsing ───────────────────────────────────────────────────────
 
-        public record CsvRow(string PartName, string Length, string Width);
+        public record CsvRow(
+            string ListId, string ProductIdRaw,
+            string Qty, string Material, string Thickness,
+            string Length, string Width);
 
-        public static List<CsvRow> ParseCsv(string path, string colPartName, string colLength, string colWidth)
+        public static List<CsvRow> ParseCsv(
+            string path,
+            string colPartName,  string partNameRegex,
+            string colTemplate,  string templateRegex,
+            string colQty,       string qtyRegex,
+            string colMaterial,  string materialRegex,
+            string colThickness, string thicknessRegex,
+            string colLength,    string lengthRegex,
+            string colWidth,     string widthRegex)
         {
-            var rows = new List<CsvRow>();
-            var lines = File.ReadAllLines(path);
+            var rows    = new List<CsvRow>();
+            var lines   = File.ReadAllLines(path);
             if (lines.Length < 2) return rows;
 
-            var headers = SplitCsvLine(lines[0]);
-            int idxPart = FindCol(headers, colPartName);
-            int idxLen  = FindCol(headers, colLength);
-            int idxWid  = FindCol(headers, colWidth);
+            var headers  = SplitCsvLine(lines[0]);
+            int idxPart  = FindCol(headers, colPartName);
+            int idxTmpl  = FindCol(headers, colTemplate);
+            int idxQty   = FindCol(headers, colQty);
+            int idxMat   = FindCol(headers, colMaterial);
+            int idxThk   = FindCol(headers, colThickness);
+            int idxLen   = FindCol(headers, colLength);
+            int idxWid   = FindCol(headers, colWidth);
 
             if (idxPart < 0) return rows;
 
@@ -204,14 +316,34 @@ namespace OpcUaViewer
             {
                 var cols = SplitCsvLine(lines[i]);
                 if (cols.Count == 0) continue;
-                string part = idxPart < cols.Count ? cols[idxPart] : "";
-                if (string.IsNullOrWhiteSpace(part)) continue;
-                string len = idxLen >= 0 && idxLen < cols.Count ? cols[idxLen] : "";
-                string wid = idxWid >= 0 && idxWid < cols.Count ? cols[idxWid] : "";
-                rows.Add(new CsvRow(part.Trim(), len.Trim(), wid.Trim()));
+
+                string rawPart = Get(cols, idxPart);
+                if (string.IsNullOrWhiteSpace(rawPart)) continue;
+
+                rows.Add(new CsvRow(
+                    ListId:       ApplyRegex(rawPart,           partNameRegex),
+                    ProductIdRaw: ApplyRegex(Get(cols, idxTmpl), templateRegex),
+                    Qty:          ApplyRegex(Get(cols, idxQty),  qtyRegex),
+                    Material:     ApplyRegex(Get(cols, idxMat),  materialRegex),
+                    Thickness:    ApplyRegex(Get(cols, idxThk),  thicknessRegex),
+                    Length:       ApplyRegex(Get(cols, idxLen),  lengthRegex),
+                    Width:        ApplyRegex(Get(cols, idxWid),  widthRegex)));
             }
             return rows;
         }
+
+        // Empty pattern → return value as-is. Pattern with capture group → group 1. No match → "".
+        public static string ApplyRegex(string value, string pattern)
+        {
+            if (string.IsNullOrWhiteSpace(pattern)) return value.Trim();
+            if (string.IsNullOrWhiteSpace(value))   return "";
+            var m = Regex.Match(value, pattern);
+            if (!m.Success) return "";
+            return m.Groups.Count > 1 ? m.Groups[1].Value : m.Value;
+        }
+
+        private static string Get(List<string> cols, int idx)
+            => idx >= 0 && idx < cols.Count ? cols[idx].Trim() : "";
 
         private static int FindCol(List<string> headers, string name)
         {
@@ -224,14 +356,14 @@ namespace OpcUaViewer
 
         private static List<string> SplitCsvLine(string line)
         {
-            var result = new List<string>();
+            var result    = new List<string>();
             bool inQuotes = false;
-            var sb = new System.Text.StringBuilder();
+            var sb        = new System.Text.StringBuilder();
             foreach (char c in line)
             {
-                if (c == '"') { inQuotes = !inQuotes; }
+                if (c == '"')                   inQuotes = !inQuotes;
                 else if (c == ',' && !inQuotes) { result.Add(sb.ToString()); sb.Clear(); }
-                else { sb.Append(c); }
+                else                            sb.Append(c);
             }
             result.Add(sb.ToString());
             return result;
@@ -242,12 +374,10 @@ namespace OpcUaViewer
         private Point _dragStart;
         private void TitleBar_MouseDown(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left)
-            {
-                _dragStart = e.Location;
-                ((Control)sender).MouseMove += TitleBar_MouseMove;
-                ((Control)sender).MouseUp   += TitleBar_MouseUp;
-            }
+            if (e.Button != MouseButtons.Left) return;
+            _dragStart = e.Location;
+            ((Control)sender).MouseMove += TitleBar_MouseMove;
+            ((Control)sender).MouseUp   += TitleBar_MouseUp;
         }
         private void TitleBar_MouseMove(object sender, MouseEventArgs e)
         {
@@ -263,58 +393,47 @@ namespace OpcUaViewer
         // ── helpers ───────────────────────────────────────────────────────────
 
         private void AddLabel(Panel parent, string text, int x, int y, int w)
-        {
-            parent.Controls.Add(new Label
+            => parent.Controls.Add(new Label
             {
-                Text      = text,
-                Location  = new Point(x, y + 8),
-                Size      = new Size(w, 24),
-                ForeColor = SubText,
-                Font      = new Font("Segoe UI", 10F),
-                BackColor = Color.Transparent
+                Text = text, Location = new Point(x, y + 8), Size = new Size(w, 24),
+                ForeColor = SubText, Font = new Font("Segoe UI", 10F), BackColor = Color.Transparent
             });
-        }
 
         private void AddSectionLabel(Panel parent, string text, int x, int y)
-        {
-            parent.Controls.Add(new Label
+            => parent.Controls.Add(new Label
             {
-                Text      = text,
-                Location  = new Point(x, y),
-                Size      = new Size(300, 22),
+                Text = text, Location = new Point(x, y), Size = new Size(400, 22),
                 ForeColor = Color.FromArgb(200, 200, 200),
-                Font      = new Font("Segoe UI", 10F, FontStyle.Bold),
-                BackColor = Color.Transparent
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold), BackColor = Color.Transparent
             });
-        }
 
-        private TextBox AddInput(Panel parent, int x, int y, int w, int h)
+        private void AddSubHeader(Panel parent, string text, int x, int y)
+            => parent.Controls.Add(new Label
+            {
+                Text = text, Location = new Point(x, y + 4), Size = new Size(RegexW + ColW, 18),
+                ForeColor = Color.FromArgb(120, 120, 120),
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Italic), BackColor = Color.Transparent
+            });
+
+        private TextBox AddInput(Panel parent, int x, int y, int w, int h, string text = "")
         {
             var tb = new TextBox
             {
-                Location    = new Point(x, y + 2),
-                Size        = new Size(w, h),
-                BackColor   = InputBg,
-                ForeColor   = TextColor,
-                BorderStyle = BorderStyle.FixedSingle,
-                Font        = new Font("Segoe UI", 11F)
+                Text = text, Location = new Point(x, y + 2), Size = new Size(w, h),
+                BackColor = InputBg, ForeColor = TextColor,
+                BorderStyle = BorderStyle.FixedSingle, Font = new Font("Segoe UI", 11F)
             };
             parent.Controls.Add(tb);
             return tb;
         }
 
-        private Button DarkButton(string text, Color bg, int x, int y, int w, int h)
+        private static Button DarkButton(string text, Color bg, int x, int y, int w, int h)
         {
             var btn = new Button
             {
-                Text                    = text,
-                BackColor               = bg,
-                ForeColor               = Color.White,
-                FlatStyle               = FlatStyle.Flat,
-                Font                    = new Font("Segoe UI", 11F),
-                UseVisualStyleBackColor = false,
-                Location                = new Point(x, y),
-                Size                    = new Size(w, h)
+                Text = text, BackColor = bg, ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 11F),
+                UseVisualStyleBackColor = false, Location = new Point(x, y), Size = new Size(w, h)
             };
             btn.FlatAppearance.BorderSize = 0;
             return btn;
