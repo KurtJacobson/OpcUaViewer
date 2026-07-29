@@ -79,12 +79,14 @@ namespace OpcUaViewer
             cancelEditButton    = new System.Windows.Forms.Button();
             addProductsButton   = new System.Windows.Forms.Button();
             removeProductsButton= new System.Windows.Forms.Button();
-            prodPathColumn      = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            prodPathColumn       = new System.Windows.Forms.DataGridViewTextBoxColumn();
             productsDataGridView = new System.Windows.Forms.DataGridView();
-            prodListIdColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            prodNameColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            prodMaterialColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            prodListIdColumn    = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            prodNameColumn      = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            prodMaterialColumn  = new System.Windows.Forms.DataGridViewTextBoxColumn();
             prodThicknessColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            prodLengthColumn    = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            prodWidthColumn     = new System.Windows.Forms.DataGridViewTextBoxColumn();
             prodQtyColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             prodRunQtyColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             prodHintColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -584,10 +586,10 @@ namespace OpcUaViewer
             productsDataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
                 prodListIdColumn, prodNameColumn,
                 prodMaterialColumn, prodThicknessColumn, prodQtyColumn,
-                prodRunQtyColumn, prodHintColumn, prodPathColumn });
+                prodRunQtyColumn, prodHintColumn, prodLengthColumn, prodWidthColumn, prodPathColumn });
             prodPathColumn.HeaderText = "Product Path"; prodPathColumn.Name = "prodPathColumn";
             prodPathColumn.ReadOnly = true;
-            prodPathColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            prodPathColumn.Visible = false;
             productsDataGridView.AllowUserToResizeColumns = true;
 
             var prodHeaderStyle = new System.Windows.Forms.DataGridViewCellStyle();
@@ -616,13 +618,15 @@ namespace OpcUaViewer
             prodRunQtyStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
             prodRunQtyColumn.DefaultCellStyle = prodRunQtyStyle;
 
-            prodListIdColumn.HeaderText = "List ID";         prodListIdColumn.Name = "prodListIdColumn";     prodListIdColumn.ReadOnly = true;  prodListIdColumn.Width = 110;
-            prodNameColumn.HeaderText = "Product";           prodNameColumn.Name = "prodNameColumn";         prodNameColumn.ReadOnly = true;  prodNameColumn.Width = 200;
-            prodMaterialColumn.HeaderText = "Material";      prodMaterialColumn.Name = "prodMaterialColumn"; prodMaterialColumn.ReadOnly = true;  prodMaterialColumn.Width = 90;
-            prodThicknessColumn.HeaderText = "Thickness";    prodThicknessColumn.Name = "prodThicknessColumn"; prodThicknessColumn.ReadOnly = true; prodThicknessColumn.Width = 80;
-            prodQtyColumn.HeaderText = "Order Qty";          prodQtyColumn.Name = "prodQtyColumn";           prodQtyColumn.ReadOnly = true;  prodQtyColumn.Width = 80;
-            prodRunQtyColumn.HeaderText = "Run Qty";         prodRunQtyColumn.Name = "prodRunQtyColumn";     prodRunQtyColumn.ReadOnly = false; prodRunQtyColumn.Width = 80;
-            prodHintColumn.HeaderText = "Hint";              prodHintColumn.Name = "prodHintColumn";         prodHintColumn.ReadOnly = true;  prodHintColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            prodListIdColumn.HeaderText = "List ID";    prodListIdColumn.Name = "prodListIdColumn";   prodListIdColumn.ReadOnly = true;  prodListIdColumn.Width = 80;
+            prodNameColumn.HeaderText = "Product";      prodNameColumn.Name = "prodNameColumn";       prodNameColumn.ReadOnly = true;    prodNameColumn.Width = 150;
+            prodMaterialColumn.HeaderText = "Material"; prodMaterialColumn.Name = "prodMaterialColumn"; prodMaterialColumn.ReadOnly = true; prodMaterialColumn.Width = 70;
+            prodThicknessColumn.HeaderText = "Thk";     prodThicknessColumn.Name = "prodThicknessColumn"; prodThicknessColumn.ReadOnly = true; prodThicknessColumn.Width = 55;
+            prodQtyColumn.HeaderText = "Ord Qty";       prodQtyColumn.Name = "prodQtyColumn";         prodQtyColumn.ReadOnly = true;     prodQtyColumn.Width = 65;
+            prodRunQtyColumn.HeaderText = "Run Qty";    prodRunQtyColumn.Name = "prodRunQtyColumn";   prodRunQtyColumn.ReadOnly = false;  prodRunQtyColumn.Width = 65;
+            prodHintColumn.HeaderText = "Hint";         prodHintColumn.Name = "prodHintColumn";       prodHintColumn.ReadOnly = true;    prodHintColumn.Width = 80;
+            prodLengthColumn.HeaderText = "Length";     prodLengthColumn.Name = "prodLengthColumn";   prodLengthColumn.ReadOnly = true;  prodLengthColumn.Width = 75;
+            prodWidthColumn.HeaderText = "Width";       prodWidthColumn.Name = "prodWidthColumn";     prodWidthColumn.ReadOnly = true;   prodWidthColumn.MinimumWidth = 65; prodWidthColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
 
             productsDataGridView.CellValidating += productsDataGridView_CellValidating;
             //
@@ -1112,6 +1116,8 @@ namespace OpcUaViewer
         private System.Windows.Forms.DataGridViewTextBoxColumn prodQtyColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn prodRunQtyColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn prodHintColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn prodLengthColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn prodWidthColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn prodPathColumn;
     }
 }

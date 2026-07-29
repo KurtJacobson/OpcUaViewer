@@ -480,10 +480,12 @@ namespace OpcUaViewer
             SetInfoEditStyle(true);
 
             // Make relevant product columns editable
-            productsDataGridView.Columns["prodListIdColumn"].ReadOnly = false;
-            productsDataGridView.Columns["prodNameColumn"].ReadOnly   = false;
-            productsDataGridView.Columns["prodQtyColumn"].ReadOnly    = false;
-            productsDataGridView.Columns["prodHintColumn"].ReadOnly   = false;
+            productsDataGridView.Columns["prodListIdColumn"].ReadOnly    = false;
+            productsDataGridView.Columns["prodNameColumn"].ReadOnly      = false;
+            productsDataGridView.Columns["prodQtyColumn"].ReadOnly       = false;
+            productsDataGridView.Columns["prodHintColumn"].ReadOnly      = false;
+            productsDataGridView.Columns["prodLengthColumn"].ReadOnly   = false;
+            productsDataGridView.Columns["prodWidthColumn"].ReadOnly    = false;
 
             // Swap buttons
             newGroupButton.Visible       = false;
@@ -507,10 +509,12 @@ namespace OpcUaViewer
 
             SetInfoEditStyle(false);
 
-            productsDataGridView.Columns["prodListIdColumn"].ReadOnly = true;
-            productsDataGridView.Columns["prodNameColumn"].ReadOnly   = true;
-            productsDataGridView.Columns["prodQtyColumn"].ReadOnly    = true;
-            productsDataGridView.Columns["prodHintColumn"].ReadOnly   = true;
+            productsDataGridView.Columns["prodListIdColumn"].ReadOnly    = true;
+            productsDataGridView.Columns["prodNameColumn"].ReadOnly      = true;
+            productsDataGridView.Columns["prodQtyColumn"].ReadOnly       = true;
+            productsDataGridView.Columns["prodHintColumn"].ReadOnly      = true;
+            productsDataGridView.Columns["prodLengthColumn"].ReadOnly   = true;
+            productsDataGridView.Columns["prodWidthColumn"].ReadOnly    = true;
 
             newGroupButton.Visible       = true;
             editGroupButton.Visible      = true;
@@ -569,8 +573,9 @@ namespace OpcUaViewer
                     }
                 }
             }
-            else if (_editMode && (col == "prodQtyColumn" || col == "prodListIdColumn" ||
-                                   col == "prodNameColumn" || col == "prodHintColumn"))
+            else if (_editMode && (col == "prodQtyColumn"    || col == "prodListIdColumn" ||
+                                   col == "prodNameColumn"  || col == "prodHintColumn"  ||
+                                   col == "prodLengthColumn" || col == "prodWidthColumn"))
             {
                 e.Cancel = true;
                 int row = e.RowIndex, colIdx = e.ColumnIndex;
@@ -801,12 +806,47 @@ namespace OpcUaViewer
             productsDataGridView.Rows.Clear();
             foreach (var p in order.Products)
             {
+                var (pLen, pWid) = ParseLW(p.Parameters);
                 productsDataGridView.Rows.Add(
                     p.ListId, p.DisplayName,
-                    p.MaterialId, p.MaterialThickness,
+                    p.MaterialId, MmToIn(p.MaterialThickness),
                     p.Quantity, p.RunQuantity, p.OperatorHint,
+                    pLen, pWid,
                     p.ProductId);   // hidden prodPathColumn
             }
+        }
+
+        private static (string length, string width) ParseLW(string parameters)
+        {
+            string length = "", width = "";
+            foreach (var part in (parameters ?? "").Split(';'))
+            {
+                int eq = part.IndexOf('=');
+                if (eq > 0)
+                {
+                    string key = part[..eq].Trim();
+                    string val = part[(eq + 1)..].Trim();
+                    if (key == "L")      length = MmToIn(val);
+                    else if (key == "W") width  = MmToIn(val);
+                }
+            }
+            return (length, width);
+        }
+
+        private static string MmToIn(string mmStr)
+        {
+            if (double.TryParse(mmStr, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out double mm))
+                return (mm / 25.4).ToString("0.000", System.Globalization.CultureInfo.InvariantCulture);
+            return mmStr;
+        }
+
+        private static string InToMm(string inStr)
+        {
+            if (double.TryParse(inStr, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out double inches))
+                return (inches * 25.4).ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
+            return inStr;
         }
 
         private void productsDataGridView_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
@@ -904,12 +944,21 @@ namespace OpcUaViewer
 
             foreach (DataGridViewRow row in productsDataGridView.Rows)
             {
-                string listId = row.Cells["prodListIdColumn"].Value?.ToString() ?? "";
-                string prodId = row.Cells["prodPathColumn"].Value?.ToString() ?? "";
-                string hint   = row.Cells["prodHintColumn"].Value?.ToString() ?? "";
+                string listId     = row.Cells["prodListIdColumn"].Value?.ToString()    ?? "";
+                string prodId     = row.Cells["prodPathColumn"].Value?.ToString()      ?? "";
+                string hint      = row.Cells["prodHintColumn"].Value?.ToString()   ?? "";
+                string length    = row.Cells["prodLengthColumn"].Value?.ToString() ?? "";
+                string width     = row.Cells["prodWidthColumn"].Value?.ToString()  ?? "";
+                var lwParts      = new System.Collections.Generic.List<string>();
+                if (!string.IsNullOrEmpty(length)) lwParts.Add($"L={InToMm(length)}");
+                if (!string.IsNullOrEmpty(width))  lwParts.Add($"W={InToMm(width)}");
+                string parameters = string.Join(";", lwParts);
+                string material   = row.Cells["prodMaterialColumn"].Value?.ToString()  ?? "";
+                string thickness  = InToMm(row.Cells["prodThicknessColumn"].Value?.ToString() ?? "");
                 int.TryParse(row.Cells["prodQtyColumn"].Value?.ToString(), out int rowQty);
                 if (rowQty <= 0) rowQty = 1;
-                root.Add(new XElement(ns + "Product",
+
+                var product = new XElement(ns + "Product",
                     new XAttribute("ListId",       listId),
                     new XAttribute("ProductId",    prodId),
                     new XAttribute("Quantity",     rowQty),
@@ -918,7 +967,18 @@ namespace OpcUaViewer
                     new XAttribute("InfoText",     ""),
                     new XAttribute("DetailsHtml",  ""),
                     new XAttribute("OperatorHint", hint),
-                    new XAttribute("UserData",     "")));
+                    new XAttribute("UserData",     ""));
+
+                if (!string.IsNullOrEmpty(parameters) || !string.IsNullOrEmpty(material) || !string.IsNullOrEmpty(thickness))
+                {
+                    product.Add(new XElement(ns + "Modifications",
+                        new XElement(ns + "Property",
+                            new XAttribute("Parameters",         parameters),
+                            new XAttribute("PhysicalMaterialId", material),
+                            new XAttribute("MaterialThickness",  thickness))));
+                }
+
+                root.Add(product);
             }
 
             if (!fileName.EndsWith(".p3cam", StringComparison.OrdinalIgnoreCase))
@@ -994,7 +1054,7 @@ namespace OpcUaViewer
                 bool dup = productsDataGridView.Rows.Cast<DataGridViewRow>()
                     .Any(r => r.Cells["prodListIdColumn"].Value?.ToString() == listId);
                 if (!dup)
-                    productsDataGridView.Rows.Add(listId, listId, "", "", 1, 1, "", prodId);
+                    productsDataGridView.Rows.Add(listId, listId, "", "", 1, 1, "", "", "", prodId);
             }
         }
 
