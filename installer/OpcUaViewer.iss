@@ -38,7 +38,8 @@ Name: "docview"; Description: "Document Viewer Plugin — display product PDF do
 Name: "example"; Description: "Example Plugin — developer reference plugin"; Types: full
 
 [Tasks]
-Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional icons:"
+Name: "desktopicon"; Description: "Create a &desktop shortcut";    GroupDescription: "Additional icons:"
+Name: "startup";     Description: "Start automatically with Windows"; GroupDescription: "Startup:"
 
 [Files]
 ; ── Core application ─────────────────────────────────────────────────────────
@@ -60,6 +61,11 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: deskto
 
 [Run]
 Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent
+
+[Registry]
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; \
+    ValueType: string; ValueName: "{#AppName}"; ValueData: """{app}\{#AppExeName}"""; \
+    Flags: uninsdeletevalue; Tasks: startup
 
 [UninstallDelete]
 ; Remove user data only if they confirm — don't auto-delete settings
