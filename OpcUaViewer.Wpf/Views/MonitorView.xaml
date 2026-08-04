@@ -1,0 +1,73 @@
+<UserControl x:Class="OpcUaViewer.Wpf.Views.MonitorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:tabs="clr-namespace:OpcUaViewer.Wpf.Tabs"
+             Background="{StaticResource BgBrush}">
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" Text="OPC UA Monitor" Style="{StaticResource PanelHeaderStyle}"
+                   FontSize="16" Margin="0,0,0,12"/>
+
+        <!-- Connection bar -->
+        <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                CornerRadius="4" Padding="12,8" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Status dot -->
+                <Ellipse Grid.Column="0">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse" BasedOn="{StaticResource StatusDotStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+
+                <TextBlock Grid.Column="2" Text="{Binding StatusText}"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource TextSubBrush}"/>
+
+                <TextBox Grid.Column="4" Text="{Binding EndpointUrl, UpdateSourceTrigger=PropertyChanged}"
+                         Width="280" VerticalAlignment="Center"/>
+
+                <Button Grid.Column="6"
+                        Content="Connect"
+                        Command="{Binding ConnectCommand}"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Padding="20,6"/>
+            </Grid>
+        </Border>
+
+        <!-- Node grid -->
+        <DataGrid Grid.Row="2"
+                  ItemsSource="{Binding Nodes}"
+                  IsReadOnly="True">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Node ID"   Binding="{Binding NodeId}"   Width="220"/>
+                <DataGridTextColumn Header="Name"      Binding="{Binding Name}"     Width="180"/>
+                <DataGridTextColumn Header="Data Type" Binding="{Binding DataType}" Width="100"/>
+                <DataGridTextColumn Header="Value"     Binding="{Binding Value}"    Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

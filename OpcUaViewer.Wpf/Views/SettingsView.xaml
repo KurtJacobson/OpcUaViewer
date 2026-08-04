@@ -1,0 +1,66 @@
+<UserControl x:Class="OpcUaViewer.Wpf.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource BgBrush}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,24" MaxWidth="640" HorizontalAlignment="Left">
+
+            <TextBlock Text="Settings" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,24"/>
+
+            <!-- OPC UA -->
+            <TextBlock Text="OPC UA CONNECTION" Style="{StaticResource PanelHeaderStyle}"
+                       Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+            <Border Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                    CornerRadius="4" Padding="16" Margin="0,0,0,20">
+                <StackPanel>
+                    <Label Content="Endpoint URL"/>
+                    <TextBox Text="{Binding EndpointUrl, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Folders -->
+            <TextBlock Text="FOLDER PATHS" Style="{StaticResource PanelHeaderStyle}"
+                       Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+            <Border Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                    CornerRadius="4" Padding="16" Margin="0,0,0,20">
+                <StackPanel>
+                    <Label Content="CAM Folder"/>
+                    <TextBox Text="{Binding CamFolderPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
+
+                    <Label Content="CAM Output Path"/>
+                    <TextBox Text="{Binding CamOutputPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
+
+                    <Label Content="CAM Products Path"/>
+                    <TextBox Text="{Binding CamProductsPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
+
+                    <Label Content="PDF / Document Folder"/>
+                    <TextBox Text="{Binding PdfFolderPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
+
+                    <Label Content="Product Path Prefix"/>
+                    <TextBox Text="{Binding ProductPathPrefix, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- UI Options -->
+            <TextBlock Text="UI OPTIONS" Style="{StaticResource PanelHeaderStyle}"
+                       Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+            <Border Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                    CornerRadius="4" Padding="16" Margin="0,0,0,24">
+                <CheckBox Content="Enable on-screen keyboard"
+                          IsChecked="{Binding KeyboardEnabled}"/>
+            </Border>
+
+            <!-- Save -->
+            <Button Content="Save Settings"
+                    Command="{Binding SaveCommand}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    HorizontalAlignment="Left"
+                    Padding="28,10"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
