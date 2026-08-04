@@ -62,7 +62,7 @@ public partial class App : Application
             "OpcUaViewer", "plugins");
         if (!Directory.Exists(pluginDir)) yield break;
 
-        foreach (string dll in Directory.GetFiles(pluginDir, "*.dll"))
+        foreach (string dll in Directory.GetFiles(pluginDir, "*.dll", SearchOption.AllDirectories))
         {
             Assembly asm;
             try { asm = Assembly.LoadFrom(dll); }
