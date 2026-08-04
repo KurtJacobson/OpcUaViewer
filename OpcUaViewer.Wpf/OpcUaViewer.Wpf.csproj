@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpcUaViewer.Core\OpcUaViewer.Core.csproj" />
+    <ProjectReference Include="..\OpcUaViewer.Theme\OpcUaViewer.Theme.csproj" />
   </ItemGroup>
 
   <ItemGroup>

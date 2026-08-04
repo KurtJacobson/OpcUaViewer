@@ -9,11 +9,11 @@
   <ItemGroup>
     <ProjectReference Include="..\OpcUaViewer.Core\OpcUaViewer.Core.csproj"/>
     <ProjectReference Include="..\OpcUaViewer.Theme\OpcUaViewer.Theme.csproj"/>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4078.44"/>
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Exclude from XAML compilation, then embed as a raw resource for runtime loading -->
-    <Page Remove="ExampleResources.xaml"/>
-    <EmbeddedResource Include="ExampleResources.xaml"/>
+    <Page Remove="DocumentResources.xaml"/>
+    <EmbeddedResource Include="DocumentResources.xaml"/>
   </ItemGroup>
 </Project>

@@ -4,11 +4,9 @@ using System.Windows;
 using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Services;
 using OpcUaViewer.Core.Settings;
-using OpcUaViewer.Wpf.Infrastructure;
 
-namespace OpcUaViewer.Wpf.Tabs;
+namespace OpcUaViewer.Plugin.Document;
 
-/// <summary>Document viewer tab — renders PDF files via WebView2.</summary>
 public class DocumentTab : ViewModelBase, IAppTab
 {
     public string Title => "Document";

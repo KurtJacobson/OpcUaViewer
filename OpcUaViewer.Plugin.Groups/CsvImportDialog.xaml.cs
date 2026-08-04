@@ -5,17 +5,16 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Win32;
+using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Settings;
 
-namespace OpcUaViewer.Wpf.Dialogs;
+namespace OpcUaViewer.Plugin.Groups;
 
 public partial class CsvImportDialog : Window
 {
-    // ── Public results ────────────────────────────────────────────────────────
-    public string GroupName { get; private set; } = "";
+    public string GroupName   { get; private set; } = "";
     public string CsvFilePath { get; private set; } = "";
 
-    // ── Mapping row VM ────────────────────────────────────────────────────────
     private sealed class MappingRow : INotifyPropertyChanged
     {
         private string _column = "", _regex = "";
@@ -59,29 +58,22 @@ public partial class CsvImportDialog : Window
         MappingRows.ItemsSource = _rows;
     }
 
-    // ── Handlers ──────────────────────────────────────────────────────────────
-
     private void Browse_Click(object sender, RoutedEventArgs e)
     {
-        var dlg = new OpenFileDialog
-        {
-            Title  = "Select CSV file",
-            Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*"
-        };
-        if (dlg.ShowDialog(this) == true)
-            CsvPathBox.Text = dlg.FileName;
+        var dlg = new OpenFileDialog { Title = "Select CSV file", Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*" };
+        if (dlg.ShowDialog(this) == true) CsvPathBox.Text = dlg.FileName;
     }
 
     private void Import_Click(object sender, RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(CsvPathBox.Text) || !File.Exists(CsvPathBox.Text))
-        { AppDialog.Warn("Please select a CSV file.", "Import CSV"); return; }
+        { DialogService.Current.Warn("Please select a CSV file.", "Import CSV"); return; }
 
         if (string.IsNullOrWhiteSpace(_rows[0].Column))
-        { AppDialog.Warn("Part Name column is required.", "Import CSV"); return; }
+        { DialogService.Current.Warn("Part Name column is required.", "Import CSV"); return; }
 
         if (string.IsNullOrWhiteSpace(GroupNameBox.Text))
-        { AppDialog.Warn("Please enter a group name.", "Import CSV"); return; }
+        { DialogService.Current.Warn("Please enter a group name.", "Import CSV"); return; }
 
         string[] regexLabels = ["Part Name RegEx", "Template RegEx", "Quantity RegEx",
                                  "Material RegEx", "Thickness RegEx", "Length RegEx", "Width RegEx"];
@@ -91,12 +83,9 @@ public partial class CsvImportDialog : Window
             if (string.IsNullOrEmpty(pat)) continue;
             try { _ = new Regex(pat); }
             catch (ArgumentException ex)
-            {
-                AppDialog.Warn($"Invalid {regexLabels[i]}:\n\n{ex.Message}", "Import CSV"); return;
-            }
+            { DialogService.Current.Warn($"Invalid {regexLabels[i]}:\n\n{ex.Message}", "Import CSV"); return; }
         }
 
-        // Persist mapping to settings
         var s = AppSettings.Current;
         s.CsvPartNameColumn     = _rows[0].Column.Trim(); s.CsvPartNameRegex      = _rows[0].Regex.Trim();
         s.CsvTemplateFileColumn = _rows[1].Column.Trim(); s.CsvTemplateFileRegex  = _rows[1].Regex.Trim();
@@ -109,7 +98,6 @@ public partial class CsvImportDialog : Window
 
         GroupName   = GroupNameBox.Text.Trim();
         CsvFilePath = CsvPathBox.Text.Trim();
-
         DialogResult = true;
         Close();
     }

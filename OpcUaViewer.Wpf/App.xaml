@@ -5,7 +5,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Theme/DarkTheme.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/OpcUaViewer.Theme;component/DarkTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <infra:InverseBoolConverter         x:Key="InverseBool"/>
             <infra:BooleanToVisibilityConverter x:Key="BoolToVis"/>

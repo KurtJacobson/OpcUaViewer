@@ -12,8 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Exclude from XAML compilation, then embed as a raw resource for runtime loading -->
-    <Page Remove="ExampleResources.xaml"/>
-    <EmbeddedResource Include="ExampleResources.xaml"/>
+    <Page Remove="GroupsResources.xaml"/>
+    <EmbeddedResource Include="GroupsResources.xaml"/>
   </ItemGroup>
 </Project>

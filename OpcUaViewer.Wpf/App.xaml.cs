@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Markup;
@@ -8,6 +9,7 @@ using Microsoft.Web.WebView2.Core;
 using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Services;
 using OpcUaViewer.Core.Settings;
+using OpcUaViewer.Wpf.Dialogs;
 using OpcUaViewer.Wpf.Tabs;
 using OpcUaViewer.Wpf.ViewModels;
 
@@ -21,6 +23,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
         AppSettings.Load();
+        DialogService.Current = new WpfDialogService();
 
         // Pre-warm the WebView2 browser process so it's ready before the Document tab is opened
         _ = CoreWebView2Environment.CreateAsync();
@@ -30,8 +33,6 @@ public partial class App : Application
         IAppTab[] builtIn =
         [
             new MonitorTab(_opc),
-            new GroupsTab(_opc),
-            new DocumentTab(_opc),
             new SettingsTab(),
         ];
 
@@ -57,12 +58,19 @@ public partial class App : Application
 
     private IEnumerable<IAppTab> LoadPlugins(OpcUaService opc)
     {
-        string pluginDir = Path.Combine(
+        // Built-in plugins ship alongside the executable in a "plugins" subfolder
+        string appPluginDir = Path.Combine(AppContext.BaseDirectory, "plugins");
+
+        // Customer plugins live in AppData so updates don't wipe them
+        string userPluginDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "OpcUaViewer", "plugins");
-        if (!Directory.Exists(pluginDir)) yield break;
 
-        foreach (string dll in Directory.GetFiles(pluginDir, "*.dll", SearchOption.AllDirectories))
+        var searchDirs = new[] { appPluginDir, userPluginDir };
+
+        foreach (string dll in searchDirs
+            .Where(Directory.Exists)
+            .SelectMany(d => Directory.GetFiles(d, "*.dll", SearchOption.AllDirectories)))
         {
             Assembly asm;
             try { asm = Assembly.LoadFrom(dll); }

@@ -8,6 +8,7 @@ public enum AppDialogButtons { Ok, YesNo }
 
 public partial class AppDialog : Window
 {
+
     public bool Result { get; private set; }
 
     public AppDialog(string title, string message,

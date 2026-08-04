@@ -1,15 +1,14 @@
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Web.WebView2.Wpf;
-using OpcUaViewer.Wpf.Tabs;
 
-namespace OpcUaViewer.Wpf.Views;
+namespace OpcUaViewer.Plugin.Document;
 
 public partial class DocumentView : UserControl
 {
     private WebView2? _webView;
     private bool      _initialized;
-    private string    _displayedUri = "\0"; // sentinel — ensures first nav always runs
+    private string    _displayedUri = "\0";
 
     public DocumentView()
     {
@@ -31,7 +30,6 @@ public partial class DocumentView : UserControl
         _webView.CoreWebView2.Settings.IsStatusBarEnabled            = false;
         _webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
 
-        // Dispose WebView2 when the host window closes, not on tab switch
         if (Window.GetWindow(this) is { } win)
             win.Closed += (_, _) => { _webView?.Dispose(); _webView = null; };
 
@@ -49,7 +47,7 @@ public partial class DocumentView : UserControl
     private void Navigate(string uri)
     {
         if (_webView?.CoreWebView2 is null) return;
-        if (uri == _displayedUri) return;   // skip redundant navigations
+        if (uri == _displayedUri) return;
         _displayedUri = uri;
 
         if (string.IsNullOrEmpty(uri))
@@ -66,15 +64,11 @@ public partial class DocumentView : UserControl
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body {
-            background: #181818;
-            color: #505050;
+            background: #181818; color: #505050;
             font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            user-select: none;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            height: 100vh; user-select: none;
           }
           .icon { font-size: 64px; margin-bottom: 20px; opacity: 0.25; }
           .msg  { font-size: 15px; opacity: 0.5; }
@@ -86,5 +80,4 @@ public partial class DocumentView : UserControl
         </body>
         </html>
         """;
-
 }

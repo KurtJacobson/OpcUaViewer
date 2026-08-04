@@ -10,10 +10,8 @@ using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Models;
 using OpcUaViewer.Core.Services;
 using OpcUaViewer.Core.Settings;
-using OpcUaViewer.Wpf.Dialogs;
-using OpcUaViewer.Wpf.Infrastructure;
 
-namespace OpcUaViewer.Wpf.Tabs;
+namespace OpcUaViewer.Plugin.Groups;
 
 public enum RowHighlight { Normal, Active, Dim }
 
@@ -26,9 +24,9 @@ public class GroupsTab : ViewModelBase, IAppTab
     private readonly OpcUaService _opc;
 
     // ── OPC UA state ──────────────────────────────────────────────────────────
-    private string _activeCamFile  = "";
+    private string _activeCamFile   = "";
     private string _activeProductId = "";
-    private int    _machineState   = -1;
+    private int    _machineState    = -1;
 
     // ── Selection ─────────────────────────────────────────────────────────────
     private CamOrderVm?   _selectedOrder;
@@ -38,13 +36,12 @@ public class GroupsTab : ViewModelBase, IAppTab
     private bool   _isEditMode;
     private string _editingFilePath = "";
 
-    // Edit-mode header fields
-    private string _editFileName    = "";
-    private string _editOrderId     = "";
-    private string _editCustomer    = "";
-    private string _editQty         = "1";
-    private string _editCompleted   = "0";
-    private string _editInfoText    = "";
+    private string _editFileName  = "";
+    private string _editOrderId   = "";
+    private string _editCustomer  = "";
+    private string _editQty       = "1";
+    private string _editCompleted = "0";
+    private string _editInfoText  = "";
 
     // ── Collections ───────────────────────────────────────────────────────────
     public ObservableCollection<CamOrderVm>   Orders   { get; } = [];
@@ -84,14 +81,12 @@ public class GroupsTab : ViewModelBase, IAppTab
         private set { Set(ref _isEditMode, value); Notify(nameof(IsViewMode)); Notify(nameof(ShowEditButtons)); Notify(nameof(ShowNormalButtons)); }
     }
 
-    public bool IsViewMode      => !_isEditMode;
-    public bool ShowEditButtons => _isEditMode;
+    public bool IsViewMode       => !_isEditMode;
+    public bool ShowEditButtons  => _isEditMode;
     public bool ShowNormalButtons => !_isEditMode;
-    public bool HasSelection    => _selectedOrder != null;
+    public bool HasSelection     => _selectedOrder != null;
+    public bool IsRunningLocked  => _machineState == 3 && !string.IsNullOrEmpty(_activeCamFile);
 
-    public bool IsRunningLocked => _machineState == 3 && !string.IsNullOrEmpty(_activeCamFile);
-
-    // Edit-mode header bindings
     public string EditFileName  { get => _editFileName;  set => Set(ref _editFileName,  value); }
     public string EditOrderId   { get => _editOrderId;   set => Set(ref _editOrderId,   value); }
     public string EditCustomer  { get => _editCustomer;  set => Set(ref _editCustomer,  value); }
@@ -100,37 +95,37 @@ public class GroupsTab : ViewModelBase, IAppTab
     public string EditInfoText  { get => _editInfoText;  set => Set(ref _editInfoText,  value); }
 
     // ── Commands ──────────────────────────────────────────────────────────────
-    public RelayCommand ReloadCommand      { get; }
-    public RelayCommand ImportCsvCommand   { get; }
-    public RelayCommand NewGroupCommand    { get; }
-    public RelayCommand EditGroupCommand   { get; }
-    public RelayCommand DeleteGroupCommand { get; }
-    public RelayCommand SaveGroupCommand   { get; }
-    public RelayCommand CancelEditCommand  { get; }
+    public RelayCommand ReloadCommand         { get; }
+    public RelayCommand ImportCsvCommand      { get; }
+    public RelayCommand NewGroupCommand       { get; }
+    public RelayCommand EditGroupCommand      { get; }
+    public RelayCommand DeleteGroupCommand    { get; }
+    public RelayCommand SaveGroupCommand      { get; }
+    public RelayCommand CancelEditCommand     { get; }
     public RelayCommand AddProductsCommand    { get; }
     public RelayCommand RemoveProductsCommand { get; }
-    public RelayCommand RunGroupCommand    { get; }
-    public RelayCommand CancelGroupCommand { get; }
+    public RelayCommand RunGroupCommand       { get; }
+    public RelayCommand CancelGroupCommand    { get; }
 
     public GroupsTab(OpcUaService opc)
     {
         _opc = opc;
 
-        ReloadCommand      = new RelayCommand(LoadOrders);
-        ImportCsvCommand   = new RelayCommand(ImportCsv);
-        NewGroupCommand    = new RelayCommand(() => EnterEditMode(null),    () => !IsRunningLocked);
-        EditGroupCommand   = new RelayCommand(EditSelected,                 () => HasSelection && !IsRunningLocked);
-        DeleteGroupCommand = new RelayCommand(DeleteSelected,               () => HasSelection && !IsRunningLocked);
-        SaveGroupCommand   = new RelayCommand(SaveGroup);
-        CancelEditCommand  = new RelayCommand(() => ExitEditMode(true));
+        ReloadCommand         = new RelayCommand(LoadOrders);
+        ImportCsvCommand      = new RelayCommand(ImportCsv);
+        NewGroupCommand       = new RelayCommand(() => EnterEditMode(null),  () => !IsRunningLocked);
+        EditGroupCommand      = new RelayCommand(EditSelected,               () => HasSelection && !IsRunningLocked);
+        DeleteGroupCommand    = new RelayCommand(DeleteSelected,             () => HasSelection && !IsRunningLocked);
+        SaveGroupCommand      = new RelayCommand(SaveGroup);
+        CancelEditCommand     = new RelayCommand(() => ExitEditMode(true));
         AddProductsCommand    = new RelayCommand(AddProducts);
         RemoveProductsCommand = new RelayCommand(RemoveProducts, () => SelectedProduct != null);
-        RunGroupCommand    = new RelayCommand(RunGroup,    () => HasSelection && !IsRunningLocked);
-        CancelGroupCommand = new RelayCommand(CancelGroup, () => HasSelection || IsRunningLocked);
+        RunGroupCommand       = new RelayCommand(RunGroup,    () => HasSelection && !IsRunningLocked);
+        CancelGroupCommand    = new RelayCommand(CancelGroup, () => HasSelection || IsRunningLocked);
 
-        _opc.CamFileChanged     += (_, f) => Dispatch(() => OnCamFileChanged(f));
+        _opc.CamFileChanged      += (_, f) => Dispatch(() => OnCamFileChanged(f));
         _opc.MachineStateChanged += (_, s) => Dispatch(() => OnMachineStateChanged(s));
-        _opc.ProductIdChanged   += (_, p) => Dispatch(() => OnProductIdChanged(p));
+        _opc.ProductIdChanged    += (_, p) => Dispatch(() => OnProductIdChanged(p));
 
         LoadOrders();
     }
@@ -180,7 +175,6 @@ public class GroupsTab : ViewModelBase, IAppTab
             EditQty       = existing.Quantity.ToString();
             EditCompleted = existing.Completed.ToString();
             EditInfoText  = existing.InfoText;
-            // Products already in the grid
         }
         else
         {
@@ -197,7 +191,7 @@ public class GroupsTab : ViewModelBase, IAppTab
 
     private void ExitEditMode(bool reload)
     {
-        string saved = _editingFilePath;
+        string saved     = _editingFilePath;
         IsEditMode       = false;
         _editingFilePath = "";
         if (reload) LoadOrders(saved);
@@ -216,8 +210,8 @@ public class GroupsTab : ViewModelBase, IAppTab
         string fileName  = EditFileName.Trim();
         string camFolder = AppSettings.Current.CamFolderPath;
 
-        if (string.IsNullOrEmpty(fileName))      { Warn("Please enter a file name."); return; }
-        if (!Directory.Exists(camFolder))         { Warn("CAM folder not configured. Set it in Settings."); return; }
+        if (string.IsNullOrEmpty(fileName))  { Warn("Please enter a file name."); return; }
+        if (!Directory.Exists(camFolder))     { Warn("CAM folder not configured. Set it in Settings."); return; }
         if (!int.TryParse(EditQty,       out int qty))       qty       = 1;
         if (!int.TryParse(EditCompleted, out int completed)) completed = 0;
 
@@ -274,7 +268,7 @@ public class GroupsTab : ViewModelBase, IAppTab
             savePath = Path.Combine(camFolder, fileName);
             if (File.Exists(savePath) && savePath != _editingFilePath)
             {
-                if (!AppDialog.Confirm($"'{fileName}' already exists. Overwrite?", "Save"))
+                if (!DialogService.Current.Confirm($"'{fileName}' already exists. Overwrite?", "Save"))
                     return;
             }
         }
@@ -294,7 +288,7 @@ public class GroupsTab : ViewModelBase, IAppTab
     {
         if (SelectedOrder == null) return;
         var order = SelectedOrder;
-        if (!AppDialog.Confirm($"Delete '{order.FileName}'?\n\nThis cannot be undone.", "Delete Group"))
+        if (!DialogService.Current.Confirm($"Delete '{order.FileName}'?\n\nThis cannot be undone.", "Delete Group"))
             return;
         try
         {
@@ -353,7 +347,7 @@ public class GroupsTab : ViewModelBase, IAppTab
             Directory.CreateDirectory(inDir);
             string dest = Path.Combine(inDir, Path.GetFileName(SelectedOrder.FilePath));
             File.Copy(SelectedOrder.FilePath, dest, overwrite: true);
-            AppDialog.Show($"Sent '{Path.GetFileName(SelectedOrder.FilePath)}' to:\n{inDir}", "Run Group");
+            DialogService.Current.Show($"Sent '{Path.GetFileName(SelectedOrder.FilePath)}' to:\n{inDir}", "Run Group");
         }
         catch (Exception ex) { Warn("Failed to copy CAM file:\n\n" + ex.Message); }
     }
@@ -366,8 +360,8 @@ public class GroupsTab : ViewModelBase, IAppTab
         if (IsRunningLocked)
         {
             string processingPath = Path.Combine(outputBase, "processing", Path.GetFileName(_activeCamFile));
-            if (!File.Exists(processingPath)) { AppDialog.Show("File not found in processing folder.", "Cancel Group"); return; }
-            if (!AppDialog.Confirm("Delete from processing folder? This will interrupt the current run.", "Cancel Group")) return;
+            if (!File.Exists(processingPath)) { DialogService.Current.Show("File not found in processing folder.", "Cancel Group"); return; }
+            if (!DialogService.Current.Confirm("Delete from processing folder? This will interrupt the current run.", "Cancel Group")) return;
             try
             {
                 string cancelDir = Path.Combine(outputBase, "canceled");
@@ -380,14 +374,14 @@ public class GroupsTab : ViewModelBase, IAppTab
 
         if (SelectedOrder == null) return;
         string inPath = Path.Combine(outputBase, "in", Path.GetFileName(SelectedOrder.FilePath));
-        if (!File.Exists(inPath)) { AppDialog.Show("File is not currently in the 'in' folder.", "Cancel Group"); return; }
+        if (!File.Exists(inPath)) { DialogService.Current.Show("File is not currently in the 'in' folder.", "Cancel Group"); return; }
 
         try
         {
             string cancelDir = Path.Combine(outputBase, "canceled");
             Directory.CreateDirectory(cancelDir);
             File.Move(inPath, Path.Combine(cancelDir, Path.GetFileName(SelectedOrder.FilePath)), overwrite: true);
-            AppDialog.Show("Moved to canceled folder.", "Cancel Group");
+            DialogService.Current.Show("Moved to canceled folder.", "Cancel Group");
         }
         catch (Exception ex) { Warn(ex.Message); }
     }
@@ -399,14 +393,14 @@ public class GroupsTab : ViewModelBase, IAppTab
         string prodFolder = AppSettings.Current.CamProductsPath;
         if (!Directory.Exists(prodFolder))
         {
-            AppDialog.Warn("Please configure the CAM Products Folder in Settings first.", "Import CSV");
+            DialogService.Current.Warn("Please configure the CAM Products Folder in Settings first.", "Import CSV");
             return;
         }
 
         var dlg = new CsvImportDialog { Owner = Application.Current.MainWindow };
         if (dlg.ShowDialog() != true) return;
 
-        var rows = OpcUaViewer.Core.Services.CsvService.ParseCsv(
+        var rows = CsvService.ParseCsv(
             dlg.CsvFilePath,
             AppSettings.Current.CsvPartNameColumn,     AppSettings.Current.CsvPartNameRegex,
             AppSettings.Current.CsvTemplateFileColumn, AppSettings.Current.CsvTemplateFileRegex,
@@ -418,7 +412,7 @@ public class GroupsTab : ViewModelBase, IAppTab
 
         if (rows.Count == 0)
         {
-            AppDialog.Warn("No rows could be imported. Check your column mapping.", "Import CSV");
+            DialogService.Current.Warn("No rows could be imported. Check your column mapping.", "Import CSV");
             return;
         }
 
@@ -426,7 +420,7 @@ public class GroupsTab : ViewModelBase, IAppTab
         if (!string.IsNullOrEmpty(prefix) && !prefix.EndsWith('\\')) prefix += '\\';
 
         EnterEditMode(null);
-        var (fn, oid) = NextOrderDefaults();
+        var (_, oid) = NextOrderDefaults();
         EditFileName = dlg.GroupName;
         EditOrderId  = oid;
         Products.Clear();
@@ -476,19 +470,13 @@ public class GroupsTab : ViewModelBase, IAppTab
         bool locked = IsRunningLocked;
         foreach (var o in Orders)
         {
-            if (!locked)
-            {
-                o.Highlight = RowHighlight.Normal;
-                continue;
-            }
+            if (!locked) { o.Highlight = RowHighlight.Normal; continue; }
             bool match = string.Equals(
                 Path.GetFileNameWithoutExtension(o.FileName),
                 Path.GetFileNameWithoutExtension(_activeCamFile),
                 StringComparison.OrdinalIgnoreCase);
             o.Highlight = match ? RowHighlight.Active : RowHighlight.Dim;
-
-            if (match && SelectedOrder != o && !_isEditMode)
-                SelectedOrder = o;
+            if (match && SelectedOrder != o && !_isEditMode) SelectedOrder = o;
         }
         RefreshProductHighlights();
     }
@@ -502,7 +490,7 @@ public class GroupsTab : ViewModelBase, IAppTab
         {
             if (!hasActive) { p.Highlight = RowHighlight.Normal; continue; }
             bool match = p.ProductId.Contains(_activeProductId, StringComparison.OrdinalIgnoreCase)
-                      || _activeProductId.Contains(p.ListId,   StringComparison.OrdinalIgnoreCase);
+                      || _activeProductId.Contains(p.ListId,    StringComparison.OrdinalIgnoreCase);
             p.Highlight = match ? RowHighlight.Active : RowHighlight.Dim;
             if (match) anyMatch = true;
         }
@@ -541,7 +529,7 @@ public class GroupsTab : ViewModelBase, IAppTab
         return "";
     }
 
-    private static void Warn(string msg) => AppDialog.Warn(msg, "Groups");
+    private static void Warn(string msg) => DialogService.Current.Warn(msg, "Groups");
 
     private static void Dispatch(Action a)
     {
@@ -566,11 +554,7 @@ public class CamOrderVm : ViewModelBase
     public int    Quantity     => Model.Quantity;
     public int    Completed    => Model.Completed;
 
-    public RowHighlight Highlight
-    {
-        get => _highlight;
-        set => Set(ref _highlight, value);
-    }
+    public RowHighlight Highlight { get => _highlight; set => Set(ref _highlight, value); }
 
     public CamOrderVm(CamOrder order) => Model = order;
 }
@@ -581,10 +565,10 @@ public class CamProductVm : ViewModelBase
     private int    _runQty, _ordQty;
     private RowHighlight _highlight;
 
-    public string ListId     { get; set; } = "";
-    public string ProductId  { get; set; } = "";
+    public string ListId      { get; set; } = "";
+    public string ProductId   { get; set; } = "";
     public string DisplayName { get; set; } = "";
-    public string MaterialId { get; set; } = "";
+    public string MaterialId  { get; set; } = "";
 
     public string Length    { get => _length;    set => Set(ref _length,    value); }
     public string Width     { get => _width;     set => Set(ref _width,     value); }
@@ -593,11 +577,7 @@ public class CamProductVm : ViewModelBase
     public int    OrdQty    { get => _ordQty;    set => Set(ref _ordQty,    value); }
     public int    RunQty    { get => _runQty;    set => Set(ref _runQty,    value); }
 
-    public RowHighlight Highlight
-    {
-        get => _highlight;
-        set => Set(ref _highlight, value);
-    }
+    public RowHighlight Highlight { get => _highlight; set => Set(ref _highlight, value); }
 
     public CamProductVm(CamProduct product)
     {

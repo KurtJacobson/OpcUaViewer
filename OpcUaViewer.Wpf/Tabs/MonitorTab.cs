@@ -5,7 +5,6 @@ using System.Windows;
 using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Services;
 using OpcUaViewer.Core.Settings;
-using OpcUaViewer.Wpf.Dialogs;
 using OpcUaViewer.Wpf.Infrastructure;
 
 namespace OpcUaViewer.Wpf.Tabs;
@@ -82,8 +81,8 @@ public class MonitorTab : ViewModelBase, IAppTab
         }
         catch (OpcUaConnectionException ex)
         {
-            AppDialog.Show($"Could not connect to the OPC UA server.\n\n{ex.Message}",
-                           "Connection Failed", AppDialogIcon.Error);
+            DialogService.Current.Warn(
+                $"Could not connect to the OPC UA server.\n\n{ex.Message}", "Connection Failed");
         }
         finally { IsBusy = false; }
     }

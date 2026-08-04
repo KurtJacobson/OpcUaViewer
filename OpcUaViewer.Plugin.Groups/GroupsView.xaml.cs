@@ -1,6 +1,6 @@
 using System.Windows.Controls;
 
-namespace OpcUaViewer.Wpf.Views;
+namespace OpcUaViewer.Plugin.Groups;
 
 public partial class GroupsView : UserControl
 {
