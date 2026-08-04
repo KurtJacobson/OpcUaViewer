@@ -52,9 +52,11 @@
                 </Border>
 
                 <!-- Tab nav -->
-                <ListBox Grid.Row="1"
-                         ItemsSource="{Binding Tabs}"
-                         SelectedItem="{Binding SelectedTab}"
+                <ListBox x:Name="NavListBox"
+                         Grid.Row="1"
+                         ItemsSource="{Binding NavTabs}"
+                         SelectedItem="{Binding SelectedTab, Mode=OneWay}"
+                         SelectionChanged="NavTabs_SelectionChanged"
                          Style="{StaticResource NavListBoxStyle}"
                          ItemContainerStyle="{StaticResource NavListBoxItemStyle}"
                          Margin="0,8,0,0">
@@ -73,14 +75,37 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <!-- Version footer -->
-                <TextBlock Grid.Row="2"
-                           x:Name="VersionText"
-                           Text="v0.0.0"
-                           FontSize="10"
-                           Foreground="{StaticResource TextSubBrush}"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,10"/>
+                <!-- Pinned-bottom tabs (e.g. Settings) + version -->
+                <StackPanel Grid.Row="2">
+                    <Separator Margin="12,0"/>
+                    <ListBox x:Name="PinnedListBox"
+                             ItemsSource="{Binding PinnedTabs}"
+                             SelectedItem="{Binding SelectedTab, Mode=OneWay}"
+                             SelectionChanged="PinnedTabs_SelectionChanged"
+                             Style="{StaticResource NavListBoxStyle}"
+                             ItemContainerStyle="{StaticResource NavListBoxItemStyle}"
+                             Margin="0,4,0,4">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel HorizontalAlignment="Center" Margin="0,2,0,2">
+                                    <TextBlock Text="{Binding Icon}"
+                                               FontSize="20"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,0,0,3"/>
+                                    <TextBlock Text="{Binding Title}"
+                                               FontSize="11"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock x:Name="VersionText"
+                               Text="v0.0.0"
+                               FontSize="10"
+                               Foreground="{StaticResource TextSubBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,10"/>
+                </StackPanel>
             </Grid>
         </Border>
 

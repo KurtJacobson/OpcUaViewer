@@ -10,7 +10,8 @@ public class MainViewModel : ViewModelBase
 {
     private IAppTab? _selectedTab;
 
-    public ObservableCollection<IAppTab> Tabs { get; } = [];
+    public ObservableCollection<IAppTab> NavTabs    { get; } = [];
+    public ObservableCollection<IAppTab> PinnedTabs { get; } = [];
 
     public IAppTab? SelectedTab
     {
@@ -25,8 +26,11 @@ public class MainViewModel : ViewModelBase
         SelectTabCommand = new RelayCommand<IAppTab>(tab => SelectedTab = tab);
 
         foreach (var tab in tabs.OrderBy(t => t.Order))
-            Tabs.Add(tab);
+        {
+            if (tab.PinToBottom) PinnedTabs.Add(tab);
+            else                 NavTabs.Add(tab);
+        }
 
-        SelectedTab = Tabs.FirstOrDefault();
+        SelectedTab = NavTabs.FirstOrDefault();
     }
 }

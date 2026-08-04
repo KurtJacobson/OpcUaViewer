@@ -7,9 +7,10 @@ namespace OpcUaViewer.Wpf.Tabs;
 
 public class SettingsTab : ViewModelBase, IAppTab
 {
-    public string Title => "Settings";
-    public string Icon  => "⚙";
-    public int    Order => 90;
+    public string Title       => "Settings";
+    public string Icon        => "⚙";
+    public int    Order       => 90;
+    public bool   PinToBottom => true;
 
     private string _endpointUrl      = "";
     private string _camFolderPath    = "";
