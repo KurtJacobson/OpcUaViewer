@@ -1,5 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using System.Windows;
+using System.Windows.Markup;
 using Microsoft.Web.WebView2.Core;
+using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Services;
 using OpcUaViewer.Core.Settings;
 using OpcUaViewer.Wpf.Tabs;
@@ -21,28 +27,22 @@ public partial class App : Application
 
         _opc = new OpcUaService();
 
-        var monitorTab  = new MonitorTab(_opc);
-        var groupsTab   = new GroupsTab(_opc);
-        var documentTab = new DocumentTab(_opc);
-        var settingsTab = new SettingsTab();
+        IAppTab[] builtIn =
+        [
+            new MonitorTab(_opc),
+            new GroupsTab(_opc),
+            new DocumentTab(_opc),
+            new SettingsTab(),
+        ];
 
-        // To add a customer-specific tab:
-        //   1. Implement IAppTab + ViewModelBase in a customer assembly (reference OpcUaViewer.Core)
-        //   2. Add a DataTemplate for it in MainWindow.xaml (or merge a ResourceDictionary)
-        //   3. Register it here: var customerTab = new AcmeTab(_opc);
-        var tabs = new OpcUaViewer.Core.Contracts.IAppTab[]
-        {
-            monitorTab,
-            groupsTab,
-            documentTab,
-            settingsTab,
-        };
+        var allTabs = new List<IAppTab>(builtIn);
+        allTabs.AddRange(LoadPlugins(_opc));
 
-        var vm     = new MainViewModel(tabs);
+        var monitorTab = (MonitorTab)builtIn[0];
+        var vm     = new MainViewModel(allTabs);
         var window = new MainWindow(vm);
         window.Show();
 
-        // Auto-connect on startup if endpoint is configured
         if (!string.IsNullOrWhiteSpace(AppSettings.Current.EndpointUrl))
             monitorTab.ConnectCommand.Execute(null);
     }
@@ -51,5 +51,61 @@ public partial class App : Application
     {
         _opc?.Dispose();
         base.OnExit(e);
+    }
+
+    // ── Plugin loader ─────────────────────────────────────────────────────────
+
+    private IEnumerable<IAppTab> LoadPlugins(OpcUaService opc)
+    {
+        string pluginDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "OpcUaViewer", "plugins");
+        if (!Directory.Exists(pluginDir)) yield break;
+
+        foreach (string dll in Directory.GetFiles(pluginDir, "*.dll"))
+        {
+            Assembly asm;
+            try { asm = Assembly.LoadFrom(dll); }
+            catch { continue; }
+
+            // Merge any ResourceDictionary embedded in the plugin
+            foreach (var rd in FindPluginResources(asm))
+                Resources.MergedDictionaries.Add(rd);
+
+            // Instantiate every IAppTab the plugin exports
+            foreach (var type in asm.GetExportedTypes())
+            {
+                if (!typeof(IAppTab).IsAssignableFrom(type) || type.IsAbstract) continue;
+
+                IAppTab? tab = null;
+                try { tab = (IAppTab?)Activator.CreateInstance(type, opc); }
+                catch { }
+
+                if (tab is null)
+                {
+                    try { tab = (IAppTab?)Activator.CreateInstance(type); }
+                    catch { }
+                }
+
+                if (tab is not null) yield return tab;
+            }
+        }
+    }
+
+    private static IEnumerable<ResourceDictionary> FindPluginResources(Assembly asm)
+    {
+        foreach (string name in asm.GetManifestResourceNames())
+        {
+            if (!name.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase)) continue;
+            ResourceDictionary? rd = null;
+            try
+            {
+                using var stream = asm.GetManifestResourceStream(name)!;
+                rd = XamlReader.Load(stream) as ResourceDictionary;
+            }
+            catch { }
+
+            if (rd is not null) yield return rd;
+        }
     }
 }

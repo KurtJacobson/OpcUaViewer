@@ -1,21 +1,3 @@
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-
-namespace OpcUaViewer.Wpf.Infrastructure;
-
-public abstract class ViewModelBase : INotifyPropertyChanged
-{
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    protected bool Set<T>(ref T field, T value, [CallerMemberName] string? name = null)
-    {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-        field = value;
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        return true;
-    }
-
-    protected void Notify([CallerMemberName] string? name = null)
-        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-}
+// ViewModelBase has moved to OpcUaViewer.Core.Contracts.
+// This alias keeps all existing using directives in the WPF project working.
+global using ViewModelBase = OpcUaViewer.Core.Contracts.ViewModelBase;
