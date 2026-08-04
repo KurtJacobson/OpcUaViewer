@@ -1,9 +1,9 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="OpcUaViewer.Plugin.Document.DocumentSettingsDialog"
-        Title="Document Viewer Settings"
+        x:Class="OpcUaViewer.Plugin.Groups.GroupsSettingsDialog"
+        Title="Groups Settings"
         WindowStyle="None" ResizeMode="NoResize"
-        SizeToContent="Height" Width="480"
+        SizeToContent="Height" Width="520"
         Background="#FF1E1E1E"
         WindowStartupLocation="CenterOwner"
         Foreground="#FFDCDCDC"
@@ -28,28 +28,50 @@
         <!-- Title bar -->
         <Border Grid.Row="0" Background="{StaticResource NavBrush}"
                 MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-            <TextBlock Text="Document Viewer — Settings"
-                       VerticalAlignment="Center" Margin="16,0"
-                       FontWeight="SemiBold"/>
+            <TextBlock Text="Groups — Settings" VerticalAlignment="Center"
+                       Margin="16,0" FontWeight="SemiBold"/>
         </Border>
 
         <!-- Content -->
-        <StackPanel Grid.Row="1" Margin="20,16">
-            <Label Content="PDF Folder Path"
-                   Foreground="{StaticResource TextSubBrush}"/>
-            <Grid Margin="0,4,0,0">
+        <StackPanel Grid.Row="1" Margin="20,16" >
+
+            <Label Content="CAM Folder" Foreground="{StaticResource TextSubBrush}"/>
+            <Grid Margin="0,4,0,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBox x:Name="PdfFolderBox" Grid.Column="0" Margin="0,0,8,0"/>
-                <Button Grid.Column="1" Content="Browse…"
-                        Click="Browse_Click" Padding="12,6"/>
+                <TextBox x:Name="CamFolderBox" Grid.Column="0" Margin="0,0,8,0"/>
+                <Button Grid.Column="1" Content="Browse…" Tag="CamFolder" Click="Browse_Click" Padding="12,6"/>
             </Grid>
-            <TextBlock Text="The folder where product PDFs are stored. Files must be named {ProductId}.pdf"
+
+            <Label Content="CAM Output Path" Foreground="{StaticResource TextSubBrush}"/>
+            <Grid Margin="0,4,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="CamOutputBox" Grid.Column="0" Margin="0,0,8,0"/>
+                <Button Grid.Column="1" Content="Browse…" Tag="CamOutput" Click="Browse_Click" Padding="12,6"/>
+            </Grid>
+
+            <Label Content="CAM Products Path" Foreground="{StaticResource TextSubBrush}"/>
+            <Grid Margin="0,4,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="CamProductsBox" Grid.Column="0" Margin="0,0,8,0"/>
+                <Button Grid.Column="1" Content="Browse…" Tag="CamProducts" Click="Browse_Click" Padding="12,6"/>
+            </Grid>
+
+            <Label Content="Product Path Prefix" Foreground="{StaticResource TextSubBrush}"/>
+            <TextBox x:Name="ProductPrefixBox" Margin="0,4,0,4"/>
+            <TextBlock Text="Prefix prepended to product IDs when resolving CAM file paths."
                        Foreground="{StaticResource TextSubBrush}"
                        FontSize="{StaticResource FontSizeSm}"
-                       TextWrapping="Wrap" Margin="0,6,0,0"/>
+                       TextWrapping="Wrap" Margin="0,4,0,0"/>
+
         </StackPanel>
 
         <!-- Button bar -->

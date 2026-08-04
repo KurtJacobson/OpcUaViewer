@@ -89,25 +89,6 @@
                         </StackPanel>
                     </Border>
 
-                    <TextBlock Text="FOLDER PATHS" Style="{StaticResource PanelHeaderStyle}"
-                               Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
-                    <Border Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                            CornerRadius="4" Padding="16" Margin="0,0,0,20">
-                        <StackPanel>
-                            <Label Content="CAM Folder"/>
-                            <TextBox Text="{Binding CamFolderPath,    UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
-                            <Label Content="CAM Output Path"/>
-                            <TextBox Text="{Binding CamOutputPath,    UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
-                            <Label Content="CAM Products Path"/>
-                            <TextBox Text="{Binding CamProductsPath,  UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
-                            <Label Content="PDF / Document Folder"/>
-                            <TextBox Text="{Binding PdfFolderPath,    UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
-                            <Label Content="Product Path Prefix"/>
-                            <TextBox Text="{Binding ProductPathPrefix, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,0"/>
-                        </StackPanel>
-                    </Border>
-
                     <TextBlock Text="UI OPTIONS" Style="{StaticResource PanelHeaderStyle}"
                                Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
                     <Border Background="{StaticResource SurfaceBrush}"

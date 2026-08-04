@@ -15,12 +15,14 @@ namespace OpcUaViewer.Plugin.Groups;
 
 public enum RowHighlight { Normal, Active, Dim }
 
-public class GroupsTab : ViewModelBase, IAppTab
+public class GroupsTab : ViewModelBase, IAppTab, IConfigurableTab
 {
     public string Title       => "Groups";
     public string Icon        => "📋";
     public int    Order       => 20;
     public string Description => "Manage production groups and product orders. Supports CSV import.";
+
+    public void Configure() => new GroupsSettingsDialog().ShowDialog();
 
     private readonly OpcUaService _opc;
 
