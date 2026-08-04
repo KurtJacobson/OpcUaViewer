@@ -1,42 +1,119 @@
 <UserControl x:Class="OpcUaViewer.Wpf.Views.GroupsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:tabs="clr-namespace:OpcUaViewer.Wpf.Tabs"
              Background="{StaticResource BgBrush}">
+
+    <UserControl.Resources>
+        <!-- Order row highlight converters via DataTriggers on ListBoxItem -->
+        <Style x:Key="OrderListItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Padding"     Value="0"/>
+            <Setter Property="Background"  Value="Transparent"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                BorderThickness="0,0,0,1"
+                                BorderBrush="{StaticResource GridLineBrush}"
+                                Padding="0">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#FF2E4A6A"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource SelectionBrush}"/>
+                            </Trigger>
+                            <!-- OPC active / dim states applied via DataTrigger on content -->
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Info field — looks like a label normally, TextBox in edit mode -->
+        <Style x:Key="InfoFieldStyle" TargetType="TextBox">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground"      Value="{StaticResource TextBrush}"/>
+            <Setter Property="FontFamily"      Value="Segoe UI"/>
+            <Setter Property="FontSize"        Value="13"/>
+            <Setter Property="FontWeight"      Value="SemiBold"/>
+            <Setter Property="Padding"         Value="4,2"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsReadOnly" Value="False">
+                    <Setter Property="Background"      Value="{StaticResource InputBgBrush}"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                    <Setter Property="BorderBrush"     Value="{StaticResource BorderBrush}"/>
+                </Trigger>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsReadOnly" Value="False"/>
+                        <Condition Property="IsFocused"  Value="True"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                </MultiTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>   <!-- toolbar -->
+            <RowDefinition Height="*"/>       <!-- content -->
         </Grid.RowDefinitions>
 
-        <!-- Toolbar -->
-        <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1"
-                Padding="12,6">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="⟳  Reload"
-                        Command="{Binding ReloadCommand}"
-                        Margin="0,0,8,0"/>
-                <Button Content="⬆  Import CSV..."
-                        Command="{Binding ImportCsvCommand}"
-                        Background="#FF325032"/>
-                <Separator Width="1" Height="28" Background="{StaticResource BorderBrush}" Margin="12,0"/>
-                <TextBlock Text="Product Groups" Style="{StaticResource PanelHeaderStyle}"
-                           VerticalAlignment="Center" Margin="0"/>
+        <!-- ══ Toolbar ═══════════════════════════════════════════════════════ -->
+        <Border Grid.Row="0"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="10,6">
+            <StackPanel Orientation="Horizontal">
+
+                <!-- Normal-mode buttons -->
+                <StackPanel Orientation="Horizontal" Visibility="{Binding ShowNormalButtons, Converter={StaticResource BoolToVis}}">
+                    <Button Content="New"    Command="{Binding NewGroupCommand}"    Margin="0,0,6,0"/>
+                    <Button Content="Edit"   Command="{Binding EditGroupCommand}"   Margin="0,0,6,0"/>
+                    <Button Content="Delete" Command="{Binding DeleteGroupCommand}" Margin="0,0,12,0"/>
+                    <Separator Width="1" Height="26" Background="{StaticResource BorderBrush}" Margin="0,0,12,0"/>
+                    <Button Content="▶  Run Group"    Command="{Binding RunGroupCommand}"    Background="#FF285028" Margin="0,0,6,0"/>
+                    <Button Content="✕  Cancel Group" Command="{Binding CancelGroupCommand}" Background="#FF602020" Margin="0,0,12,0"/>
+                    <Separator Width="1" Height="26" Background="{StaticResource BorderBrush}" Margin="0,0,12,0"/>
+                    <Button Content="⬆  Import CSV..."  Command="{Binding ImportCsvCommand}"  Background="#FF285020"/>
+                </StackPanel>
+
+                <!-- Edit-mode buttons -->
+                <StackPanel Orientation="Horizontal" Visibility="{Binding ShowEditButtons, Converter={StaticResource BoolToVis}}">
+                    <Button Content="Add Products..."    Command="{Binding AddProductsCommand}"    Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,0"/>
+                    <Button Content="Remove Selected"    Command="{Binding RemoveProductsCommand}" Margin="0,0,16,0"/>
+                    <Separator Width="1" Height="26" Background="{StaticResource BorderBrush}" Margin="0,0,16,0"/>
+                    <Button Content="✔  Save"    Command="{Binding SaveGroupCommand}"   Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,0"/>
+                    <Button Content="✕  Cancel"  Command="{Binding CancelEditCommand}"  Margin="0,0,0,0"/>
+                </StackPanel>
+
+                <!-- Reload (always visible) -->
+                <Button Content="⟳  Reload" Command="{Binding ReloadCommand}" Margin="12,0,0,0"/>
             </StackPanel>
         </Border>
 
-        <!-- Two-pane content -->
+        <!-- ══ Two-pane content ═══════════════════════════════════════════════ -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="280" MinWidth="180"/>
+                <ColumnDefinition Width="270" MinWidth="160"/>
                 <ColumnDefinition Width="4"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Orders list -->
-            <Border Grid.Column="0" Background="{StaticResource NavBrush}"
-                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+            <!-- ── Left: Orders list ────────────────────────────────────────── -->
+            <Border Grid.Column="0"
+                    Background="{StaticResource NavBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="0,0,1,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -52,34 +129,31 @@
                              ItemsSource="{Binding Orders}"
                              SelectedItem="{Binding SelectedOrder}"
                              Background="Transparent"
-                             BorderThickness="0">
+                             BorderThickness="0"
+                             ItemContainerStyle="{StaticResource OrderListItemStyle}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Margin="8,6">
-                                    <TextBlock Text="{Binding OrderId}"
-                                               FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding CustomerName}"
-                                               Foreground="{StaticResource TextSubBrush}"
-                                               FontSize="11"/>
-                                </StackPanel>
+                                <Border x:Name="itemBd" Padding="10,8">
+                                    <StackPanel>
+                                        <TextBlock x:Name="orderIdTb" Text="{Binding OrderId}" FontWeight="SemiBold"/>
+                                        <TextBlock x:Name="fileNameTb" Text="{Binding FileName}"
+                                                   Foreground="{StaticResource TextSubBrush}" FontSize="11"/>
+                                    </StackPanel>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding Highlight}" Value="Active">
+                                        <Setter TargetName="itemBd"    Property="Background"     Value="#FF193519"/>
+                                        <Setter TargetName="orderIdTb" Property="Foreground"     Value="#FFB0EFB0"/>
+                                        <Setter TargetName="fileNameTb" Property="Foreground"    Value="#FF80C080"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Highlight}" Value="Dim">
+                                        <Setter TargetName="itemBd"    Property="Background"     Value="Transparent"/>
+                                        <Setter TargetName="orderIdTb" Property="Foreground"     Value="#FF484848"/>
+                                        <Setter TargetName="fileNameTb" Property="Foreground"    Value="#FF383838"/>
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <Setter Property="Padding" Value="0"/>
-                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                <Setter Property="BorderBrush" Value="{StaticResource GridLineBrush}"/>
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Style.Triggers>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="#FF2E4A6A"/>
-                                    </Trigger>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="{StaticResource SelectionBrush}"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ListBox.ItemContainerStyle>
                     </ListBox>
                 </Grid>
             </Border>
@@ -90,35 +164,116 @@
                           Background="{StaticResource BorderBrush}"
                           ResizeBehavior="PreviousAndNext"/>
 
-            <!-- Products grid -->
-            <Grid Grid.Column="2" Margin="0">
+            <!-- ── Right: Info panel + products grid ─────────────────────────── -->
+            <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>   <!-- group info -->
+                    <RowDefinition Height="*"/>       <!-- products -->
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Padding="12,8"
+                <!-- Group info panel -->
+                <Border Grid.Row="0"
                         Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
-                    <TextBlock Text="{Binding SelectedOrder.OrderId, FallbackValue='No group selected'}"
-                               Style="{StaticResource PanelHeaderStyle}" Margin="0"/>
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="12,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="70"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="28"/>
+                            <RowDefinition Height="28"/>
+                            <RowDefinition Height="28"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Row 0: File name / Order ID -->
+                        <Label Grid.Row="0" Grid.Column="0" Content="File:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBox Grid.Row="0" Grid.Column="1"
+                                 Text="{Binding EditFileName, UpdateSourceTrigger=PropertyChanged}"
+                                 IsReadOnly="{Binding IsViewMode}"
+                                 Style="{StaticResource InfoFieldStyle}"
+                                 Margin="0,0,12,0"/>
+                        <Label Grid.Row="0" Grid.Column="2" Content="Order:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBox Grid.Row="0" Grid.Column="3"
+                                 Text="{Binding EditOrderId, UpdateSourceTrigger=PropertyChanged}"
+                                 IsReadOnly="{Binding IsViewMode}"
+                                 Style="{StaticResource InfoFieldStyle}"
+                                 Grid.ColumnSpan="3"/>
+
+                        <!-- Row 1: Customer / Qty Ordered / Qty Produced -->
+                        <Label Grid.Row="1" Grid.Column="0" Content="Customer:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBox Grid.Row="1" Grid.Column="1"
+                                 Text="{Binding EditCustomer, UpdateSourceTrigger=PropertyChanged}"
+                                 IsReadOnly="{Binding IsViewMode}"
+                                 Style="{StaticResource InfoFieldStyle}"
+                                 Margin="0,0,12,0"/>
+                        <Label Grid.Row="1" Grid.Column="2" Content="Qty:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBox Grid.Row="1" Grid.Column="3"
+                                 Text="{Binding EditQty, UpdateSourceTrigger=PropertyChanged}"
+                                 IsReadOnly="{Binding IsViewMode}"
+                                 Style="{StaticResource InfoFieldStyle}"
+                                 Margin="0,0,8,0"/>
+                        <Label Grid.Row="1" Grid.Column="4" Content="Prod:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBox Grid.Row="1" Grid.Column="5"
+                                 Text="{Binding EditCompleted, UpdateSourceTrigger=PropertyChanged}"
+                                 IsReadOnly="{Binding IsViewMode}"
+                                 Style="{StaticResource InfoFieldStyle}"/>
+
+                        <!-- Row 2: Info text -->
+                        <Label Grid.Row="2" Grid.Column="0" Content="Info:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBox Grid.Row="2" Grid.Column="1"
+                                 Text="{Binding EditInfoText, UpdateSourceTrigger=PropertyChanged}"
+                                 IsReadOnly="{Binding IsViewMode}"
+                                 Style="{StaticResource InfoFieldStyle}"
+                                 Grid.ColumnSpan="5"/>
+                    </Grid>
                 </Border>
 
+                <!-- Products DataGrid -->
                 <DataGrid Grid.Row="1"
+                          x:Name="ProductGrid"
                           ItemsSource="{Binding Products}"
                           SelectedItem="{Binding SelectedProduct}"
-                          Margin="0">
+                          CanUserAddRows="False">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="List ID"   Binding="{Binding ListId}"      Width="100"/>
-                        <DataGridTextColumn Header="Product"   Binding="{Binding DisplayName}" Width="160"/>
-                        <DataGridTextColumn Header="Material"  Binding="{Binding MaterialId}"  Width="80"/>
-                        <DataGridTextColumn Header="Thk"       Binding="{Binding Thickness}"   Width="65"/>
-                        <DataGridTextColumn Header="Length"    Binding="{Binding Length}"      Width="80"/>
-                        <DataGridTextColumn Header="Width"     Binding="{Binding Width}"       Width="80"/>
-                        <DataGridTextColumn Header="Ord Qty"   Binding="{Binding OrdQty}"      Width="65"/>
-                        <DataGridTextColumn Header="Run Qty"   Binding="{Binding RunQty}"      Width="65"/>
-                        <DataGridTextColumn Header="Hint"      Binding="{Binding Hint}"        Width="*"/>
+                        <DataGridTextColumn Header="List ID"   Binding="{Binding ListId}"      Width="105" IsReadOnly="{Binding DataContext.IsViewMode, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                        <DataGridTextColumn Header="Product"   Binding="{Binding DisplayName}" Width="160" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Material"  Binding="{Binding MaterialId}"  Width="80"  IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Thk"       Binding="{Binding Thickness}"   Width="65"  IsReadOnly="{Binding DataContext.IsViewMode, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                        <DataGridTextColumn Header="Length"    Binding="{Binding Length}"      Width="80"  IsReadOnly="{Binding DataContext.IsViewMode, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                        <DataGridTextColumn Header="Width"     Binding="{Binding Width}"       Width="80"  IsReadOnly="{Binding DataContext.IsViewMode, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                        <DataGridTextColumn Header="Ord Qty"   Binding="{Binding OrdQty}"      Width="65"  IsReadOnly="{Binding DataContext.IsViewMode, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                        <DataGridTextColumn Header="Run Qty"   Binding="{Binding RunQty}"      Width="65"  IsReadOnly="False"/>
+                        <DataGridTextColumn Header="Hint"      Binding="{Binding Hint}"        Width="*"   IsReadOnly="{Binding DataContext.IsViewMode, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                     </DataGrid.Columns>
+
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#FF2E4A6A"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{StaticResource SelectionBrush}"/>
+                                </Trigger>
+                                <DataTrigger Binding="{Binding Highlight}" Value="Active">
+                                    <Setter Property="Background" Value="#FF5A3700"/>
+                                    <Setter Property="Foreground" Value="#FFFFD28C"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Highlight}" Value="Dim">
+                                    <Setter Property="Background" Value="#FF161616"/>
+                                    <Setter Property="Foreground" Value="#FF404040"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
                 </DataGrid>
             </Grid>
         </Grid>

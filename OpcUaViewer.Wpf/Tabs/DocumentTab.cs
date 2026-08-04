@@ -1,9 +1,14 @@
+using System;
+using System.IO;
+using System.Windows;
 using OpcUaViewer.Core.Contracts;
+using OpcUaViewer.Core.Services;
+using OpcUaViewer.Core.Settings;
 using OpcUaViewer.Wpf.Infrastructure;
 
 namespace OpcUaViewer.Wpf.Tabs;
 
-/// <summary>Document viewer tab — renders PDF/HTML files via WebView2.</summary>
+/// <summary>Document viewer tab — renders PDF files via WebView2.</summary>
 public class DocumentTab : ViewModelBase, IAppTab
 {
     public string Title => "Document";
@@ -12,6 +17,7 @@ public class DocumentTab : ViewModelBase, IAppTab
 
     private string _documentUri = "";
     private string _statusText  = "No document loaded";
+    private string _lastLoadedProductId = "";
 
     public string DocumentUri
     {
@@ -25,15 +31,66 @@ public class DocumentTab : ViewModelBase, IAppTab
         set => Set(ref _statusText, value);
     }
 
+    public DocumentTab(OpcUaService opc)
+    {
+        opc.ProductIdChanged += (_, productId) => Dispatch(() => OpenProductPdf(productId));
+    }
+
     public void LoadDocument(string uri)
     {
         DocumentUri = uri;
-        StatusText  = System.IO.Path.GetFileName(uri);
+        StatusText  = Path.GetFileName(uri);
     }
 
-    public void ClearDocument()
+    public void ClearDocument(string message = "No document loaded")
     {
         DocumentUri = "";
-        StatusText  = "No document loaded";
+        StatusText  = message;
+    }
+
+    private void OpenProductPdf(string productId)
+    {
+        if (string.IsNullOrWhiteSpace(productId))
+        {
+            if (!string.IsNullOrEmpty(_lastLoadedProductId))
+                ClearDocument("Waiting for a product ID...");
+            _lastLoadedProductId = "";
+            return;
+        }
+
+        if (productId == _lastLoadedProductId) return;
+        _lastLoadedProductId = productId;
+
+        string folder = AppSettings.Current.PdfFolderPath;
+        if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
+        {
+            ClearDocument($"PDF folder not found: {folder}");
+            return;
+        }
+
+        string fileName = SanitizeFileName(productId) + ".pdf";
+        string fullPath = Path.Combine(folder, fileName);
+
+        if (!File.Exists(fullPath))
+        {
+            ClearDocument($"No PDF found for '{productId}'");
+            return;
+        }
+
+        DocumentUri = new Uri(fullPath).AbsoluteUri;
+        StatusText  = $"Showing: {fileName}";
+    }
+
+    private static string SanitizeFileName(string name)
+    {
+        foreach (char c in Path.GetInvalidFileNameChars())
+            name = name.Replace(c, '_');
+        return name;
+    }
+
+    private static void Dispatch(Action a)
+    {
+        if (Application.Current?.Dispatcher.CheckAccess() == true) a();
+        else Application.Current?.Dispatcher.BeginInvoke(a);
     }
 }
