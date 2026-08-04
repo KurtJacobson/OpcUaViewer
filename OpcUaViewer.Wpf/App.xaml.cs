@@ -1,4 +1,5 @@
 using System.Windows;
+using Microsoft.Web.WebView2.Core;
 using OpcUaViewer.Core.Services;
 using OpcUaViewer.Core.Settings;
 using OpcUaViewer.Wpf.Tabs;
@@ -14,6 +15,9 @@ public partial class App : Application
     {
         base.OnStartup(e);
         AppSettings.Load();
+
+        // Pre-warm the WebView2 browser process so it's ready before the Document tab is opened
+        _ = CoreWebView2Environment.CreateAsync();
 
         _opc = new OpcUaService();
 
