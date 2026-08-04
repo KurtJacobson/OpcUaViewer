@@ -12,27 +12,14 @@
 
         <TextBlock Grid.Row="0" Text="OPC UA Monitor" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
 
-        <!-- Connection bar -->
+        <!-- Status bar -->
         <Border Grid.Row="1"
                 Background="{StaticResource SurfaceBrush}"
                 BorderBrush="{StaticResource BorderBrush}"
                 BorderThickness="1" CornerRadius="4"
                 Padding="12,8" Margin="0,0,0,12">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="8"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="8"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="8"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="8"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Status dot -->
-                <Ellipse Grid.Column="0" Width="10" Height="10" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal">
+                <Ellipse Width="10" Height="10" VerticalAlignment="Center" Margin="0,0,8,0">
                     <Ellipse.Style>
                         <Style TargetType="Ellipse">
                             <Setter Property="Fill" Value="{StaticResource TextSubBrush}"/>
@@ -44,39 +31,10 @@
                         </Style>
                     </Ellipse.Style>
                 </Ellipse>
-
-                <TextBlock Grid.Column="2" Text="{Binding StatusText}"
+                <TextBlock Text="{Binding StatusText}"
                            VerticalAlignment="Center"
-                           Foreground="{StaticResource TextSubBrush}"
-                           TextTrimming="CharacterEllipsis"/>
-
-                <TextBox Grid.Column="4"
-                         Text="{Binding EndpointUrl, UpdateSourceTrigger=PropertyChanged}"
-                         VerticalAlignment="Center"
-                         IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBool}}"/>
-
-                <!-- Connect button -->
-                <Button Grid.Column="6"
-                        Command="{Binding ConnectCommand}"
-                        Padding="20,6">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
-                            <Setter Property="Content" Value="Connect"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsBusy}" Value="True">
-                                    <Setter Property="Content"    Value="Connecting…"/>
-                                    <Setter Property="IsEnabled"  Value="False"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-
-                <Button Grid.Column="8"
-                        Content="Disconnect"
-                        Command="{Binding DisconnectCommand}"
-                        Padding="20,6"/>
-            </Grid>
+                           Foreground="{StaticResource TextSubBrush}"/>
+            </StackPanel>
         </Border>
 
         <!-- Node value grid -->

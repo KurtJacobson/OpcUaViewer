@@ -29,7 +29,7 @@ public partial class App : Application
         var pluginTabs    = pluginService.LoadAll().ToList();
 
         var monitorTab  = new MonitorTab(_opc);
-        var settingsTab = new SettingsTab(pluginService);
+        var settingsTab = new SettingsTab(monitorTab, pluginService);
 
         var allTabs = new IAppTab[] { monitorTab, settingsTab }.Concat(pluginTabs);
         var vm      = new MainViewModel(allTabs);

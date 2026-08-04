@@ -76,7 +76,7 @@
             <ScrollViewer VerticalScrollBarVisibility="Auto"
                           Visibility="{Binding SelectedIndex, ElementName=SettingsTabs,
                                        Converter={StaticResource IndexToVisibility}, ConverterParameter=0}">
-                <StackPanel Margin="32,24" MaxWidth="640" HorizontalAlignment="Left">
+                <StackPanel Margin="32,24" MaxWidth="640" HorizontalAlignment="Left" Width="497">
 
                     <TextBlock Text="OPC UA CONNECTION" Style="{StaticResource PanelHeaderStyle}"
                                Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
@@ -84,8 +84,62 @@
                             BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                             CornerRadius="4" Padding="16" Margin="0,0,0,20">
                         <StackPanel>
+                            <!-- URL row -->
                             <Label Content="Endpoint URL"/>
-                            <TextBox Text="{Binding EndpointUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,0"/>
+                            <TextBox Text="{Binding MonitorTab.EndpointUrl, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,4,0,12"/>
+
+                            <!-- Status + connect row -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Ellipse Grid.Column="0" Width="10" Height="10" VerticalAlignment="Center">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="{StaticResource TextSubBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding MonitorTab.IsConnected}" Value="True">
+                                                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+
+                                <TextBlock Grid.Column="2" Text="{Binding MonitorTab.StatusText}"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextSubBrush}"
+                                           TextTrimming="CharacterEllipsis"/>
+
+                                <Button Grid.Column="4"
+                                        Command="{Binding MonitorTab.ConnectCommand}"
+                                        Padding="20,6">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+                                            <Setter Property="Content" Value="Connect"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding MonitorTab.IsBusy}" Value="True">
+                                                    <Setter Property="Content"   Value="Connecting…"/>
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <Button Grid.Column="6"
+                                        Content="Disconnect"
+                                        Command="{Binding MonitorTab.DisconnectCommand}"
+                                        Padding="20,6"/>
+                            </Grid>
                         </StackPanel>
                     </Border>
 
