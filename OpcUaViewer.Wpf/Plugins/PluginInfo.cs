@@ -15,15 +15,26 @@ public sealed class PluginInfo : ViewModelBase
 
     public IReadOnlyList<IAppTab> Tabs { get; init; } = [];
 
-    public string Description => Tabs.FirstOrDefault(t => !string.IsNullOrEmpty(t.Description))?.Description ?? "";
+    public string Description  => Tabs.FirstOrDefault(t => !string.IsNullOrEmpty(t.Description))?.Description ?? "";
 
     public string TabList => Tabs.Count > 0
         ? string.Join(", ", Tabs.Select(t => t.Title))
         : "—";
 
+    public bool CanConfigure => Tabs.OfType<IConfigurableTab>().Any();
+
+    public RelayCommand ConfigureCommand { get; }
+
     public bool IsEnabled
     {
         get => _isEnabled;
         set => Set(ref _isEnabled, value);
+    }
+
+    public PluginInfo()
+    {
+        ConfigureCommand = new RelayCommand(
+            () => Tabs.OfType<IConfigurableTab>().FirstOrDefault()?.Configure(),
+            () => CanConfigure && IsLoaded);
     }
 }

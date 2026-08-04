@@ -7,7 +7,7 @@ using OpcUaViewer.Core.Settings;
 
 namespace OpcUaViewer.Plugin.Document;
 
-public class DocumentTab : ViewModelBase, IAppTab
+public class DocumentTab : ViewModelBase, IAppTab, IConfigurableTab
 {
     public string Title       => "Document";
     public string Icon        => "📄";
@@ -29,6 +29,8 @@ public class DocumentTab : ViewModelBase, IAppTab
         get => _statusText;
         set => Set(ref _statusText, value);
     }
+
+    public void Configure() => new DocumentSettingsDialog().ShowDialog();
 
     public DocumentTab(OpcUaService opc)
     {
