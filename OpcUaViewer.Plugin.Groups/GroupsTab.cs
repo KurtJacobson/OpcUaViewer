@@ -17,9 +17,10 @@ public enum RowHighlight { Normal, Active, Dim }
 
 public class GroupsTab : ViewModelBase, IAppTab
 {
-    public string Title => "Groups";
-    public string Icon  => "📋";
-    public int    Order => 20;
+    public string Title       => "Groups";
+    public string Icon        => "📋";
+    public int    Order       => 20;
+    public string Description => "Manage production groups and product orders. Supports CSV import.";
 
     private readonly OpcUaService _opc;
 

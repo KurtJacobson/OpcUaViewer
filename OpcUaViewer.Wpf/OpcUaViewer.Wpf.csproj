@@ -15,7 +15,23 @@
   <ItemGroup>
     <ProjectReference Include="..\OpcUaViewer.Core\OpcUaViewer.Core.csproj" />
     <ProjectReference Include="..\OpcUaViewer.Theme\OpcUaViewer.Theme.csproj" />
+    <!-- Shipped plugins: build-order dependency only — DLLs go to plugins\ subfolder, not the GAC -->
+    <ProjectReference Include="..\OpcUaViewer.Plugin.Groups\OpcUaViewer.Plugin.Groups.csproj"
+                      ReferenceOutputAssembly="false" Private="false"/>
+    <ProjectReference Include="..\OpcUaViewer.Plugin.Document\OpcUaViewer.Plugin.Document.csproj"
+                      ReferenceOutputAssembly="false" Private="false"/>
   </ItemGroup>
+
+  <Target Name="CopyShippedPlugins" AfterTargets="Build">
+    <ItemGroup>
+      <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Groups\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Groups.dll"/>
+      <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Document\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Document.dll"/>
+    </ItemGroup>
+    <Copy SourceFiles="@(_ShippedPlugin)"
+          DestinationFolder="$(OutputPath)plugins\"
+          SkipUnchangedFiles="true"
+          ContinueOnError="true"/>
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4078.44" />

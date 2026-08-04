@@ -7,9 +7,10 @@ namespace OpcUaViewer.Plugin.Example;
 
 public class ExampleTab : ViewModelBase, IAppTab
 {
-    public string Title => "Example";
-    public string Icon  => "🔌";
-    public int    Order => 90;
+    public string Title       => "Example";
+    public string Icon        => "🔌";
+    public int    Order       => 90;
+    public string Description => "Reference plugin demonstrating the OPC UA Viewer plugin API.";
 
     private string _statusText   = "Not connected";
     private string _productId    = "—";

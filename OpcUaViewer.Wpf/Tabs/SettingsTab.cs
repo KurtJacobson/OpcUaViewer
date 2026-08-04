@@ -1,10 +1,10 @@
 using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Settings;
 using OpcUaViewer.Wpf.Infrastructure;
+using OpcUaViewer.Wpf.Plugins;
 
 namespace OpcUaViewer.Wpf.Tabs;
 
-/// <summary>Application settings tab.</summary>
 public class SettingsTab : ViewModelBase, IAppTab
 {
     public string Title => "Settings";
@@ -55,11 +55,13 @@ public class SettingsTab : ViewModelBase, IAppTab
         set => Set(ref _keyboardEnabled, value);
     }
 
-    public RelayCommand SaveCommand { get; }
+    public PluginService PluginService { get; }
+    public RelayCommand  SaveCommand   { get; }
 
-    public SettingsTab()
+    public SettingsTab(PluginService pluginService)
     {
-        SaveCommand = new RelayCommand(Save);
+        PluginService = pluginService;
+        SaveCommand   = new RelayCommand(Save);
         Load();
     }
 
@@ -85,6 +87,7 @@ public class SettingsTab : ViewModelBase, IAppTab
         s.PdfFolderPath    = PdfFolderPath.Trim();
         s.ProductPathPrefix = ProductPathPrefix.Trim();
         s.KeyboardEnabled  = KeyboardEnabled;
+        PluginService.SaveEnabledState();
         AppSettings.Save();
     }
 }

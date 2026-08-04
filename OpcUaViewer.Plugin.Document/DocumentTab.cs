@@ -9,9 +9,10 @@ namespace OpcUaViewer.Plugin.Document;
 
 public class DocumentTab : ViewModelBase, IAppTab
 {
-    public string Title => "Document";
-    public string Icon  => "📄";
-    public int    Order => 30;
+    public string Title       => "Document";
+    public string Icon        => "📄";
+    public int    Order       => 30;
+    public string Description => "Displays product PDF documentation based on the active OPC UA product ID.";
 
     private string _documentUri = "";
     private string _statusText  = "No document loaded";

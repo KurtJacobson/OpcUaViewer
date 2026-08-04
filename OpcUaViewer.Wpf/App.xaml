@@ -9,6 +9,8 @@
             </ResourceDictionary.MergedDictionaries>
             <infra:InverseBoolConverter         x:Key="InverseBool"/>
             <infra:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            <infra:IndexToVisibilityConverter   x:Key="IndexToVisibility"/>
+            <infra:ZeroToVisibilityConverter    x:Key="ZeroToVisibility"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -6,7 +6,8 @@ namespace OpcUaViewer.Core.Contracts;
 /// </summary>
 public interface IAppTab
 {
-    string Title { get; }
-    string Icon  { get; }  // Emoji or Segoe MDL2 glyph character
-    int    Order { get; }  // Nav sort position; built-ins use 10, 20, 30...
+    string Title       { get; }
+    string Icon        { get; }  // Emoji or Segoe MDL2 glyph character
+    int    Order       { get; }  // Nav sort position; built-ins use 10, 20, 30...
+    string Description => "";    // Optional human-readable description shown in the plugin viewer
 }

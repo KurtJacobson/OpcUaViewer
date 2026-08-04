@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -54,6 +55,9 @@ public sealed class AppSettings
     public int    WindowTop         { get; set; } = -1;
     public int    WindowWidth       { get; set; } = 1200;
     public int    WindowHeight      { get; set; } = 700;
+
+    // Plugins
+    public List<string> DisabledPlugins { get; set; } = [];
 
     // CSV import
     public string CsvPartNameColumn     { get; set; } = "Part Name";
