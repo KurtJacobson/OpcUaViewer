@@ -49,9 +49,9 @@ public partial class App : Application
         foreach (var p in pluginService.Plugins)
         {
             if (string.IsNullOrEmpty(p.LoadError))
-                AppLogger.Info($"Plugin loaded: {p.Name} ({p.TabList})");
+                AppLogger.Info($"Plugin loaded: {p.Name} ({p.TabList}) — {p.FilePath}");
             else
-                AppLogger.Error($"Plugin failed: {p.Name} — {p.LoadError}");
+                AppLogger.Error($"Plugin failed: {p.Name} — {p.LoadError} — {p.FilePath}");
         }
 
         var monitorTab  = new MonitorTab(_opc);
