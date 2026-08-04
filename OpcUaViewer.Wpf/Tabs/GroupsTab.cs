@@ -10,6 +10,7 @@ using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Models;
 using OpcUaViewer.Core.Services;
 using OpcUaViewer.Core.Settings;
+using OpcUaViewer.Wpf.Dialogs;
 using OpcUaViewer.Wpf.Infrastructure;
 
 namespace OpcUaViewer.Wpf.Tabs;
@@ -273,8 +274,7 @@ public class GroupsTab : ViewModelBase, IAppTab
             savePath = Path.Combine(camFolder, fileName);
             if (File.Exists(savePath) && savePath != _editingFilePath)
             {
-                if (MessageBox.Show($"'{fileName}' already exists. Overwrite?", "Save",
-                        MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                if (!AppDialog.Confirm($"'{fileName}' already exists. Overwrite?", "Save"))
                     return;
             }
         }
@@ -294,8 +294,7 @@ public class GroupsTab : ViewModelBase, IAppTab
     {
         if (SelectedOrder == null) return;
         var order = SelectedOrder;
-        if (MessageBox.Show($"Delete '{order.FileName}'?\n\nThis cannot be undone.",
-                "Delete Group", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+        if (!AppDialog.Confirm($"Delete '{order.FileName}'?\n\nThis cannot be undone.", "Delete Group"))
             return;
         try
         {
@@ -354,8 +353,7 @@ public class GroupsTab : ViewModelBase, IAppTab
             Directory.CreateDirectory(inDir);
             string dest = Path.Combine(inDir, Path.GetFileName(SelectedOrder.FilePath));
             File.Copy(SelectedOrder.FilePath, dest, overwrite: true);
-            MessageBox.Show($"Sent '{Path.GetFileName(SelectedOrder.FilePath)}' to:\n{inDir}", "Run Group",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            AppDialog.Show($"Sent '{Path.GetFileName(SelectedOrder.FilePath)}' to:\n{inDir}", "Run Group");
         }
         catch (Exception ex) { Warn("Failed to copy CAM file:\n\n" + ex.Message); }
     }
@@ -368,9 +366,8 @@ public class GroupsTab : ViewModelBase, IAppTab
         if (IsRunningLocked)
         {
             string processingPath = Path.Combine(outputBase, "processing", Path.GetFileName(_activeCamFile));
-            if (!File.Exists(processingPath)) { MessageBox.Show($"File not found in processing folder.", "Cancel Group", MessageBoxButton.OK, MessageBoxImage.Information); return; }
-            if (MessageBox.Show("Delete from processing folder? This will interrupt the current run.",
-                    "Cancel Group", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            if (!File.Exists(processingPath)) { AppDialog.Show("File not found in processing folder.", "Cancel Group"); return; }
+            if (!AppDialog.Confirm("Delete from processing folder? This will interrupt the current run.", "Cancel Group")) return;
             try
             {
                 string cancelDir = Path.Combine(outputBase, "canceled");
@@ -383,14 +380,14 @@ public class GroupsTab : ViewModelBase, IAppTab
 
         if (SelectedOrder == null) return;
         string inPath = Path.Combine(outputBase, "in", Path.GetFileName(SelectedOrder.FilePath));
-        if (!File.Exists(inPath)) { MessageBox.Show("File is not currently in the 'in' folder.", "Cancel Group", MessageBoxButton.OK, MessageBoxImage.Information); return; }
+        if (!File.Exists(inPath)) { AppDialog.Show("File is not currently in the 'in' folder.", "Cancel Group"); return; }
 
         try
         {
             string cancelDir = Path.Combine(outputBase, "canceled");
             Directory.CreateDirectory(cancelDir);
             File.Move(inPath, Path.Combine(cancelDir, Path.GetFileName(SelectedOrder.FilePath)), overwrite: true);
-            MessageBox.Show("Moved to canceled folder.", "Cancel Group", MessageBoxButton.OK, MessageBoxImage.Information);
+            AppDialog.Show("Moved to canceled folder.", "Cancel Group");
         }
         catch (Exception ex) { Warn(ex.Message); }
     }
@@ -399,7 +396,57 @@ public class GroupsTab : ViewModelBase, IAppTab
 
     private void ImportCsv()
     {
-        // Wired in a later pass — CsvImportDialog will be ported to WPF
+        string prodFolder = AppSettings.Current.CamProductsPath;
+        if (!Directory.Exists(prodFolder))
+        {
+            AppDialog.Warn("Please configure the CAM Products Folder in Settings first.", "Import CSV");
+            return;
+        }
+
+        var dlg = new CsvImportDialog { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true) return;
+
+        var rows = OpcUaViewer.Core.Services.CsvService.ParseCsv(
+            dlg.CsvFilePath,
+            AppSettings.Current.CsvPartNameColumn,     AppSettings.Current.CsvPartNameRegex,
+            AppSettings.Current.CsvTemplateFileColumn, AppSettings.Current.CsvTemplateFileRegex,
+            AppSettings.Current.CsvQtyColumn,          AppSettings.Current.CsvQtyRegex,
+            AppSettings.Current.CsvMaterialColumn,     AppSettings.Current.CsvMaterialRegex,
+            AppSettings.Current.CsvThicknessColumn,    AppSettings.Current.CsvThicknessRegex,
+            AppSettings.Current.CsvLengthColumn,       AppSettings.Current.CsvLengthRegex,
+            AppSettings.Current.CsvWidthColumn,        AppSettings.Current.CsvWidthRegex);
+
+        if (rows.Count == 0)
+        {
+            AppDialog.Warn("No rows could be imported. Check your column mapping.", "Import CSV");
+            return;
+        }
+
+        string prefix = AppSettings.Current.ProductPathPrefix;
+        if (!string.IsNullOrEmpty(prefix) && !prefix.EndsWith('\\')) prefix += '\\';
+
+        EnterEditMode(null);
+        var (fn, oid) = NextOrderDefaults();
+        EditFileName = dlg.GroupName;
+        EditOrderId  = oid;
+        Products.Clear();
+
+        foreach (var row in rows)
+        {
+            string listId  = row.ListId;
+            string rawProd = string.IsNullOrEmpty(row.ProductIdRaw) ? row.ListId : row.ProductIdRaw;
+            string prodId  = prefix + rawProd;
+
+            var vm = new CamProductVm(listId, prodId)
+            {
+                MaterialId = row.Material,
+                Thickness  = row.Thickness,
+                Length     = row.Length,
+                Width      = row.Width,
+            };
+            if (int.TryParse(row.Qty, out int qty)) vm.OrdQty = qty;
+            Products.Add(vm);
+        }
     }
 
     // ── OPC UA reactions ──────────────────────────────────────────────────────
@@ -494,7 +541,7 @@ public class GroupsTab : ViewModelBase, IAppTab
         return "";
     }
 
-    private static void Warn(string msg) => MessageBox.Show(msg, "Groups", MessageBoxButton.OK, MessageBoxImage.Warning);
+    private static void Warn(string msg) => AppDialog.Warn(msg, "Groups");
 
     private static void Dispatch(Action a)
     {
