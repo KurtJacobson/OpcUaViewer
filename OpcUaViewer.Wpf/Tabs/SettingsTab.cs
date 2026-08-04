@@ -1,7 +1,9 @@
+using System.Windows;
 using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Settings;
 using OpcUaViewer.Wpf.Infrastructure;
 using OpcUaViewer.Wpf.Plugins;
+using OpcUaViewer.Wpf.Views;
 
 namespace OpcUaViewer.Wpf.Tabs;
 
@@ -11,6 +13,8 @@ public class SettingsTab : ViewModelBase, IAppTab
     public string Icon        => "⚙";
     public int    Order       => 90;
     public bool   PinToBottom => true;
+
+    public FrameworkElement CreateView() => new SettingsView { DataContext = this };
 
     private bool _keyboardEnabled;
 

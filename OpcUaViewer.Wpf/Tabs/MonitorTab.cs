@@ -6,6 +6,7 @@ using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Services;
 using OpcUaViewer.Core.Settings;
 using OpcUaViewer.Wpf.Infrastructure;
+using OpcUaViewer.Wpf.Views;
 
 namespace OpcUaViewer.Wpf.Tabs;
 
@@ -14,6 +15,8 @@ public class MonitorTab : ViewModelBase, IAppTab
     public string Title => "Monitor";
     public string Icon  => "📡";
     public int    Order => 10;
+
+    public FrameworkElement CreateView() => new MonitorView { DataContext = this };
 
     private readonly OpcUaService _opc;
     private bool   _isConnected;

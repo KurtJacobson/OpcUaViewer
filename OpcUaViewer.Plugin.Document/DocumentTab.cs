@@ -14,6 +14,8 @@ public class DocumentTab : ViewModelBase, IAppTab, IConfigurableTab
     public int    Order       => 30;
     public string Description => "Displays product PDF documentation based on the active OPC UA product ID.";
 
+    public FrameworkElement CreateView() => new DocumentView { DataContext = this };
+
     private string _documentUri = "";
     private string _statusText  = "No document loaded";
     private string _lastLoadedProductId = "";

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Windows;
 using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Wpf.Infrastructure;
 
@@ -9,6 +10,7 @@ namespace OpcUaViewer.Wpf.ViewModels;
 public class MainViewModel : ViewModelBase
 {
     private IAppTab? _selectedTab;
+    private readonly Dictionary<IAppTab, FrameworkElement> _viewCache = [];
 
     public ObservableCollection<IAppTab> NavTabs    { get; } = [];
     public ObservableCollection<IAppTab> PinnedTabs { get; } = [];
@@ -16,7 +18,22 @@ public class MainViewModel : ViewModelBase
     public IAppTab? SelectedTab
     {
         get => _selectedTab;
-        set => Set(ref _selectedTab, value);
+        set
+        {
+            if (Set(ref _selectedTab, value))
+                Notify(nameof(SelectedView));
+        }
+    }
+
+    public FrameworkElement? SelectedView
+    {
+        get
+        {
+            if (_selectedTab is null) return null;
+            if (!_viewCache.TryGetValue(_selectedTab, out var view))
+                _viewCache[_selectedTab] = view = _selectedTab.CreateView();
+            return view;
+        }
     }
 
     public RelayCommand<IAppTab> SelectTabCommand { get; }

@@ -1,4 +1,5 @@
 using System;
+using System.Windows;
 using System.Windows.Threading;
 using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Services;
@@ -11,6 +12,8 @@ public class ExampleTab : ViewModelBase, IAppTab
     public string Icon        => "🔌";
     public int    Order       => 90;
     public string Description => "Reference plugin demonstrating the OPC UA Viewer plugin API.";
+
+    public FrameworkElement CreateView() => new ExampleView { DataContext = this };
 
     private string _statusText   = "Not connected";
     private string _productId    = "—";

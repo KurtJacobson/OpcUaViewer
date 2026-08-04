@@ -22,6 +22,8 @@ public class GroupsTab : ViewModelBase, IAppTab, IConfigurableTab
     public int    Order       => 20;
     public string Description => "Manage production groups and product orders. Supports CSV import.";
 
+    public FrameworkElement CreateView() => new GroupsView { DataContext = this };
+
     public void Configure() => new GroupsSettingsDialog().ShowDialog();
 
     private readonly OpcUaService _opc;
