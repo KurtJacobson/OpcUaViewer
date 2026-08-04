@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using OpenCvSharp;
 using OpcUaViewer.Core.Contracts;
+using OpcUaViewer.Core.Services;
 using OpcUaViewer.Core.Settings;
 
 namespace OpcUaViewer.Plugin.Webcam;
@@ -57,6 +58,7 @@ public class WebcamViewModel : ViewModelBase, IDisposable
 
         if (!cap.IsOpened())
         {
+            AppLogger.Error($"Webcam: failed to open camera index {idx}");
             Application.Current?.Dispatcher.BeginInvoke(() =>
             {
                 StatusText = $"Failed to open camera {idx}";

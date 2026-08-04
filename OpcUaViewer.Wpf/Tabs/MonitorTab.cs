@@ -77,13 +77,16 @@ public class MonitorTab : ViewModelBase, IAppTab
         var cts = _opc.NewCts();
         try
         {
+            AppLogger.Info($"Connecting to OPC UA: {EndpointUrl.Trim()}");
             await _opc.ConnectAsync(EndpointUrl.Trim(), cts.Token);
             AppSettings.Current.EndpointUrl = EndpointUrl.Trim();
             AppSettings.Save();
             IsConnected = true;
+            AppLogger.Info("OPC UA connected");
         }
         catch (OpcUaConnectionException ex)
         {
+            AppLogger.Error($"OPC UA connection failed: {EndpointUrl.Trim()}", ex);
             DialogService.Current.Warn(
                 $"Could not connect to the OPC UA server.\n\n{ex.Message}", "Connection Failed");
         }
