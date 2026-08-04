@@ -8,12 +8,12 @@
 
     <UserControl.Resources>
         <Style x:Key="SettingsTabItemStyle" TargetType="TabItem">
-            <Setter Property="Background"   Value="Transparent"/>
-            <Setter Property="Foreground"   Value="{StaticResource TextSubBrush}"/>
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="Foreground"      Value="{StaticResource TextSubBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"      Value="20,8"/>
-            <Setter Property="FontFamily"   Value="{StaticResource UiFont}"/>
-            <Setter Property="FontSize"     Value="{StaticResource FontSizeMd}"/>
+            <Setter Property="Padding"         Value="20,8"/>
+            <Setter Property="FontFamily"      Value="{StaticResource UiFont}"/>
+            <Setter Property="FontSize"        Value="{StaticResource FontSizeMd}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
@@ -26,9 +26,8 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="bd" Property="BorderBrush"
-                                        Value="{StaticResource AccentBrush}"/>
-                                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter Property="Foreground"                   Value="{StaticResource TextBrush}"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
@@ -44,9 +43,10 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Tab strip -->
+        <!-- ══ Tab strip ═════════════════════════════════════════════════════ -->
         <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" Margin="16,0,0,0">
@@ -63,22 +63,21 @@
                             </StackPanel>
                         </ControlTemplate>
                     </TabControl.Template>
-                    <TabItem Header="General"  Style="{StaticResource SettingsTabItemStyle}"/>
-                    <TabItem Header="Plugins"  Style="{StaticResource SettingsTabItemStyle}"/>
+                    <TabItem Header="General" Style="{StaticResource SettingsTabItemStyle}"/>
+                    <TabItem Header="Plugins" Style="{StaticResource SettingsTabItemStyle}"/>
                 </TabControl>
             </StackPanel>
         </Border>
 
-        <!-- Content area — swap panels based on selected tab -->
+        <!-- ══ Content area ══════════════════════════════════════════════════ -->
         <Grid Grid.Row="1">
 
-            <!-- ══ General ════════════════════════════════════════════════════ -->
+            <!-- General -->
             <ScrollViewer VerticalScrollBarVisibility="Auto"
                           Visibility="{Binding SelectedIndex, ElementName=SettingsTabs,
                                        Converter={StaticResource IndexToVisibility}, ConverterParameter=0}">
                 <StackPanel Margin="32,24" MaxWidth="640" HorizontalAlignment="Left">
 
-                    <!-- OPC UA -->
                     <TextBlock Text="OPC UA CONNECTION" Style="{StaticResource PanelHeaderStyle}"
                                Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
                     <Border Background="{StaticResource SurfaceBrush}"
@@ -86,12 +85,10 @@
                             CornerRadius="4" Padding="16" Margin="0,0,0,20">
                         <StackPanel>
                             <Label Content="Endpoint URL"/>
-                            <TextBox Text="{Binding EndpointUrl, UpdateSourceTrigger=PropertyChanged}"
-                                     Margin="0,4,0,0"/>
+                            <TextBox Text="{Binding EndpointUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,0"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- Folders -->
                     <TextBlock Text="FOLDER PATHS" Style="{StaticResource PanelHeaderStyle}"
                                Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
                     <Border Background="{StaticResource SurfaceBrush}"
@@ -99,130 +96,108 @@
                             CornerRadius="4" Padding="16" Margin="0,0,0,20">
                         <StackPanel>
                             <Label Content="CAM Folder"/>
-                            <TextBox Text="{Binding CamFolderPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
-
+                            <TextBox Text="{Binding CamFolderPath,    UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
                             <Label Content="CAM Output Path"/>
-                            <TextBox Text="{Binding CamOutputPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
-
+                            <TextBox Text="{Binding CamOutputPath,    UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
                             <Label Content="CAM Products Path"/>
-                            <TextBox Text="{Binding CamProductsPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
-
+                            <TextBox Text="{Binding CamProductsPath,  UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
                             <Label Content="PDF / Document Folder"/>
-                            <TextBox Text="{Binding PdfFolderPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
-
+                            <TextBox Text="{Binding PdfFolderPath,    UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,12"/>
                             <Label Content="Product Path Prefix"/>
                             <TextBox Text="{Binding ProductPathPrefix, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,0"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- UI Options -->
                     <TextBlock Text="UI OPTIONS" Style="{StaticResource PanelHeaderStyle}"
                                Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
                     <Border Background="{StaticResource SurfaceBrush}"
                             BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                            CornerRadius="4" Padding="16" Margin="0,0,0,24">
-                        <CheckBox Content="Enable on-screen keyboard"
-                                  IsChecked="{Binding KeyboardEnabled}"/>
+                            CornerRadius="4" Padding="16" Margin="0,0,0,0">
+                        <CheckBox Content="Enable on-screen keyboard" IsChecked="{Binding KeyboardEnabled}"/>
                     </Border>
 
-                    <!-- Save -->
-                    <Button Content="Save Settings"
-                            Command="{Binding SaveCommand}"
-                            Style="{StaticResource AccentButtonStyle}"
-                            HorizontalAlignment="Left"
-                            Padding="28,10"/>
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- ══ Plugins ════════════════════════════════════════════════════ -->
-            <Grid Visibility="{Binding SelectedIndex, ElementName=SettingsTabs,
-                               Converter={StaticResource IndexToVisibility}, ConverterParameter=1}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+            <!-- Plugins -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="32,24,32,0"
+                          Visibility="{Binding SelectedIndex, ElementName=SettingsTabs,
+                                       Converter={StaticResource IndexToVisibility}, ConverterParameter=1}">
+                <StackPanel MaxWidth="800" HorizontalAlignment="Left">
 
-                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Margin="32,24,32,0">
-                    <StackPanel MaxWidth="800" HorizontalAlignment="Left">
+                    <TextBlock Text="INSTALLED PLUGINS" Style="{StaticResource PanelHeaderStyle}"
+                               Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Changes take effect after restarting the application."
+                               Foreground="{StaticResource TextSubBrush}"
+                               FontSize="{StaticResource FontSizeSm}" Margin="0,0,0,16"/>
 
-                        <TextBlock Text="INSTALLED PLUGINS" Style="{StaticResource PanelHeaderStyle}"
-                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+                    <ItemsControl ItemsSource="{Binding PluginService.Plugins}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource SurfaceBrush}"
+                                        BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="1" CornerRadius="4"
+                                        Padding="16,12" Margin="0,0,0,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
 
-                        <TextBlock Text="Changes take effect after restarting the application."
-                                   Foreground="{StaticResource TextSubBrush}"
-                                   FontSize="{StaticResource FontSizeSm}"
-                                   Margin="0,0,0,16"/>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                            <TextBlock Text="{Binding Description, Mode=OneWay}"
+                                                       Foreground="{StaticResource TextSubBrush}"
+                                                       Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                            <TextBlock Margin="0,4,0,0">
+                                                <Run Text="Tabs: "    Foreground="{StaticResource TextSubBrush}"/>
+                                                <Run Text="{Binding TabList,   Mode=OneWay}" Foreground="{StaticResource TextSubBrush}"/>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding FilePath, Mode=OneWay}"
+                                                       Foreground="{StaticResource TextSubBrush}"
+                                                       FontSize="{StaticResource FontSizeSm}"
+                                                       Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
 
-                        <ItemsControl ItemsSource="{Binding PluginService.Plugins}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="{StaticResource SurfaceBrush}"
-                                            BorderBrush="{StaticResource BorderBrush}"
-                                            BorderThickness="1" CornerRadius="4"
-                                            Padding="16,12" Margin="0,0,0,8">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                    VerticalAlignment="Center" Margin="16,0,0,0">
+                                            <Button Content="Configure"
+                                                    Command="{Binding ConfigureCommand}"
+                                                    Margin="0,0,12,0"
+                                                    Visibility="{Binding CanConfigure, Converter={StaticResource BoolToVis}}"/>
+                                            <CheckBox IsChecked="{Binding IsEnabled}" Content="Enabled"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
-                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Name}"
-                                                           FontWeight="SemiBold" FontSize="14"/>
-                                                <TextBlock Text="{Binding Description, Mode=OneWay}"
-                                                           Foreground="{StaticResource TextSubBrush}"
-                                                           Margin="0,3,0,0"
-                                                           TextWrapping="Wrap"/>
-                                                <TextBlock Margin="0,4,0,0">
-                                                    <Run Text="Tabs: " Foreground="{StaticResource TextSubBrush}"/>
-                                                    <Run Text="{Binding TabList, Mode=OneWay}" Foreground="{StaticResource TextSubBrush}"/>
-                                                </TextBlock>
-                                                <TextBlock Text="{Binding FilePath, Mode=OneWay}"
-                                                           Foreground="{StaticResource TextSubBrush}"
-                                                           FontSize="{StaticResource FontSizeSm}"
-                                                           Margin="0,2,0,0"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                            </StackPanel>
+                    <TextBlock Margin="0,8,0,0"
+                               Foreground="{StaticResource TextSubBrush}"
+                               FontSize="{StaticResource FontSizeSm}"
+                               Visibility="{Binding PluginService.Plugins.Count, Converter={StaticResource ZeroToVisibility}}">
+                        No plugins found. Place plugin DLLs in the plugins folder next to the application,
+                        or in %LocalAppData%\OpcUaViewer\plugins\.
+                    </TextBlock>
 
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal"
-                                                        VerticalAlignment="Center" Margin="16,0,0,0">
-                                                <Button Content="Configure"
-                                                        Command="{Binding ConfigureCommand}"
-                                                        Margin="0,0,12,0"
-                                                        Visibility="{Binding CanConfigure,
-                                                                     Converter={StaticResource BoolToVis}}"/>
-                                                <CheckBox IsChecked="{Binding IsEnabled}"
-                                                          Content="Enabled"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
 
-                        <TextBlock Margin="0,8,0,0"
-                                   Foreground="{StaticResource TextSubBrush}"
-                                   FontSize="{StaticResource FontSizeSm}"
-                                   Visibility="{Binding PluginService.Plugins.Count,
-                                                Converter={StaticResource ZeroToVisibility}}">
-                            No plugins found. Place plugin DLLs in the plugins folder next to the application,
-                            or in %LocalAppData%\OpcUaViewer\plugins\.
-                        </TextBlock>
-                    </StackPanel>
-                </ScrollViewer>
+        </Grid><!-- /content Grid -->
 
-                <Border Grid.Row="1"
-                        Background="{StaticResource SurfaceBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
-                        BorderThickness="0,1,0,0"
-                        Padding="32,12">
-                    <Button Content="Save Settings"
-                            Command="{Binding SaveCommand}"
-                            Style="{StaticResource AccentButtonStyle}"
-                            HorizontalAlignment="Left"
-                            Padding="28,10"/>
-                </Border>
-            </Grid>
-        </Grid>
+        <!-- ══ Shared save bar ═══════════════════════════════════════════════ -->
+        <Border Grid.Row="2"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="32,12">
+            <Button Content="Save Settings"
+                    Command="{Binding SaveCommand}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    HorizontalAlignment="Right"
+                    Padding="28,10"/>
+        </Border>
+
     </Grid>
 </UserControl>
