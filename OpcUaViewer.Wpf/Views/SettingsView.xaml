@@ -169,10 +169,20 @@
                     <ItemsControl ItemsSource="{Binding PluginService.Plugins}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="{StaticResource SurfaceBrush}"
-                                        BorderBrush="{StaticResource BorderBrush}"
-                                        BorderThickness="1" CornerRadius="4"
+                                <Border BorderThickness="1" CornerRadius="4"
                                         Padding="16,12" Margin="0,0,0,8">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background"   Value="{StaticResource SurfaceBrush}"/>
+                                            <Setter Property="BorderBrush"  Value="{StaticResource BorderBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LoadError, Converter={StaticResource NullOrEmptyToBool}}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}"/>
+                                                    <Setter Property="Background"  Value="{StaticResource ErrorSurfaceBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -180,27 +190,113 @@
                                         </Grid.ColumnDefinitions>
 
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
-                                            <TextBlock Text="{Binding Description, Mode=OneWay}"
-                                                       Foreground="{StaticResource TextSubBrush}"
-                                                       Margin="0,3,0,0" TextWrapping="Wrap"/>
-                                            <TextBlock Margin="0,4,0,0">
-                                                <Run Text="Tabs: "    Foreground="{StaticResource TextSubBrush}"/>
-                                                <Run Text="{Binding TabList,   Mode=OneWay}" Foreground="{StaticResource TextSubBrush}"/>
-                                            </TextBlock>
-                                            <TextBlock Text="{Binding FilePath, Mode=OneWay}"
-                                                       Foreground="{StaticResource TextSubBrush}"
-                                                       FontSize="{StaticResource FontSizeSm}"
-                                                       Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <!-- Error badge -->
+                                                <Border Background="{StaticResource ErrorBrush}"
+                                                        CornerRadius="3" Padding="5,1" Margin="0,0,8,0"
+                                                        VerticalAlignment="Center">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding LoadError, Converter={StaticResource NullOrEmptyToBool}}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="LOAD FAILED" FontSize="10" FontWeight="Bold"
+                                                               Foreground="White"/>
+                                                </Border>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+
+                                            <!-- Normal info (hidden when failed) -->
+                                            <StackPanel>
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding LoadError, Converter={StaticResource NullOrEmptyToBool}}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
+                                                <TextBlock Text="{Binding Description, Mode=OneWay}"
+                                                           Foreground="{StaticResource TextSubBrush}"
+                                                           Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                                <TextBlock Margin="0,4,0,0">
+                                                    <Run Text="Tabs: "  Foreground="{StaticResource TextSubBrush}"/>
+                                                    <Run Text="{Binding TabList, Mode=OneWay}" Foreground="{StaticResource TextSubBrush}"/>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding FilePath, Mode=OneWay}"
+                                                           Foreground="{StaticResource TextSubBrush}"
+                                                           FontSize="{StaticResource FontSizeSm}"
+                                                           Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+
+                                            <!-- Error detail (shown when failed) -->
+                                            <StackPanel>
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding LoadError, Converter={StaticResource NullOrEmptyToBool}}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
+                                                <TextBlock Text="{Binding LoadError, Mode=OneWay}"
+                                                           Foreground="{StaticResource ErrorBrush}"
+                                                           FontSize="{StaticResource FontSizeSm}"
+                                                           Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding FilePath, Mode=OneWay}"
+                                                           Foreground="{StaticResource TextSubBrush}"
+                                                           FontSize="{StaticResource FontSizeSm}"
+                                                           Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
                                         </StackPanel>
 
+                                        <!-- Normal actions -->
                                         <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                     VerticalAlignment="Center" Margin="16,0,0,0">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding LoadError, Converter={StaticResource NullOrEmptyToBool}}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
                                             <Button Content="Configure"
                                                     Command="{Binding ConfigureCommand}"
                                                     Margin="0,0,12,0"
                                                     Visibility="{Binding CanConfigure, Converter={StaticResource BoolToVis}}"/>
                                             <CheckBox IsChecked="{Binding IsEnabled}" Content="Enabled"/>
+                                        </StackPanel>
+
+                                        <!-- Error actions -->
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                    VerticalAlignment="Center" Margin="16,0,0,0">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding LoadError, Converter={StaticResource NullOrEmptyToBool}}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <Button Content="Copy Error"
+                                                    Tag="{Binding LoadError}"
+                                                    Click="CopyError_Click"
+                                                    Padding="12,6"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>

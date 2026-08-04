@@ -45,6 +45,19 @@ public class IndexToVisibilityConverter : IValueConverter
         => DependencyProperty.UnsetValue;
 }
 
+// Returns true when the string is non-null and non-empty, false otherwise
+[ValueConversion(typeof(string), typeof(bool))]
+public class NullOrEmptyToBoolConverter : IValueConverter
+{
+    public static readonly NullOrEmptyToBoolConverter Default = new();
+
+    public object Convert(object value, Type t, object p, CultureInfo c)
+        => value is string s && !string.IsNullOrEmpty(s);
+
+    public object ConvertBack(object value, Type t, object p, CultureInfo c)
+        => DependencyProperty.UnsetValue;
+}
+
 // Shows Visible when collection count is zero
 [ValueConversion(typeof(int), typeof(Visibility))]
 public class ZeroToVisibilityConverter : IValueConverter

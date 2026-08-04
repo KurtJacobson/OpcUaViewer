@@ -34,6 +34,8 @@
     <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}"/>
     <SolidColorBrush x:Key="SuccessBrush"     Color="{StaticResource SuccessColor}"/>
     <SolidColorBrush x:Key="DangerBrush"      Color="{StaticResource DangerColor}"/>
+    <SolidColorBrush x:Key="ErrorBrush"       Color="{StaticResource DangerColor}"/>
+    <SolidColorBrush x:Key="ErrorSurfaceBrush" Color="#FF2A1A1A"/>
     <SolidColorBrush x:Key="WarningBrush"     Color="{StaticResource WarningColor}"/>
     <SolidColorBrush x:Key="InputBgBrush"     Color="{StaticResource InputBgColor}"/>
     <SolidColorBrush x:Key="ButtonBgBrush"    Color="{StaticResource ButtonBgColor}"/>

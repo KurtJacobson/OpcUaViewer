@@ -11,6 +11,7 @@
             <infra:BooleanToVisibilityConverter x:Key="BoolToVis"/>
             <infra:IndexToVisibilityConverter   x:Key="IndexToVisibility"/>
             <infra:ZeroToVisibilityConverter    x:Key="ZeroToVisibility"/>
+            <infra:NullOrEmptyToBoolConverter   x:Key="NullOrEmptyToBool"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
