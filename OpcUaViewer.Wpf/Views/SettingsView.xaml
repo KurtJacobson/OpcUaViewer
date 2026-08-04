@@ -147,8 +147,18 @@
                                Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
                     <Border Background="{StaticResource SurfaceBrush}"
                             BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                            CornerRadius="4" Padding="16" Margin="0,0,0,0">
+                            CornerRadius="4" Padding="16" Margin="0,0,0,20">
                         <CheckBox Content="Enable on-screen keyboard" IsChecked="{Binding KeyboardEnabled}"/>
+                    </Border>
+
+                    <TextBlock Text="DIAGNOSTICS" Style="{StaticResource PanelHeaderStyle}"
+                               Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+                    <Border Background="{StaticResource SurfaceBrush}"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                            CornerRadius="4" Padding="16" Margin="0,0,0,0">
+                        <Button Content="Open Today's Log"
+                                Command="{Binding OpenLogCommand}"
+                                Padding="16,6" HorizontalAlignment="Left"/>
                     </Border>
 
                 </StackPanel>

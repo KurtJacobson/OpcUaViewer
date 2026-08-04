@@ -1,3 +1,6 @@
+using System;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Settings;
@@ -24,21 +27,35 @@ public class SettingsTab : ViewModelBase, IAppTab
         set => Set(ref _keyboardEnabled, value);
     }
 
-    public MonitorTab      MonitorTab    { get; }
-    public PluginService   PluginService { get; }
-    public RelayCommand    SaveCommand   { get; }
+    public MonitorTab      MonitorTab      { get; }
+    public PluginService   PluginService   { get; }
+    public RelayCommand    SaveCommand     { get; }
+    public RelayCommand    OpenLogCommand  { get; }
 
     public SettingsTab(MonitorTab monitorTab, PluginService pluginService)
     {
-        MonitorTab    = monitorTab;
-        PluginService = pluginService;
-        SaveCommand   = new RelayCommand(Save);
+        MonitorTab     = monitorTab;
+        PluginService  = pluginService;
+        SaveCommand    = new RelayCommand(Save);
+        OpenLogCommand = new RelayCommand(OpenLog);
         Load();
     }
 
     public void Load()
     {
         KeyboardEnabled = AppSettings.Current.KeyboardEnabled;
+    }
+
+    private static void OpenLog()
+    {
+        string path = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "OpcUaViewer", "logs", $"{DateTime.Today:yyyy-MM-dd}.log");
+
+        if (!File.Exists(path))
+            File.WriteAllText(path, "");  // create empty file so the editor opens cleanly
+
+        Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
     }
 
     private void Save()
