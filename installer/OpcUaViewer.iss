@@ -35,6 +35,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "main";    Description: "OPC UA Viewer (required)"; Types: full compact custom; Flags: fixed
 Name: "groups";  Description: "Groups Plugin — manage production groups and product orders"; Types: full
 Name: "docview"; Description: "Document Viewer Plugin — display product PDF documentation"; Types: full
+Name: "webcam";  Description: "Webcam Plugin — live camera feed viewer"; Types: full
 Name: "example"; Description: "Example Plugin — developer reference plugin"; Types: full
 
 [Tasks]
@@ -52,6 +53,7 @@ Source: "{#PublishDir}\Assets\*";                          DestDir: "{app}\Asset
 ; ── Shipped plugins (each optional) ──────────────────────────────────────────
 Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Groups.dll";    DestDir: "{app}\plugins"; Components: groups;  Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Document.dll";  DestDir: "{app}\plugins"; Components: docview; Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Webcam.dll";    DestDir: "{app}\plugins"; Components: webcam;  Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Example.dll";   DestDir: "{app}\plugins"; Components: example; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]

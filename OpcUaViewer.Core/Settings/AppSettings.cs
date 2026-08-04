@@ -59,6 +59,9 @@ public sealed class AppSettings
     // Plugins
     public List<string> DisabledPlugins { get; set; } = [];
 
+    // Webcam
+    public int WebcamIndex { get; set; } = 0;
+
     // CSV import
     public string CsvPartNameColumn     { get; set; } = "Part Name";
     public string CsvPartNameRegex      { get; set; } = "";

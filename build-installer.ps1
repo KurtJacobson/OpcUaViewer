@@ -32,7 +32,8 @@ if (-not $SkipPublish) {
 # dotnet publish does not run the CopyShippedPlugins MSBuild target, so we do it here.
 $pluginProjects = @(
     "OpcUaViewer.Plugin.Groups",
-    "OpcUaViewer.Plugin.Document"
+    "OpcUaViewer.Plugin.Document",
+    "OpcUaViewer.Plugin.Webcam"
 )
 
 Write-Host "Building and copying plugins..." -ForegroundColor Cyan

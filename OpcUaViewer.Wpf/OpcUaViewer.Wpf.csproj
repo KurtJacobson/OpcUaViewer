@@ -20,15 +20,32 @@
                       ReferenceOutputAssembly="false" Private="false"/>
     <ProjectReference Include="..\OpcUaViewer.Plugin.Document\OpcUaViewer.Plugin.Document.csproj"
                       ReferenceOutputAssembly="false" Private="false"/>
+    <ProjectReference Include="..\OpcUaViewer.Plugin.Webcam\OpcUaViewer.Plugin.Webcam.csproj"
+                      ReferenceOutputAssembly="false" Private="false"/>
   </ItemGroup>
 
   <Target Name="CopyShippedPlugins" AfterTargets="Build">
+    <!-- Groups and Document: copy single DLL only -->
     <ItemGroup>
       <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Groups\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Groups.dll"/>
       <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Document\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Document.dll"/>
     </ItemGroup>
     <Copy SourceFiles="@(_ShippedPlugin)"
           DestinationFolder="$(OutputPath)plugins\"
+          SkipUnchangedFiles="true"
+          ContinueOnError="true"/>
+
+    <!-- Webcam: copy plugin DLL + managed deps to plugins\, native DLL to app root -->
+    <ItemGroup>
+      <_WebcamPlugin Include="..\OpcUaViewer.Plugin.Webcam\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Webcam.dll"/>
+      <_WebcamPlugin Include="..\OpcUaViewer.Plugin.Webcam\bin\$(Configuration)\$(TargetFramework)\OpenCvSharp.dll"/>
+    </ItemGroup>
+    <Copy SourceFiles="@(_WebcamPlugin)"
+          DestinationFolder="$(OutputPath)plugins\"
+          SkipUnchangedFiles="true"
+          ContinueOnError="true"/>
+    <Copy SourceFiles="..\OpcUaViewer.Plugin.Webcam\bin\$(Configuration)\$(TargetFramework)\OpenCvSharpExtern.dll"
+          DestinationFolder="$(OutputPath)"
           SkipUnchangedFiles="true"
           ContinueOnError="true"/>
   </Target>
