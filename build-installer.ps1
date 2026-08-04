@@ -43,7 +43,8 @@ foreach ($proj in $pluginProjects) {
     dotnet build "$root\$proj\$proj.csproj" -c $Configuration --no-restore
     if ($LASTEXITCODE -ne 0) { throw "Build failed for $proj." }
 
-    $dll = "$root\$proj\bin\$Configuration\$tf\$proj.dll"
+    $binDir = "$root\$proj\bin\$Configuration\$tf"
+    $dll = "$binDir\$proj.dll"
     if (Test-Path $dll) {
         Copy-Item $dll -Destination $plugins -Force
         Write-Host "  Copied $proj.dll" -ForegroundColor Gray
@@ -51,6 +52,13 @@ foreach ($proj in $pluginProjects) {
         Write-Warning "  $proj.dll not found at: $dll"
     }
 }
+
+# Webcam: copy managed wrapper to plugins\ and native DLL to app root
+$webcamBin = "$root\OpcUaViewer.Plugin.Webcam\bin\$Configuration\$tf"
+$managedCv = "$webcamBin\OpenCvSharp.dll"
+$nativeCv  = "$webcamBin\OpenCvSharpExtern.dll"
+if (Test-Path $managedCv) { Copy-Item $managedCv -Destination $plugins -Force; Write-Host "  Copied OpenCvSharp.dll" -ForegroundColor Gray }
+if (Test-Path $nativeCv)  { Copy-Item $nativeCv  -Destination $publish  -Force; Write-Host "  Copied OpenCvSharpExtern.dll" -ForegroundColor Gray }
 
 # ── 3. Compile installer ──────────────────────────────────────────────────────
 $iscc = @(

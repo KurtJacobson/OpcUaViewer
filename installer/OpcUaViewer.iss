@@ -54,6 +54,8 @@ Source: "{#PublishDir}\Assets\*";                          DestDir: "{app}\Asset
 Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Groups.dll";    DestDir: "{app}\plugins"; Components: groups;  Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Document.dll";  DestDir: "{app}\plugins"; Components: docview; Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Webcam.dll";    DestDir: "{app}\plugins"; Components: webcam;  Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#PublishDir}\plugins\OpenCvSharp.dll";                 DestDir: "{app}\plugins"; Components: webcam;  Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#PublishDir}\OpenCvSharpExtern.dll";                   DestDir: "{app}";         Components: webcam;  Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Example.dll";   DestDir: "{app}\plugins"; Components: example; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
