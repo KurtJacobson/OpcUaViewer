@@ -9,9 +9,10 @@ public sealed class PluginInfo : ViewModelBase
 {
     private bool _isEnabled;
 
-    public string Name     { get; init; } = "";
-    public string FilePath { get; init; } = "";
-    public bool   IsLoaded { get; init; }
+    public string Name      { get; init; } = "";
+    public string FilePath  { get; init; } = "";
+    public bool   IsLoaded  { get; init; }
+    public string LoadError { get; init; } = "";  // non-empty when the plugin failed to load
 
     public IReadOnlyList<IAppTab> Tabs { get; init; } = [];
 

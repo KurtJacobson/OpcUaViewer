@@ -72,36 +72,52 @@ public sealed class PluginService
 
     private PluginInfo? TryLoad(string dll)
     {
+        string shortName = Path.GetFileNameWithoutExtension(dll);
+
         Assembly asm;
         try { asm = Assembly.LoadFrom(dll); }
-        catch { return null; }
+        catch (Exception ex) { return Failed(dll, shortName, ex); }
 
-        foreach (var rd in FindResources(asm))
-            _app.Resources.MergedDictionaries.Add(rd);
-
-        var tabs = new List<IAppTab>();
-        foreach (var type in asm.GetExportedTypes())
+        try
         {
-            if (!typeof(IAppTab).IsAssignableFrom(type) || type.IsAbstract) continue;
-            IAppTab? tab = null;
-            try { tab = (IAppTab?)Activator.CreateInstance(type, _opc); } catch { }
-            if (tab is null)
-                try { tab = (IAppTab?)Activator.CreateInstance(type); } catch { }
-            if (tab is not null) tabs.Add(tab);
+            var tabTypes = asm.GetExportedTypes()
+                             .Where(t => typeof(IAppTab).IsAssignableFrom(t) && !t.IsAbstract)
+                             .ToList();
+
+            if (tabTypes.Count == 0) return null;  // not a plugin DLL, skip silently
+
+            foreach (var rd in FindResources(asm))
+                _app.Resources.MergedDictionaries.Add(rd);
+
+            var tabs = new List<IAppTab>();
+            foreach (var type in tabTypes)
+            {
+                IAppTab? tab = null;
+                try { tab = (IAppTab?)Activator.CreateInstance(type, _opc); } catch { }
+                if (tab is null)
+                    try { tab = (IAppTab?)Activator.CreateInstance(type); } catch { }
+                if (tab is not null) tabs.Add(tab);
+            }
+
+            if (tabs.Count == 0) return null;
+
+            string name = asm.GetName().Name ?? shortName;
+            return new PluginInfo { Name = name, FilePath = dll, Tabs = tabs, IsLoaded = true, IsEnabled = true };
         }
-
-        if (tabs.Count == 0) return null;
-
-        string name = asm.GetName().Name ?? Path.GetFileNameWithoutExtension(dll);
-        return new PluginInfo
-        {
-            Name      = name,
-            FilePath  = dll,
-            Tabs      = tabs,
-            IsLoaded  = true,
-            IsEnabled = true,
-        };
+        catch (Exception ex) { return Failed(dll, shortName, ex); }
     }
+
+    private static PluginInfo Failed(string dll, string name, Exception ex) =>
+        Failed(dll, name, ex.GetBaseException().Message);
+
+    private static PluginInfo Failed(string dll, string name, string message) => new()
+    {
+        Name      = name,
+        FilePath  = dll,
+        IsLoaded  = false,
+        IsEnabled = false,
+        LoadError = message,
+    };
 
     private static PluginInfo? BuildUnloaded(string dll)
     {
