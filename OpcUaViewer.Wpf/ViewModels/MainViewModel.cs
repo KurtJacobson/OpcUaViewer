@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows;
 using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Wpf.Infrastructure;
 
@@ -9,45 +8,34 @@ namespace OpcUaViewer.Wpf.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
-    private IAppTab? _selectedTab;
-    private readonly Dictionary<IAppTab, FrameworkElement> _viewCache = [];
+    private TabGroupViewModel? _selectedGroup;
 
-    public ObservableCollection<IAppTab> NavTabs    { get; } = [];
-    public ObservableCollection<IAppTab> PinnedTabs { get; } = [];
+    public ObservableCollection<TabGroupViewModel> NavGroups    { get; } = [];
+    public ObservableCollection<TabGroupViewModel> PinnedGroups { get; } = [];
 
-    public IAppTab? SelectedTab
+    public TabGroupViewModel? SelectedGroup
     {
-        get => _selectedTab;
-        set
-        {
-            if (Set(ref _selectedTab, value))
-                Notify(nameof(SelectedView));
-        }
+        get => _selectedGroup;
+        set => Set(ref _selectedGroup, value);
     }
 
-    public FrameworkElement? SelectedView
-    {
-        get
-        {
-            if (_selectedTab is null) return null;
-            if (!_viewCache.TryGetValue(_selectedTab, out var view))
-                _viewCache[_selectedTab] = view = _selectedTab.CreateView();
-            return view;
-        }
-    }
-
-    public RelayCommand<IAppTab> SelectTabCommand { get; }
+    public RelayCommand<TabGroupViewModel> SelectGroupCommand { get; }
 
     public MainViewModel(IEnumerable<IAppTab> tabs)
     {
-        SelectTabCommand = new RelayCommand<IAppTab>(tab => SelectedTab = tab);
+        SelectGroupCommand = new RelayCommand<TabGroupViewModel>(g => SelectedGroup = g);
 
-        foreach (var tab in tabs.OrderBy(t => t.Order))
+        var groups = tabs
+            .OrderBy(t => t.Order)
+            .GroupBy(t => t.GroupKey)
+            .Select(g => new TabGroupViewModel(g.Key, g.ToList()));
+
+        foreach (var group in groups)
         {
-            if (tab.PinToBottom) PinnedTabs.Add(tab);
-            else                 NavTabs.Add(tab);
+            if (group.PinToBottom) PinnedGroups.Add(group);
+            else                   NavGroups.Add(group);
         }
 
-        SelectedTab = NavTabs.FirstOrDefault();
+        SelectedGroup = NavGroups.FirstOrDefault();
     }
 }
