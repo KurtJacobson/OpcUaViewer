@@ -1,7 +1,8 @@
-<UserControl x:Class="OpcUaViewer.Plugin.OpcUa.Views.MonitorView"
+<UserControl
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Background="{StaticResource BgBrush}">
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="OpcUaViewer.Plugin.OpcUa.Views.MonitorView"
+             Background="{StaticResource BgBrush}" d:DesignHeight="523.12" d:DesignWidth="956.193">
 
     <Grid Margin="16">
         <Grid.RowDefinitions>
@@ -21,7 +22,7 @@
             <StackPanel Orientation="Horizontal">
                 <Ellipse Width="10" Height="10" VerticalAlignment="Center" Margin="0,0,8,0">
                     <Ellipse.Style>
-                        <Style TargetType="Ellipse">
+                        <Style TargetType="{x:Type Ellipse}">
                             <Setter Property="Fill" Value="{StaticResource TextSubBrush}"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsConnected}" Value="True">
