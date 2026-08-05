@@ -11,8 +11,8 @@ public class TabGroupViewModel : ViewModelBase
     private readonly Dictionary<IAppTab, FrameworkElement> _viewCache = [];
 
     public string          Key        { get; }
-    public string          Icon       => _selectedTab.Icon;
-    public string          Title      => _selectedTab.Title;
+    public string          Icon       => Tabs[0].Icon;
+    public string          Title      => Tabs[0].Title;
     public bool            PinToBottom => Tabs[0].PinToBottom;
     public List<IAppTab>   Tabs       { get; }
     public bool            HasMultipleTabs => Tabs.Count > 1;
@@ -23,11 +23,7 @@ public class TabGroupViewModel : ViewModelBase
         set
         {
             if (Set(ref _selectedTab, value))
-            {
                 Notify(nameof(SelectedView));
-                Notify(nameof(Icon));
-                Notify(nameof(Title));
-            }
         }
     }
 

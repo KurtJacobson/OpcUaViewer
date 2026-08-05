@@ -9,4 +9,7 @@ public interface IDataSource
 {
     string Name        { get; }
     string Description => "";
+
+    /// <summary>Called once after all plugins are loaded and the main window is shown.</summary>
+    void OnApplicationStarted() {}
 }

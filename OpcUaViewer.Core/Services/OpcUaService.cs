@@ -6,19 +6,9 @@ using System.Threading.Tasks;
 using Opc.Ua;
 using Opc.Ua.Client;
 using Opc.Ua.Configuration;
+using OpcUaViewer.Core.Contracts;
 
 namespace OpcUaViewer.Core.Services;
-
-public record MonitoredNodeInfo(string Name, string NodeIdStr);
-
-public class NodeValueEventArgs(string name, object? rawValue, string statusCode, DateTime timestamp) : EventArgs
-{
-    public string   Name       { get; } = name;
-    public object?  RawValue   { get; } = rawValue;
-    public string   StrValue   { get; } = rawValue?.ToString() ?? "";
-    public string   StatusCode { get; } = statusCode;
-    public DateTime Timestamp  { get; } = timestamp;
-}
 
 /// <summary>
 /// Manages OPC UA connection, browsing, and subscription. All events fire on background threads;
@@ -339,5 +329,3 @@ public class OpcUaService : IDisposable
     private void RaiseStatus(string msg) => StatusChanged?.Invoke(this, msg);
 }
 
-public class OpcUaConnectionException(string message, Exception? inner = null)
-    : Exception(message, inner);

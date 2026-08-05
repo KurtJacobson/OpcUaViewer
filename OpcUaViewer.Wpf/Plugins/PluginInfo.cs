@@ -14,8 +14,9 @@ public sealed class PluginInfo : ViewModelBase
     public bool   IsLoaded  { get; init; }
     public string LoadError { get; init; } = "";
 
-    public IReadOnlyList<IAppTab>    Tabs        { get; init; } = [];
-    public IReadOnlyList<IDataSource> DataSources { get; init; } = [];
+    public IReadOnlyList<IAppTab>      Tabs        { get; init; } = [];
+    public IReadOnlyList<IDataSource>  DataSources { get; init; } = [];
+    public IReadOnlyList<ISettingsPanel> Panels    { get; init; } = [];
 
     public bool IsDataSourcePlugin => Tabs.Count == 0 && DataSources.Count > 0;
 
@@ -32,7 +33,9 @@ public sealed class PluginInfo : ViewModelBase
         ? string.Join(", ", DataSources.Select(s => s.Name))
         : "—";
 
-    public bool CanConfigure => Tabs.OfType<IConfigurableTab>().Any();
+    public bool CanConfigure =>
+        Tabs.OfType<IConfigurableTab>().Any() ||
+        DataSources.OfType<IConfigurableTab>().Any();
 
     public RelayCommand ConfigureCommand { get; }
 
@@ -45,7 +48,8 @@ public sealed class PluginInfo : ViewModelBase
     public PluginInfo()
     {
         ConfigureCommand = new RelayCommand(
-            () => Tabs.OfType<IConfigurableTab>().FirstOrDefault()?.Configure(),
+            () => (Tabs.OfType<IConfigurableTab>().FirstOrDefault()
+                   ?? (IConfigurableTab?)DataSources.OfType<IConfigurableTab>().FirstOrDefault())?.Configure(),
             () => CanConfigure && IsLoaded);
     }
 }

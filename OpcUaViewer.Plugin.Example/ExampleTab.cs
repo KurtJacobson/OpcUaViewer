@@ -10,7 +10,7 @@ public class ExampleTab : ViewModelBase, IAppTab
 {
     public string Title       => "Example";
     public string Icon        => "🔌";
-    public int    Order       => 90;
+    public int    Order       => 80;
     public string Description => "Reference plugin demonstrating the OPC UA Viewer plugin API.";
 
     public FrameworkElement CreateView() => new ExampleView { DataContext = this };
@@ -27,12 +27,16 @@ public class ExampleTab : ViewModelBase, IAppTab
     public string MachineState { get => _machineState; private set => Set(ref _machineState, value); }
     public string Clock        { get => _clock;        private set => Set(ref _clock,        value); }
 
-    public ExampleTab(OpcUaService opc)
+    public ExampleTab()
     {
-        opc.StatusChanged       += (_, msg) => Dispatch(() => StatusText   = msg);
-        opc.ProductIdChanged    += (_, v)   => Dispatch(() => ProductId    = v);
-        opc.CamFileChanged      += (_, v)   => Dispatch(() => CamFile      = v);
-        opc.MachineStateChanged += (_, v)   => Dispatch(() => MachineState = v.ToString());
+        var opc = DataSourceRegistry.Get<IOpcUaSource>();
+        if (opc is not null)
+        {
+            opc.StatusChanged       += (_, msg) => Dispatch(() => StatusText   = msg);
+            opc.ProductIdChanged    += (_, v)   => Dispatch(() => ProductId    = v);
+            opc.CamFileChanged      += (_, v)   => Dispatch(() => CamFile      = v);
+            opc.MachineStateChanged += (_, v)   => Dispatch(() => MachineState = v.ToString());
+        }
 
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += (_, _) => Clock = DateTime.Now.ToString("HH:mm:ss");

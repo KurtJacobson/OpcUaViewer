@@ -3,6 +3,7 @@
   <Project Path="OpcUaViewer.Core/OpcUaViewer.Core.csproj" />
   <Project Path="OpcUaViewer.Theme/OpcUaViewer.Theme.csproj" />
   <Project Path="OpcUaViewer.Wpf/OpcUaViewer.Wpf.csproj" />
+  <Project Path="OpcUaViewer.Plugin.OpcUa/OpcUaViewer.Plugin.OpcUa.csproj" />
   <Project Path="OpcUaViewer.Plugin.Example/OpcUaViewer.Plugin.Example.csproj" />
   <Project Path="OpcUaViewer.Plugin.Webcam/OpcUaViewer.Plugin.Webcam.csproj" />
   <Project Path="OpcUaViewer.Plugin.Groups/OpcUaViewer.Plugin.Groups.csproj" />

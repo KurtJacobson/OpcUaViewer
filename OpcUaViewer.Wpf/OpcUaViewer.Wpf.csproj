@@ -22,13 +22,16 @@
                       ReferenceOutputAssembly="false" Private="false"/>
     <ProjectReference Include="..\OpcUaViewer.Plugin.Webcam\OpcUaViewer.Plugin.Webcam.csproj"
                       ReferenceOutputAssembly="false" Private="false"/>
+    <ProjectReference Include="..\OpcUaViewer.Plugin.OpcUa\OpcUaViewer.Plugin.OpcUa.csproj"
+                      ReferenceOutputAssembly="false" Private="false"/>
   </ItemGroup>
 
   <Target Name="CopyShippedPlugins" AfterTargets="Build">
-    <!-- Groups and Document: copy single DLL only -->
+    <!-- Single-DLL plugins -->
     <ItemGroup>
       <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Groups\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Groups.dll"/>
       <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Document\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Document.dll"/>
+      <_ShippedPlugin Include="..\OpcUaViewer.Plugin.OpcUa\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.OpcUa.dll"/>
     </ItemGroup>
     <Copy SourceFiles="@(_ShippedPlugin)"
           DestinationFolder="$(OutputPath)plugins\"

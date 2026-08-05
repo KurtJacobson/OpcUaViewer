@@ -14,8 +14,7 @@ namespace OpcUaViewer.Wpf.Plugins;
 
 public sealed class PluginService
 {
-    private readonly OpcUaService _opc;
-    private readonly Application  _app;
+    private readonly Application _app;
 
     public ObservableCollection<PluginInfo> Plugins { get; } = [];
 
@@ -26,11 +25,7 @@ public sealed class PluginService
                      "OpcUaViewer", "plugins"),
     ];
 
-    public PluginService(OpcUaService opc, Application app)
-    {
-        _opc = opc;
-        _app = app;
-    }
+    public PluginService(Application app) => _app = app;
 
     // ── Initial load at startup ───────────────────────────────────────────────
 
@@ -39,7 +34,7 @@ public sealed class PluginService
         var disabled = AppSettings.Current.DisabledPlugins;
         var dlls     = DiscoverDlls().ToList();
 
-        // Pass 1: data-source plugins — must be registered before tab plugins instantiate
+        // Pass 1: pure data-source plugins — register before tab plugins instantiate
         foreach (string dll in dlls)
         {
             bool enabled = !disabled.Contains(dll, StringComparer.OrdinalIgnoreCase);
@@ -54,10 +49,9 @@ public sealed class PluginService
             Plugins.Add(info);
         }
 
-        // Pass 2: tab plugins
+        // Pass 2: tab plugins (also handles mixed DLLs with co-located data sources)
         foreach (string dll in dlls)
         {
-            // Skip DLLs already processed as data-source plugins
             if (Plugins.Any(p => string.Equals(p.FilePath, dll, StringComparison.OrdinalIgnoreCase)))
                 continue;
 
@@ -89,7 +83,7 @@ public sealed class PluginService
         AppSettings.Save();
     }
 
-    // ── Pass-1: data source loader ────────────────────────────────────────────
+    // ── Pass-1: pure data-source loader ──────────────────────────────────────
 
     private static PluginInfo? TryLoadDataSources(string dll)
     {
@@ -97,7 +91,7 @@ public sealed class PluginService
 
         Assembly asm;
         try { asm = Assembly.LoadFrom(dll); }
-        catch { return null; }  // will be caught in pass 2 if it also has tabs
+        catch { return null; }
 
         try
         {
@@ -107,7 +101,7 @@ public sealed class PluginService
 
             if (dsTypes.Count == 0) return null;
 
-            // Bail if this DLL also has tabs — it will be handled in pass 2 together
+            // Mixed DLLs (tabs + data sources) are handled in pass 2
             bool hasTabs = asm.GetExportedTypes()
                               .Any(t => typeof(IAppTab).IsAssignableFrom(t) && !t.IsAbstract);
             if (hasTabs) return null;
@@ -122,12 +116,15 @@ public sealed class PluginService
 
             if (sources.Count == 0) return null;
 
+            var panels = sources.OfType<ISettingsPanel>().ToList<ISettingsPanel>();
+
             string name = asm.GetName().Name ?? shortName;
             return new PluginInfo
             {
                 Name        = name,
                 FilePath    = dll,
                 DataSources = sources,
+                Panels      = panels,
                 IsLoaded    = true,
                 IsEnabled   = true,
             };
@@ -151,15 +148,13 @@ public sealed class PluginService
                              .Where(t => typeof(IAppTab).IsAssignableFrom(t) && !t.IsAbstract)
                              .ToList();
 
-            if (tabTypes.Count == 0) return null;  // not a plugin DLL, skip silently
+            if (tabTypes.Count == 0) return null;
 
             foreach (var rd in FindResources(asm))
                 _app.Resources.MergedDictionaries.Add(rd);
 
-            var tabs    = new List<IAppTab>();
+            // Co-located data sources: instantiate and register before tabs
             var sources = new List<IDataSource>();
-
-            // Instantiate any co-located data sources first and register them
             var dsTypes = asm.GetExportedTypes()
                              .Where(t => typeof(IDataSource).IsAssignableFrom(t) && !t.IsAbstract)
                              .ToList();
@@ -174,16 +169,19 @@ public sealed class PluginService
                 }
             }
 
+            var tabs = new List<IAppTab>();
             foreach (var type in tabTypes)
             {
                 IAppTab? tab = null;
-                try { tab = (IAppTab?)Activator.CreateInstance(type, _opc); } catch { }
-                if (tab is null)
-                    try { tab = (IAppTab?)Activator.CreateInstance(type); } catch { }
+                try { tab = (IAppTab?)Activator.CreateInstance(type); } catch { }
                 if (tab is not null) tabs.Add(tab);
             }
 
             if (tabs.Count == 0) return null;
+
+            var panels = tabs.OfType<ISettingsPanel>()
+                .Concat<ISettingsPanel>(sources.OfType<ISettingsPanel>())
+                .ToList();
 
             string name = asm.GetName().Name ?? shortName;
             return new PluginInfo
@@ -192,6 +190,7 @@ public sealed class PluginService
                 FilePath    = dll,
                 Tabs        = tabs,
                 DataSources = sources,
+                Panels      = panels,
                 IsLoaded    = true,
                 IsEnabled   = true,
             };
