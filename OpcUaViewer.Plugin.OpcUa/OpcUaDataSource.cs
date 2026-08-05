@@ -41,7 +41,7 @@ public class OpcUaDataSource : ViewModelBase, IMachineSource, ISettingsPanel, ID
     public RelayCommand DisconnectCommand { get; }
 
     // ── ISettingsPanel ────────────────────────────────────────────────────────
-    public string Header => "OPC UA CONNECTION";
+    public string Header => "OPC UA";
     FrameworkElement ISettingsPanel.CreateView() => new OpcUaSettingsView { DataContext = this };
     public void Save()
     {
@@ -86,9 +86,9 @@ public class OpcUaDataSource : ViewModelBase, IMachineSource, ISettingsPanel, ID
         catch (OpcUaConnectionException ex)
         {
             AppLogger.Error($"OPC UA connection failed: {EndpointUrl.Trim()}", ex);
-            MessageBox.Show(
+            DialogService.Current.Warn(
                 $"Could not connect to the OPC UA server.\n\n{ex.Message}",
-                "Connection Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+                "Connection Failed");
         }
         finally { IsBusy = false; }
     }

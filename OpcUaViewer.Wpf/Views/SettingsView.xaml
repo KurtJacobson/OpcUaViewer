@@ -41,122 +41,155 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- ══ Tab strip ═════════════════════════════════════════════════════ -->
-        <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
-            <StackPanel Orientation="Horizontal" Margin="16,0,0,0">
-                <TextBlock Text="SETTINGS" FontSize="11" FontWeight="Bold"
-                           Foreground="{StaticResource AccentBrush}"
-                           VerticalAlignment="Center" Margin="0,0,24,0"/>
-                <TabControl x:Name="SettingsTabs"
-                            Background="Transparent" BorderThickness="0"
-                            TabStripPlacement="Top" Padding="0">
-                    <TabControl.Template>
-                        <ControlTemplate TargetType="TabControl">
-                            <StackPanel Orientation="Horizontal">
-                                <TabPanel IsItemsHost="True"/>
+        <!-- ══ TabControl: strip + content ══════════════════════════════════ -->
+        <TabControl x:Name="SettingsTabs" Grid.Row="0"
+                    Background="Transparent" BorderThickness="0">
+            <TabControl.Template>
+                <ControlTemplate TargetType="TabControl">
+                    <DockPanel>
+                        <!-- Header row: SETTINGS label + tab strip -->
+                        <Border DockPanel.Dock="Top"
+                                Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <StackPanel Orientation="Horizontal" Margin="16,0,0,0">
+                                <TextBlock Text="SETTINGS" FontSize="11" FontWeight="Bold"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           VerticalAlignment="Center" Margin="0,0,24,0"/>
+                                <TabPanel IsItemsHost="True" Background="Transparent"/>
                             </StackPanel>
-                        </ControlTemplate>
-                    </TabControl.Template>
-                    <TabItem Header="General" Style="{StaticResource SettingsTabItemStyle}"/>
-                    <TabItem Header="Plugins" Style="{StaticResource SettingsTabItemStyle}"/>
-                </TabControl>
-            </StackPanel>
-        </Border>
+                        </Border>
+                        <!-- Content area -->
+                        <ContentPresenter ContentSource="SelectedContent"/>
+                    </DockPanel>
+                </ControlTemplate>
+            </TabControl.Template>
 
-        <!-- ══ Content area ══════════════════════════════════════════════════ -->
-        <Grid Grid.Row="1">
+            <!-- ── General ─────────────────────────────────────────────────── -->
+            <TabItem Header="General" Style="{StaticResource SettingsTabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="32,24" MaxWidth="640" HorizontalAlignment="Left" Width="497">
 
-            <!-- General -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                          Visibility="{Binding SelectedIndex, ElementName=SettingsTabs,
-                                       Converter={StaticResource IndexToVisibility}, ConverterParameter=0}">
-                <StackPanel Margin="32,24" MaxWidth="640" HorizontalAlignment="Left" Width="497">
+                        <TextBlock Text="UI OPTIONS" Style="{StaticResource PanelHeaderStyle}"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+                        <Border Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="4" Padding="16" Margin="0,0,0,20">
+                            <CheckBox Content="Enable on-screen keyboard" IsChecked="{Binding KeyboardEnabled}"/>
+                        </Border>
 
-                    <!-- Plugin-injected settings panels (e.g. OPC UA connection) -->
-                    <ItemsControl ItemsSource="{Binding SettingsPanels}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Margin="0,0,0,20">
-                                    <TextBlock Text="{Binding Header}"
-                                               Style="{StaticResource PanelHeaderStyle}"
-                                               Foreground="{StaticResource AccentBrush}"
-                                               Margin="0,0,0,8"/>
-                                    <ContentControl Content="{Binding View}"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        <TextBlock Text="DIAGNOSTICS" Style="{StaticResource PanelHeaderStyle}"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+                        <Border Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="4" Padding="16">
+                            <Button Content="Open Today's Log"
+                                    Command="{Binding OpenLogCommand}"
+                                    Padding="16,6" HorizontalAlignment="Left"/>
+                        </Border>
 
-                    <TextBlock Text="UI OPTIONS" Style="{StaticResource PanelHeaderStyle}"
-                               Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
-                    <Border Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                            CornerRadius="4" Padding="16" Margin="0,0,0,20">
-                        <CheckBox Content="Enable on-screen keyboard" IsChecked="{Binding KeyboardEnabled}"/>
-                    </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
 
-                    <TextBlock Text="DIAGNOSTICS" Style="{StaticResource PanelHeaderStyle}"
-                               Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
-                    <Border Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                            CornerRadius="4" Padding="16" Margin="0,0,0,0">
-                        <Button Content="Open Today's Log"
-                                Command="{Binding OpenLogCommand}"
-                                Padding="16,6" HorizontalAlignment="Left"/>
-                    </Border>
+            <!-- ── Plugins ─────────────────────────────────────────────────── -->
+            <TabItem Header="Plugins" Style="{StaticResource SettingsTabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="32,24,32,0">
+                    <StackPanel MaxWidth="800" HorizontalAlignment="Left">
 
-                </StackPanel>
-            </ScrollViewer>
+                        <TextBlock Text="INSTALLED PLUGINS" Style="{StaticResource PanelHeaderStyle}"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+                        <TextBlock Text="Changes take effect after restarting the application."
+                                   Foreground="{StaticResource TextSubBrush}"
+                                   FontSize="{StaticResource FontSizeSm}" Margin="0,0,0,16"/>
 
-            <!-- Plugins -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="32,24,32,0"
-                          Visibility="{Binding SelectedIndex, ElementName=SettingsTabs,
-                                       Converter={StaticResource IndexToVisibility}, ConverterParameter=1}">
-                <StackPanel MaxWidth="800" HorizontalAlignment="Left">
+                        <ItemsControl ItemsSource="{Binding PluginService.Plugins}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderThickness="1" CornerRadius="4"
+                                            Padding="16,12" Margin="0,0,0,8">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background"   Value="{StaticResource SurfaceBrush}"/>
+                                                <Setter Property="BorderBrush"  Value="{StaticResource BorderBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding LoadError, Converter={StaticResource NullOrEmptyToBool}}" Value="True">
+                                                        <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}"/>
+                                                        <Setter Property="Background"  Value="{StaticResource ErrorSurfaceBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
 
-                    <TextBlock Text="INSTALLED PLUGINS" Style="{StaticResource PanelHeaderStyle}"
-                               Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
-                    <TextBlock Text="Changes take effect after restarting the application."
-                               Foreground="{StaticResource TextSubBrush}"
-                               FontSize="{StaticResource FontSizeSm}" Margin="0,0,0,16"/>
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <!-- Error badge -->
+                                                    <Border Background="{StaticResource ErrorBrush}"
+                                                            CornerRadius="3" Padding="5,1" Margin="0,0,8,0"
+                                                            VerticalAlignment="Center">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding LoadError, Converter={StaticResource NullOrEmptyToBool}}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock Text="LOAD FAILED" FontSize="10" FontWeight="Bold"
+                                                                   Foreground="White"/>
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
 
-                    <ItemsControl ItemsSource="{Binding PluginService.Plugins}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border BorderThickness="1" CornerRadius="4"
-                                        Padding="16,12" Margin="0,0,0,8">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Background"   Value="{StaticResource SurfaceBrush}"/>
-                                            <Setter Property="BorderBrush"  Value="{StaticResource BorderBrush}"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding LoadError, Converter={StaticResource NullOrEmptyToBool}}" Value="True">
-                                                    <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}"/>
-                                                    <Setter Property="Background"  Value="{StaticResource ErrorSurfaceBrush}"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
+                                                <!-- Normal info -->
+                                                <StackPanel>
+                                                    <StackPanel.Style>
+                                                        <Style TargetType="StackPanel">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding LoadError, Converter={StaticResource NullOrEmptyToBool}}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </StackPanel.Style>
+                                                    <TextBlock Text="{Binding Description, Mode=OneWay}"
+                                                               Foreground="{StaticResource TextSubBrush}"
+                                                               Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                                    <TextBlock Margin="0,4,0,0"
+                                                               Visibility="{Binding IsDataSourcePlugin,
+                                                                   Converter={StaticResource InverseBoolToVis}}">
+                                                        <Run Text="Tabs: "  Foreground="{StaticResource TextSubBrush}"/>
+                                                        <Run Text="{Binding TabList, Mode=OneWay}" Foreground="{StaticResource TextSubBrush}"/>
+                                                    </TextBlock>
+                                                    <TextBlock Margin="0,4,0,0"
+                                                               Visibility="{Binding IsDataSourcePlugin,
+                                                                   Converter={StaticResource BoolToVis}}">
+                                                        <Run Text="Sources: " Foreground="{StaticResource TextSubBrush}"/>
+                                                        <Run Text="{Binding SourceList, Mode=OneWay}" Foreground="{StaticResource TextSubBrush}"/>
+                                                    </TextBlock>
+                                                    <TextBlock Text="{Binding FilePath, Mode=OneWay}"
+                                                               Foreground="{StaticResource TextSubBrush}"
+                                                               FontSize="{StaticResource FontSizeSm}"
+                                                               Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
 
-                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                            <StackPanel Orientation="Horizontal">
-                                                <!-- Error badge -->
-                                                <Border Background="{StaticResource ErrorBrush}"
-                                                        CornerRadius="3" Padding="5,1" Margin="0,0,8,0"
-                                                        VerticalAlignment="Center">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border">
+                                                <!-- Error detail -->
+                                                <StackPanel>
+                                                    <StackPanel.Style>
+                                                        <Style TargetType="StackPanel">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding LoadError, Converter={StaticResource NullOrEmptyToBool}}" Value="True">
@@ -164,16 +197,21 @@
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
-                                                    </Border.Style>
-                                                    <TextBlock Text="LOAD FAILED" FontSize="10" FontWeight="Bold"
-                                                               Foreground="White"/>
-                                                </Border>
-                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"
-                                                           VerticalAlignment="Center"/>
+                                                    </StackPanel.Style>
+                                                    <TextBlock Text="{Binding LoadError, Mode=OneWay}"
+                                                               Foreground="{StaticResource ErrorBrush}"
+                                                               FontSize="{StaticResource FontSizeSm}"
+                                                               Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                                    <TextBlock Text="{Binding FilePath, Mode=OneWay}"
+                                                               Foreground="{StaticResource TextSubBrush}"
+                                                               FontSize="{StaticResource FontSizeSm}"
+                                                               Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
                                             </StackPanel>
 
-                                            <!-- Normal info (hidden when failed) -->
-                                            <StackPanel>
+                                            <!-- Normal actions -->
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                        VerticalAlignment="Center" Margin="16,0,0,0">
                                                 <StackPanel.Style>
                                                     <Style TargetType="StackPanel">
                                                         <Setter Property="Visibility" Value="Visible"/>
@@ -184,29 +222,16 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </StackPanel.Style>
-                                                <TextBlock Text="{Binding Description, Mode=OneWay}"
-                                                           Foreground="{StaticResource TextSubBrush}"
-                                                           Margin="0,3,0,0" TextWrapping="Wrap"/>
-                                                <TextBlock Margin="0,4,0,0"
-                                                           Visibility="{Binding IsDataSourcePlugin,
-                                                               Converter={StaticResource InverseBoolToVis}}">
-                                                    <Run Text="Tabs: "  Foreground="{StaticResource TextSubBrush}"/>
-                                                    <Run Text="{Binding TabList, Mode=OneWay}" Foreground="{StaticResource TextSubBrush}"/>
-                                                </TextBlock>
-                                                <TextBlock Margin="0,4,0,0"
-                                                           Visibility="{Binding IsDataSourcePlugin,
-                                                               Converter={StaticResource BoolToVis}}">
-                                                    <Run Text="Sources: " Foreground="{StaticResource TextSubBrush}"/>
-                                                    <Run Text="{Binding SourceList, Mode=OneWay}" Foreground="{StaticResource TextSubBrush}"/>
-                                                </TextBlock>
-                                                <TextBlock Text="{Binding FilePath, Mode=OneWay}"
-                                                           Foreground="{StaticResource TextSubBrush}"
-                                                           FontSize="{StaticResource FontSizeSm}"
-                                                           Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                                <Button Content="Configure"
+                                                        Command="{Binding ConfigureCommand}"
+                                                        Margin="0,0,12,0"
+                                                        Visibility="{Binding CanConfigure, Converter={StaticResource BoolToVis}}"/>
+                                                <CheckBox IsChecked="{Binding IsEnabled}" Content="Enabled"/>
                                             </StackPanel>
 
-                                            <!-- Error detail (shown when failed) -->
-                                            <StackPanel>
+                                            <!-- Error actions -->
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                        VerticalAlignment="Center" Margin="16,0,0,0">
                                                 <StackPanel.Style>
                                                     <Style TargetType="StackPanel">
                                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -217,76 +242,35 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </StackPanel.Style>
-                                                <TextBlock Text="{Binding LoadError, Mode=OneWay}"
-                                                           Foreground="{StaticResource ErrorBrush}"
-                                                           FontSize="{StaticResource FontSizeSm}"
-                                                           Margin="0,4,0,0" TextWrapping="Wrap"/>
-                                                <TextBlock Text="{Binding FilePath, Mode=OneWay}"
-                                                           Foreground="{StaticResource TextSubBrush}"
-                                                           FontSize="{StaticResource FontSizeSm}"
-                                                           Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                                <Button Content="Copy Error"
+                                                        Tag="{Binding LoadError}"
+                                                        Click="CopyError_Click"
+                                                        Padding="12,6"/>
                                             </StackPanel>
-                                        </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
 
-                                        <!-- Normal actions -->
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal"
-                                                    VerticalAlignment="Center" Margin="16,0,0,0">
-                                            <StackPanel.Style>
-                                                <Style TargetType="StackPanel">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding LoadError, Converter={StaticResource NullOrEmptyToBool}}" Value="True">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </StackPanel.Style>
-                                            <Button Content="Configure"
-                                                    Command="{Binding ConfigureCommand}"
-                                                    Margin="0,0,12,0"
-                                                    Visibility="{Binding CanConfigure, Converter={StaticResource BoolToVis}}"/>
-                                            <CheckBox IsChecked="{Binding IsEnabled}" Content="Enabled"/>
-                                        </StackPanel>
+                        <TextBlock Margin="0,8,0,0"
+                                   Foreground="{StaticResource TextSubBrush}"
+                                   FontSize="{StaticResource FontSizeSm}"
+                                   Visibility="{Binding PluginService.Plugins.Count, Converter={StaticResource ZeroToVisibility}}">
+                            No plugins found. Place plugin DLLs in the plugins folder next to the application,
+                            or in %LocalAppData%\OpcUaViewer\plugins\.
+                        </TextBlock>
 
-                                        <!-- Error actions -->
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal"
-                                                    VerticalAlignment="Center" Margin="16,0,0,0">
-                                            <StackPanel.Style>
-                                                <Style TargetType="StackPanel">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding LoadError, Converter={StaticResource NullOrEmptyToBool}}" Value="True">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </StackPanel.Style>
-                                            <Button Content="Copy Error"
-                                                    Tag="{Binding LoadError}"
-                                                    Click="CopyError_Click"
-                                                    Padding="12,6"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
 
-                    <TextBlock Margin="0,8,0,0"
-                               Foreground="{StaticResource TextSubBrush}"
-                               FontSize="{StaticResource FontSizeSm}"
-                               Visibility="{Binding PluginService.Plugins.Count, Converter={StaticResource ZeroToVisibility}}">
-                        No plugins found. Place plugin DLLs in the plugins folder next to the application,
-                        or in %LocalAppData%\OpcUaViewer\plugins\.
-                    </TextBlock>
+            <!-- Plugin panel tabs are added in SettingsView.xaml.cs -->
 
-                </StackPanel>
-            </ScrollViewer>
+        </TabControl>
 
-        </Grid><!-- /content Grid -->
-
-        <!-- ══ Shared save bar ═══════════════════════════════════════════════ -->
-        <Border Grid.Row="2"
+        <!-- ══ Save bar ══════════════════════════════════════════════════════ -->
+        <Border Grid.Row="1"
                 Background="{StaticResource SurfaceBrush}"
                 BorderBrush="{StaticResource BorderBrush}"
                 BorderThickness="0,1,0,0"
