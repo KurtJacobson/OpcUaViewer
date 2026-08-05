@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Web.WebView2.Wpf;
@@ -8,7 +10,8 @@ public partial class DocumentView : UserControl
 {
     private WebView2? _webView;
     private bool      _initialized;
-    private string    _displayedUri = "\0";
+    private string    _displayedUri     = "\0";
+    private string    _displayedMessage = "\0";
 
     public DocumentView()
     {
@@ -37,47 +40,35 @@ public partial class DocumentView : UserControl
         {
             vm.PropertyChanged += (_, args) =>
             {
-                if (args.PropertyName == nameof(DocumentTab.DocumentUri))
-                    Navigate(vm.DocumentUri);
+                if (args.PropertyName == nameof(DocumentTab.DocumentUri) ||
+                    args.PropertyName == nameof(DocumentTab.StatusText))
+                    Navigate(vm.DocumentUri, vm.StatusText);
             };
-            Navigate(vm.DocumentUri);
+            Navigate(vm.DocumentUri, vm.StatusText);
         }
     }
 
-    private void Navigate(string uri)
+    private void Navigate(string uri, string statusText)
     {
         if (_webView?.CoreWebView2 is null) return;
-        if (uri == _displayedUri) return;
-        _displayedUri = uri;
+        if (uri == _displayedUri && statusText == _displayedMessage) return;
+        _displayedUri     = uri;
+        _displayedMessage = statusText;
 
         if (string.IsNullOrEmpty(uri))
-            _webView.CoreWebView2.NavigateToString(PlaceholderHtml);
+            _webView.CoreWebView2.NavigateToString(LoadPlaceholder(statusText));
         else
             _webView.CoreWebView2.Navigate(uri);
     }
 
-    private const string PlaceholderHtml = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-        <meta charset="utf-8"/>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
-            background: #181818; color: #505050;
-            font-family: 'Segoe UI', sans-serif;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            height: 100vh; user-select: none;
-          }
-          .icon { font-size: 64px; margin-bottom: 20px; opacity: 0.25; }
-          .msg  { font-size: 15px; opacity: 0.5; }
-        </style>
-        </head>
-        <body>
-          <div class="icon">📄</div>
-          <div class="msg">No document loaded — waiting for a product ID</div>
-        </body>
-        </html>
-        """;
+    private static string LoadPlaceholder(string message)
+    {
+        string path = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory, "Assets", "no-document.html");
+
+        if (!File.Exists(path))
+            return $"<body style='background:#181818;color:#606060;font-family:Segoe UI;display:flex;align-items:center;justify-content:center;height:100vh'>{message}</body>";
+
+        return File.ReadAllText(path).Replace("{{MESSAGE}}", message);
+    }
 }
