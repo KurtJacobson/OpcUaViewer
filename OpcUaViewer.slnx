@@ -1,6 +1,5 @@
 <Solution>
-  <Project Path="OpcUaViewer/OpcUaViewer.csproj" Id="bf3a4040-ab13-4d3b-841d-276048df2c19" />
-  <Project Path="OpcUaViewer.Core/OpcUaViewer.Core.csproj" />
+<Project Path="OpcUaViewer.Core/OpcUaViewer.Core.csproj" />
   <Project Path="OpcUaViewer.Theme/OpcUaViewer.Theme.csproj" />
   <Project Path="OpcUaViewer.Wpf/OpcUaViewer.Wpf.csproj" />
   <Project Path="OpcUaViewer.Plugin.OpcUa/OpcUaViewer.Plugin.OpcUa.csproj" />

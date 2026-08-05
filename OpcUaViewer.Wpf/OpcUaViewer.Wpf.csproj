@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>OpcUaViewer.Wpf</RootNamespace>
     <AssemblyName>OpcUaViewer</AssemblyName>
-    <ApplicationIcon>..\OpcUaViewer\Resources\app.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
     <NoWarn>$(NoWarn);CA1416;CS0618;MSB3277</NoWarn>
   </PropertyGroup>
 
@@ -58,7 +58,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\OpcUaViewer\Assets\no-document.html" Link="Assets\no-document.html">
+    <Content Include="Assets\no-document.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
