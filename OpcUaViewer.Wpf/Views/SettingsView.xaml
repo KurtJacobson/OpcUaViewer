@@ -237,9 +237,17 @@
                                                 <TextBlock Text="{Binding Description, Mode=OneWay}"
                                                            Foreground="{StaticResource TextSubBrush}"
                                                            Margin="0,3,0,0" TextWrapping="Wrap"/>
-                                                <TextBlock Margin="0,4,0,0">
+                                                <TextBlock Margin="0,4,0,0"
+                                                           Visibility="{Binding IsDataSourcePlugin,
+                                                               Converter={StaticResource InverseBoolToVis}}">
                                                     <Run Text="Tabs: "  Foreground="{StaticResource TextSubBrush}"/>
                                                     <Run Text="{Binding TabList, Mode=OneWay}" Foreground="{StaticResource TextSubBrush}"/>
+                                                </TextBlock>
+                                                <TextBlock Margin="0,4,0,0"
+                                                           Visibility="{Binding IsDataSourcePlugin,
+                                                               Converter={StaticResource BoolToVis}}">
+                                                    <Run Text="Sources: " Foreground="{StaticResource TextSubBrush}"/>
+                                                    <Run Text="{Binding SourceList, Mode=OneWay}" Foreground="{StaticResource TextSubBrush}"/>
                                                 </TextBlock>
                                                 <TextBlock Text="{Binding FilePath, Mode=OneWay}"
                                                            Foreground="{StaticResource TextSubBrush}"

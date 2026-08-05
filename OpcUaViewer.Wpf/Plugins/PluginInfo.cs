@@ -12,14 +12,24 @@ public sealed class PluginInfo : ViewModelBase
     public string Name      { get; init; } = "";
     public string FilePath  { get; init; } = "";
     public bool   IsLoaded  { get; init; }
-    public string LoadError { get; init; } = "";  // non-empty when the plugin failed to load
+    public string LoadError { get; init; } = "";
 
-    public IReadOnlyList<IAppTab> Tabs { get; init; } = [];
+    public IReadOnlyList<IAppTab>    Tabs        { get; init; } = [];
+    public IReadOnlyList<IDataSource> DataSources { get; init; } = [];
 
-    public string Description  => Tabs.FirstOrDefault(t => !string.IsNullOrEmpty(t.Description))?.Description ?? "";
+    public bool IsDataSourcePlugin => Tabs.Count == 0 && DataSources.Count > 0;
+
+    public string Description =>
+        Tabs.FirstOrDefault(t => !string.IsNullOrEmpty(t.Description))?.Description
+        ?? DataSources.FirstOrDefault(s => !string.IsNullOrEmpty(s.Description))?.Description
+        ?? "";
 
     public string TabList => Tabs.Count > 0
         ? string.Join(", ", Tabs.Select(t => t.Title))
+        : "—";
+
+    public string SourceList => DataSources.Count > 0
+        ? string.Join(", ", DataSources.Select(s => s.Name))
         : "—";
 
     public bool CanConfigure => Tabs.OfType<IConfigurableTab>().Any();

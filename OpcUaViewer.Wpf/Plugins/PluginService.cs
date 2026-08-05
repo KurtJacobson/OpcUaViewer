@@ -37,15 +37,36 @@ public sealed class PluginService
     public IEnumerable<IAppTab> LoadAll()
     {
         var disabled = AppSettings.Current.DisabledPlugins;
+        var dlls     = DiscoverDlls().ToList();
 
-        foreach (string dll in DiscoverDlls())
+        // Pass 1: data-source plugins — must be registered before tab plugins instantiate
+        foreach (string dll in dlls)
         {
+            bool enabled = !disabled.Contains(dll, StringComparer.OrdinalIgnoreCase);
+            if (!enabled) continue;
+
+            var info = TryLoadDataSources(dll);
+            if (info is null) continue;
+
+            foreach (var ds in info.DataSources)
+                DataSourceRegistry.Register(ds);
+
+            Plugins.Add(info);
+        }
+
+        // Pass 2: tab plugins
+        foreach (string dll in dlls)
+        {
+            // Skip DLLs already processed as data-source plugins
+            if (Plugins.Any(p => string.Equals(p.FilePath, dll, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
             bool enabled = !disabled.Contains(dll, StringComparer.OrdinalIgnoreCase);
 
             PluginInfo? info;
             if (enabled)
             {
-                info = TryLoad(dll);
+                info = TryLoadTabs(dll);
                 if (info is null) continue;
                 foreach (var tab in info.Tabs) yield return tab;
             }
@@ -68,9 +89,55 @@ public sealed class PluginService
         AppSettings.Save();
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Pass-1: data source loader ────────────────────────────────────────────
 
-    private PluginInfo? TryLoad(string dll)
+    private static PluginInfo? TryLoadDataSources(string dll)
+    {
+        string shortName = Path.GetFileNameWithoutExtension(dll);
+
+        Assembly asm;
+        try { asm = Assembly.LoadFrom(dll); }
+        catch { return null; }  // will be caught in pass 2 if it also has tabs
+
+        try
+        {
+            var dsTypes = asm.GetExportedTypes()
+                             .Where(t => typeof(IDataSource).IsAssignableFrom(t) && !t.IsAbstract)
+                             .ToList();
+
+            if (dsTypes.Count == 0) return null;
+
+            // Bail if this DLL also has tabs — it will be handled in pass 2 together
+            bool hasTabs = asm.GetExportedTypes()
+                              .Any(t => typeof(IAppTab).IsAssignableFrom(t) && !t.IsAbstract);
+            if (hasTabs) return null;
+
+            var sources = new List<IDataSource>();
+            foreach (var type in dsTypes)
+            {
+                IDataSource? ds = null;
+                try { ds = (IDataSource?)Activator.CreateInstance(type); } catch { }
+                if (ds is not null) sources.Add(ds);
+            }
+
+            if (sources.Count == 0) return null;
+
+            string name = asm.GetName().Name ?? shortName;
+            return new PluginInfo
+            {
+                Name        = name,
+                FilePath    = dll,
+                DataSources = sources,
+                IsLoaded    = true,
+                IsEnabled   = true,
+            };
+        }
+        catch { return null; }
+    }
+
+    // ── Pass-2: tab loader ────────────────────────────────────────────────────
+
+    private PluginInfo? TryLoadTabs(string dll)
     {
         string shortName = Path.GetFileNameWithoutExtension(dll);
 
@@ -89,7 +156,24 @@ public sealed class PluginService
             foreach (var rd in FindResources(asm))
                 _app.Resources.MergedDictionaries.Add(rd);
 
-            var tabs = new List<IAppTab>();
+            var tabs    = new List<IAppTab>();
+            var sources = new List<IDataSource>();
+
+            // Instantiate any co-located data sources first and register them
+            var dsTypes = asm.GetExportedTypes()
+                             .Where(t => typeof(IDataSource).IsAssignableFrom(t) && !t.IsAbstract)
+                             .ToList();
+            foreach (var type in dsTypes)
+            {
+                IDataSource? ds = null;
+                try { ds = (IDataSource?)Activator.CreateInstance(type); } catch { }
+                if (ds is not null)
+                {
+                    sources.Add(ds);
+                    DataSourceRegistry.Register(ds);
+                }
+            }
+
             foreach (var type in tabTypes)
             {
                 IAppTab? tab = null;
@@ -102,10 +186,20 @@ public sealed class PluginService
             if (tabs.Count == 0) return null;
 
             string name = asm.GetName().Name ?? shortName;
-            return new PluginInfo { Name = name, FilePath = dll, Tabs = tabs, IsLoaded = true, IsEnabled = true };
+            return new PluginInfo
+            {
+                Name        = name,
+                FilePath    = dll,
+                Tabs        = tabs,
+                DataSources = sources,
+                IsLoaded    = true,
+                IsEnabled   = true,
+            };
         }
         catch (Exception ex) { return Failed(dll, shortName, ex); }
     }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static PluginInfo Failed(string dll, string name, Exception ex) =>
         Failed(dll, name, ex.GetBaseException().Message);
@@ -123,14 +217,15 @@ public sealed class PluginService
     {
         try
         {
-            // Load metadata only to verify the assembly contains at least one IAppTab
             var ctx  = new System.Runtime.Loader.AssemblyLoadContext(null, isCollectible: true);
             var asm  = ctx.LoadFromAssemblyPath(dll);
-            bool hasTab = asm.GetExportedTypes()
-                            .Any(t => typeof(IAppTab).IsAssignableFrom(t) && !t.IsAbstract);
+            bool hasPlugin = asm.GetExportedTypes()
+                               .Any(t => (typeof(IAppTab).IsAssignableFrom(t) ||
+                                          typeof(IDataSource).IsAssignableFrom(t))
+                                         && !t.IsAbstract);
             ctx.Unload();
 
-            if (!hasTab) return null;
+            if (!hasPlugin) return null;
 
             string name = AssemblyName.GetAssemblyName(dll).Name
                           ?? Path.GetFileNameWithoutExtension(dll);
