@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Services;
@@ -7,7 +8,7 @@ using OpcUaViewer.Plugin.OpcUa.Views;
 
 namespace OpcUaViewer.Plugin.OpcUa;
 
-public class OpcUaDataSource : ViewModelBase, IOpcUaSource, ISettingsPanel, IDisposable
+public class OpcUaDataSource : ViewModelBase, IMachineSource, ISettingsPanel, IDisposable
 {
     private readonly OpcUaService _svc = new();
 
@@ -18,37 +19,37 @@ public class OpcUaDataSource : ViewModelBase, IOpcUaSource, ISettingsPanel, IDis
 
     // ── IDataSource ───────────────────────────────────────────────────────────
     public string Name        => "OPC UA";
-    public string Description => "OPC UA client — connects to a server and streams node values.";
+    public string Description => "OPC UA client — connects to a server and streams tag values.";
 
-    // ── IOpcUaSource ViewModel surface ────────────────────────────────────────
+    // ── IMachineSource ────────────────────────────────────────────────────────
     public bool   IsConnected { get => _isConnected; private set => Set(ref _isConnected, value); }
-    public bool   IsBusy      { get => _isBusy;      private set => Set(ref _isBusy, value); }
     public string StatusText  { get => _statusText;  private set => Set(ref _statusText, value); }
+
+    public event EventHandler<string>?                 StatusChanged;
+    public event EventHandler<IReadOnlyList<TagInfo>>? TagsDiscovered;
+    public event EventHandler<TagValueEventArgs>?      TagValueUpdated;
+    public event EventHandler<string>?                 ProductIdChanged;
+    public event EventHandler<string>?                 ProgramChanged;
+    public event EventHandler<int>?                    MachineStateChanged;
+    public event EventHandler<bool>?                   OperatorActionChanged;
+
+    // ── OpcUa-specific ViewModel surface (for OpcUaSettingsView) ─────────────
+    public bool   IsBusy      { get => _isBusy;      private set => Set(ref _isBusy, value); }
     public string EndpointUrl { get => _endpointUrl; set => Set(ref _endpointUrl, value); }
 
     public RelayCommand ConnectCommand    { get; }
     public RelayCommand DisconnectCommand { get; }
 
-    // ── IOpcUaSource events ───────────────────────────────────────────────────
-    public event EventHandler<string>?                           StatusChanged;
-    public event EventHandler<System.Collections.Generic.IReadOnlyList<MonitoredNodeInfo>>? NodesDiscovered;
-    public event EventHandler<NodeValueEventArgs>?               NodeValueUpdated;
-    public event EventHandler<string>?                           ProductIdChanged;
-    public event EventHandler<string>?                           CamFileChanged;
-    public event EventHandler<int>?                              MachineStateChanged;
-    public event EventHandler<bool>?                             OperatorActionChanged;
-    public event EventHandler<NodeValueEventArgs>?               StatsValueChanged;
-
     // ── ISettingsPanel ────────────────────────────────────────────────────────
-    public string          Header     => "OPC UA CONNECTION";
+    public string Header => "OPC UA CONNECTION";
     FrameworkElement ISettingsPanel.CreateView() => new OpcUaSettingsView { DataContext = this };
-    public void            Save()
+    public void Save()
     {
         AppSettings.Current.EndpointUrl = EndpointUrl.Trim();
         AppSettings.Save();
     }
 
-    // ── IDataSource.OnApplicationStarted ─────────────────────────────────────
+    // ── IDataSource ───────────────────────────────────────────────────────────
     public void OnApplicationStarted()
     {
         if (!string.IsNullOrWhiteSpace(EndpointUrl))
@@ -60,13 +61,12 @@ public class OpcUaDataSource : ViewModelBase, IOpcUaSource, ISettingsPanel, IDis
         _endpointUrl = AppSettings.Current.EndpointUrl;
 
         _svc.StatusChanged       += (_, msg)   => Dispatch(() => { StatusText = msg; StatusChanged?.Invoke(this, msg); });
-        _svc.NodesDiscovered     += (_, nodes) => NodesDiscovered?.Invoke(this, nodes);
-        _svc.NodeValueUpdated    += (_, e)     => NodeValueUpdated?.Invoke(this, e);
+        _svc.TagsDiscovered      += (_, tags)  => TagsDiscovered?.Invoke(this, tags);
+        _svc.TagValueUpdated     += (_, e)     => TagValueUpdated?.Invoke(this, e);
         _svc.ProductIdChanged    += (_, v)     => ProductIdChanged?.Invoke(this, v);
-        _svc.CamFileChanged      += (_, v)     => CamFileChanged?.Invoke(this, v);
+        _svc.ProgramChanged      += (_, v)     => ProgramChanged?.Invoke(this, v);
         _svc.MachineStateChanged += (_, v)     => MachineStateChanged?.Invoke(this, v);
         _svc.OperatorActionChanged += (_, v)   => OperatorActionChanged?.Invoke(this, v);
-        _svc.StatsValueChanged   += (_, e)     => StatsValueChanged?.Invoke(this, e);
 
         ConnectCommand    = new RelayCommand(ConnectAsync,  () => !IsConnected && !IsBusy);
         DisconnectCommand = new RelayCommand(Disconnect,    () => IsConnected);

@@ -11,31 +11,31 @@ public class ExampleTab : ViewModelBase, IAppTab
     public string Title       => "Example";
     public string Icon        => "🔌";
     public int    Order       => 80;
-    public string Description => "Reference plugin demonstrating the OPC UA Viewer plugin API.";
+    public string Description => "Reference plugin demonstrating the machine data source plugin API.";
 
     public FrameworkElement CreateView() => new ExampleView { DataContext = this };
 
     private string _statusText   = "Not connected";
     private string _productId    = "—";
-    private string _camFile      = "—";
+    private string _program      = "—";
     private string _machineState = "—";
     private string _clock        = "";
 
     public string StatusText   { get => _statusText;   private set => Set(ref _statusText,   value); }
     public string ProductId    { get => _productId;    private set => Set(ref _productId,    value); }
-    public string CamFile      { get => _camFile;      private set => Set(ref _camFile,      value); }
+    public string Program      { get => _program;      private set => Set(ref _program,      value); }
     public string MachineState { get => _machineState; private set => Set(ref _machineState, value); }
     public string Clock        { get => _clock;        private set => Set(ref _clock,        value); }
 
     public ExampleTab()
     {
-        var opc = DataSourceRegistry.Get<IOpcUaSource>();
-        if (opc is not null)
+        var src = DataSourceRegistry.Get<IMachineSource>();
+        if (src is not null)
         {
-            opc.StatusChanged       += (_, msg) => Dispatch(() => StatusText   = msg);
-            opc.ProductIdChanged    += (_, v)   => Dispatch(() => ProductId    = v);
-            opc.CamFileChanged      += (_, v)   => Dispatch(() => CamFile      = v);
-            opc.MachineStateChanged += (_, v)   => Dispatch(() => MachineState = v.ToString());
+            src.StatusChanged       += (_, msg) => Dispatch(() => StatusText   = msg);
+            src.ProductIdChanged    += (_, v)   => Dispatch(() => ProductId    = v);
+            src.ProgramChanged      += (_, v)   => Dispatch(() => Program      = v);
+            src.MachineStateChanged += (_, v)   => Dispatch(() => MachineState = v.ToString());
         }
 
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -46,7 +46,7 @@ public class ExampleTab : ViewModelBase, IAppTab
 
     private static void Dispatch(Action a)
     {
-        if (System.Windows.Application.Current?.Dispatcher.CheckAccess() == true) a();
-        else System.Windows.Application.Current?.Dispatcher.BeginInvoke(a);
+        if (Application.Current?.Dispatcher.CheckAccess() == true) a();
+        else Application.Current?.Dispatcher.BeginInvoke(a);
     }
 }

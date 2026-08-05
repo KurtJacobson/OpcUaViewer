@@ -34,9 +34,11 @@ public class DocumentTab : ViewModelBase, IAppTab, IConfigurableTab
 
     public void Configure() => new DocumentSettingsDialog().ShowDialog();
 
-    public DocumentTab(OpcUaService opc)
+    public DocumentTab()
     {
-        opc.ProductIdChanged += (_, productId) => Dispatch(() => OpenProductPdf(productId));
+        var src = DataSourceRegistry.Get<IMachineSource>();
+        if (src is not null)
+            src.ProductIdChanged += (_, productId) => Dispatch(() => OpenProductPdf(productId));
     }
 
     public void LoadDocument(string uri)

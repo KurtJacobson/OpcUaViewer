@@ -10,6 +10,9 @@ using OpcUaViewer.Core.Contracts;
 
 namespace OpcUaViewer.Core.Services;
 
+public class OpcUaConnectionException(string message, Exception? inner = null)
+    : Exception(message, inner);
+
 /// <summary>
 /// Manages OPC UA connection, browsing, and subscription. All events fire on background threads;
 /// subscribers are responsible for dispatching to the UI thread.
@@ -19,30 +22,19 @@ public class OpcUaService : IDisposable
     // ── Configuration ─────────────────────────────────────────────────────────
     public string MonitoringFolderPath     { get; set; } = "4:PLC/6:Modules/6:::/6:Global PV/6:Monitoring";
     public string ProductIdNodeMatch       { get; set; } = "ProductId";
-    public string CamFileNodeMatch         { get; set; } = "CAMFileInProcess";
+    public string ProgramNodeMatch         { get; set; } = "CAMFileInProcess";
     public string MachineStateNodeMatch    { get; set; } = "CurrentMachineState";
     public ushort ExtraNodeNamespace       { get; set; } = 6;
     public string OperatorActionNodePath   { get; set; } = "::AsGlobalPV:Monitoring.OperatorActionRequested";
 
-    // Stats nodes (same namespace as OperatorAction)
-    public string StatsAutoModeNode       { get; set; } = "::AsGlobalPV:Monitoring.AutomaticMode";
-    public string StatsManualModeNode     { get; set; } = "::AsGlobalPV:Monitoring.ManualMode";
-    public string StatsSetupModeNode      { get; set; } = "::AsGlobalPV:Monitoring.SetupMode";
-    public string StatsTotalHoursNode     { get; set; } = "::AsGlobalPV:Monitoring.TotalOperatingHours";
-    public string StatsProducingHoursNode { get; set; } = "::AsGlobalPV:Monitoring.TotalOperatingHoursProducing";
-    public string StatsPartCountNode      { get; set; } = "::AsGlobalPV:Monitoring.CurrentProductCount";
-    public string StatsCurrentStepNode    { get; set; } = "::AsGlobalPV:Monitoring.CurrentProductionStep";
-    public string StatsBendingNowNode     { get; set; } = "::AsGlobalPV:Monitoring.BendingNow";
-
     // ── Events ─────────────────────────────────────────────────────────────────
-    public event EventHandler<string>?                   StatusChanged;
-    public event EventHandler<IReadOnlyList<MonitoredNodeInfo>>? NodesDiscovered;
-    public event EventHandler<NodeValueEventArgs>?       NodeValueUpdated;
-    public event EventHandler<string>?                   ProductIdChanged;
-    public event EventHandler<string>?                   CamFileChanged;
-    public event EventHandler<int>?                      MachineStateChanged;
-    public event EventHandler<bool>?                     OperatorActionChanged;
-    public event EventHandler<NodeValueEventArgs>?       StatsValueChanged;
+    public event EventHandler<string>?                StatusChanged;
+    public event EventHandler<IReadOnlyList<TagInfo>>? TagsDiscovered;
+    public event EventHandler<TagValueEventArgs>?      TagValueUpdated;
+    public event EventHandler<string>?                 ProductIdChanged;
+    public event EventHandler<string>?                 ProgramChanged;
+    public event EventHandler<int>?                    MachineStateChanged;
+    public event EventHandler<bool>?                   OperatorActionChanged;
 
     // ── State ──────────────────────────────────────────────────────────────────
     public bool IsConnected => _session != null;
@@ -52,10 +44,9 @@ public class OpcUaService : IDisposable
     private CancellationTokenSource? _cts;
 
     private readonly Dictionary<uint, string> _handleToName = new();
-    private uint? _productIdHandle, _camFileHandle, _machineStateHandle, _opActionHandle;
-    private readonly HashSet<uint> _statsHandles = [];
+    private uint? _productIdHandle, _programHandle, _machineStateHandle, _opActionHandle;
 
-    private IReadOnlyList<MonitoredNodeInfo> _nodes = [];
+    private IReadOnlyList<TagInfo> _tags = [];
 
     // ── Public API ─────────────────────────────────────────────────────────────
 
@@ -87,12 +78,12 @@ public class OpcUaService : IDisposable
 
             await Task.Run(() =>
             {
-                DiscoverNodes();
+                DiscoverTags();
                 CreateSubscription();
             }, ct);
 
-            RaiseStatus(_nodes.Count > 0
-                ? $"Connected to {endpoint.EndpointUrl} ({_nodes.Count} items)"
+            RaiseStatus(_tags.Count > 0
+                ? $"Connected to {endpoint.EndpointUrl} ({_tags.Count} items)"
                 : $"Connected to {endpoint.EndpointUrl} — no items at configured path");
         }
         catch (OperationCanceledException) { }
@@ -122,9 +113,8 @@ public class OpcUaService : IDisposable
             _session      = null;
             _subscription = null;
             _handleToName.Clear();
-            _statsHandles.Clear();
-            _productIdHandle = _camFileHandle = _machineStateHandle = _opActionHandle = null;
-            _nodes = [];
+            _productIdHandle = _programHandle = _machineStateHandle = _opActionHandle = null;
+            _tags = [];
             RaiseStatus("Disconnected");
         }
     }
@@ -140,28 +130,28 @@ public class OpcUaService : IDisposable
 
     // ── Private: discovery & subscription ─────────────────────────────────────
 
-    private void DiscoverNodes()
+    private void DiscoverTags()
     {
-        List<MonitoredNodeInfo> nodes;
+        List<TagInfo> tags;
         try
         {
             var folderId = ResolveBrowsePath(MonitoringFolderPath);
-            nodes = BrowseVariables(folderId)
-                .Select(n => new MonitoredNodeInfo(n.Name, n.NodeId.ToString()))
+            tags = BrowseVariables(folderId)
+                .Select(n => new TagInfo(n.Name, n.NodeId.ToString()))
                 .ToList();
         }
         catch (Exception ex)
         {
-            nodes = [];
+            tags = [];
             RaiseStatus($"Browse failed: {ex.InnerException?.Message ?? ex.Message}");
         }
-        _nodes = nodes;
-        NodesDiscovered?.Invoke(this, nodes);
+        _tags = tags;
+        TagsDiscovered?.Invoke(this, tags);
     }
 
     private void CreateSubscription()
     {
-        if (_session == null || _nodes.Count == 0) return;
+        if (_session == null || _tags.Count == 0) return;
 
         _subscription = new Subscription(_session.DefaultSubscription) { PublishingInterval = 500 };
 
@@ -182,22 +172,12 @@ public class OpcUaService : IDisposable
             _handleToName[item.ClientHandle] = node.Name;
 
             string n = node.Name;
-            if (n.Contains(ProductIdNodeMatch,    StringComparison.OrdinalIgnoreCase)) _productIdHandle     = item.ClientHandle;
-            if (n.Contains(CamFileNodeMatch,      StringComparison.OrdinalIgnoreCase)) _camFileHandle       = item.ClientHandle;
-            if (n.Contains(MachineStateNodeMatch, StringComparison.OrdinalIgnoreCase)) _machineStateHandle  = item.ClientHandle;
+            if (n.Contains(ProductIdNodeMatch,    StringComparison.OrdinalIgnoreCase)) _productIdHandle    = item.ClientHandle;
+            if (n.Contains(ProgramNodeMatch,      StringComparison.OrdinalIgnoreCase)) _programHandle      = item.ClientHandle;
+            if (n.Contains(MachineStateNodeMatch, StringComparison.OrdinalIgnoreCase)) _machineStateHandle = item.ClientHandle;
         }
 
-        // Extra hardcoded nodes
         _opActionHandle = AddExtraItem(_subscription, OperatorActionNodePath, "OperatorActionRequested");
-
-        AddStatsItem(_subscription, StatsAutoModeNode);
-        AddStatsItem(_subscription, StatsManualModeNode);
-        AddStatsItem(_subscription, StatsSetupModeNode);
-        AddStatsItem(_subscription, StatsTotalHoursNode);
-        AddStatsItem(_subscription, StatsProducingHoursNode);
-        AddStatsItem(_subscription, StatsPartCountNode);
-        AddStatsItem(_subscription, StatsCurrentStepNode);
-        AddStatsItem(_subscription, StatsBendingNowNode);
 
         _session.AddSubscription(_subscription);
         _subscription.Create();
@@ -222,27 +202,19 @@ public class OpcUaService : IDisposable
         catch { return null; }
     }
 
-    private void AddStatsItem(Subscription sub, string nodePath)
-    {
-        var h = AddExtraItem(sub, nodePath, nodePath.Split('.').Last());
-        if (h.HasValue) _statsHandles.Add(h.Value);
-    }
-
     private void OnValueChanged(MonitoredItem item, MonitoredItemNotificationEventArgs e)
     {
         foreach (var v in item.DequeueValues())
         {
             string name   = _handleToName.GetValueOrDefault(item.ClientHandle, "");
             string strVal = v.Value?.ToString() ?? "";
-            var    args   = new NodeValueEventArgs(name, v.Value, v.StatusCode.ToString(),
+            var    args   = new TagValueEventArgs(name, v.Value, v.StatusCode.ToString(),
                                 v.SourceTimestamp != DateTime.MinValue ? v.SourceTimestamp : DateTime.UtcNow);
 
-            // General node value event (for monitor grid)
-            NodeValueUpdated?.Invoke(this, args);
+            TagValueUpdated?.Invoke(this, args);
 
-            // Routed events
             if      (_productIdHandle    == item.ClientHandle) ProductIdChanged?.Invoke(this, strVal);
-            else if (_camFileHandle      == item.ClientHandle) CamFileChanged?.Invoke(this, strVal);
+            else if (_programHandle      == item.ClientHandle) ProgramChanged?.Invoke(this, strVal);
             else if (_machineStateHandle == item.ClientHandle && int.TryParse(strVal, out int state))
                 MachineStateChanged?.Invoke(this, state);
             else if (_opActionHandle     == item.ClientHandle)
@@ -250,8 +222,6 @@ public class OpcUaService : IDisposable
                 bool waiting = v.Value is bool b ? b : strVal is "True" or "1";
                 OperatorActionChanged?.Invoke(this, waiting);
             }
-            else if (_statsHandles.Contains(item.ClientHandle))
-                StatsValueChanged?.Invoke(this, args);
         }
     }
 
@@ -328,4 +298,3 @@ public class OpcUaService : IDisposable
 
     private void RaiseStatus(string msg) => StatusChanged?.Invoke(this, msg);
 }
-

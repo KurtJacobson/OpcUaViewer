@@ -161,7 +161,8 @@ public sealed class PluginService
             foreach (var type in dsTypes)
             {
                 IDataSource? ds = null;
-                try { ds = (IDataSource?)Activator.CreateInstance(type); } catch { }
+                try { ds = (IDataSource?)Activator.CreateInstance(type); }
+                catch (Exception ex) { return Failed(dll, shortName, $"Failed to instantiate {type.Name}: {ex.GetBaseException().Message}"); }
                 if (ds is not null)
                 {
                     sources.Add(ds);
@@ -173,7 +174,8 @@ public sealed class PluginService
             foreach (var type in tabTypes)
             {
                 IAppTab? tab = null;
-                try { tab = (IAppTab?)Activator.CreateInstance(type); } catch { }
+                try { tab = (IAppTab?)Activator.CreateInstance(type); }
+                catch (Exception ex) { return Failed(dll, shortName, $"Failed to instantiate {type.Name}: {ex.GetBaseException().Message}"); }
                 if (tab is not null) tabs.Add(tab);
             }
 

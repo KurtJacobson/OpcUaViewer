@@ -26,7 +26,7 @@ public class GroupsTab : ViewModelBase, IAppTab, IConfigurableTab
 
     public void Configure() => new GroupsSettingsDialog().ShowDialog();
 
-    private readonly OpcUaService _opc;
+    private readonly IMachineSource? _src;
 
     // ── OPC UA state ──────────────────────────────────────────────────────────
     private string _activeCamFile   = "";
@@ -112,9 +112,9 @@ public class GroupsTab : ViewModelBase, IAppTab, IConfigurableTab
     public RelayCommand RunGroupCommand       { get; }
     public RelayCommand CancelGroupCommand    { get; }
 
-    public GroupsTab(OpcUaService opc)
+    public GroupsTab()
     {
-        _opc = opc;
+        _src = DataSourceRegistry.Get<IMachineSource>();
 
         ReloadCommand         = new RelayCommand(LoadOrders);
         ImportCsvCommand      = new RelayCommand(ImportCsv);
@@ -128,9 +128,12 @@ public class GroupsTab : ViewModelBase, IAppTab, IConfigurableTab
         RunGroupCommand       = new RelayCommand(RunGroup,    () => HasSelection && !IsRunningLocked);
         CancelGroupCommand    = new RelayCommand(CancelGroup, () => HasSelection || IsRunningLocked);
 
-        _opc.CamFileChanged      += (_, f) => Dispatch(() => OnCamFileChanged(f));
-        _opc.MachineStateChanged += (_, s) => Dispatch(() => OnMachineStateChanged(s));
-        _opc.ProductIdChanged    += (_, p) => Dispatch(() => OnProductIdChanged(p));
+        if (_src is not null)
+        {
+            _src.ProgramChanged      += (_, f) => Dispatch(() => OnCamFileChanged(f));
+            _src.MachineStateChanged += (_, s) => Dispatch(() => OnMachineStateChanged(s));
+            _src.ProductIdChanged    += (_, p) => Dispatch(() => OnProductIdChanged(p));
+        }
 
         LoadOrders();
     }
