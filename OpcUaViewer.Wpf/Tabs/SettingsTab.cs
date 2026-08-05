@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using OpcUaViewer.Core.Contracts;
+using OpcUaViewer.Core.Services;
 using OpcUaViewer.Core.Settings;
 using OpcUaViewer.Wpf.Infrastructure;
 using OpcUaViewer.Wpf.Plugins;
@@ -43,10 +44,15 @@ public class SettingsTab : ViewModelBase, IAppTab
         SaveCommand    = new RelayCommand(Save);
         OpenLogCommand = new RelayCommand(OpenLog);
 
-        SettingsPanels = pluginService.Plugins
-            .SelectMany(p => p.Panels)
-            .Select(p => new SettingsPanelVm(p.Header, p.CreateView()))
-            .ToList();
+        var panels = new List<SettingsPanelVm>();
+        foreach (var p in pluginService.Plugins.SelectMany(pl => pl.Panels))
+        {
+            try   { panels.Add(new SettingsPanelVm(p.Header, p.CreateView())); }
+            catch (Exception ex) { AppLogger.Error($"Settings panel '{p.Header}' CreateView failed", ex); }
+        }
+        SettingsPanels = panels;
+        AppLogger.Info($"SettingsPanels built: {panels.Count} panel(s)" +
+            (panels.Count > 0 ? $" [{string.Join(", ", panels.Select(p => p.Header))}]" : ""));
 
         Load();
     }

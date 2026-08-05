@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Collections;
+using OpcUaViewer.Core.Contracts;
 
 namespace OpcUaViewer.Wpf.Infrastructure;
 
@@ -74,6 +76,26 @@ public class InverseBoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type t, object p, CultureInfo c)
         => value is true ? Visibility.Collapsed : Visibility.Visible;
+
+    public object ConvertBack(object value, Type t, object p, CultureInfo c)
+        => DependencyProperty.UnsetValue;
+}
+
+// Calls ISettingsPanel.CreateView() and caches the result per panel instance
+public class SettingsPanelViewConverter : IValueConverter
+{
+    private readonly Dictionary<ISettingsPanel, FrameworkElement> _cache = [];
+
+    public object? Convert(object value, Type t, object p, CultureInfo c)
+    {
+        if (value is not ISettingsPanel panel) return null;
+        if (!_cache.TryGetValue(panel, out var view))
+        {
+            view = panel.CreateView();
+            _cache[panel] = view;
+        }
+        return view;
+    }
 
     public object ConvertBack(object value, Type t, object p, CultureInfo c)
         => DependencyProperty.UnsetValue;

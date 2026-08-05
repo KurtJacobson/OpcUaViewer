@@ -45,7 +45,7 @@ public partial class App : Application
         foreach (var p in pluginService.Plugins)
         {
             if (string.IsNullOrEmpty(p.LoadError))
-                AppLogger.Info($"Plugin loaded: {p.Name} ({(p.IsDataSourcePlugin ? p.SourceList : p.TabList)}) — {p.FilePath}");
+                AppLogger.Info($"Plugin loaded: {p.Name} tabs=[{p.TabList}] sources=[{p.SourceList}] panels={p.Panels.Count} — {p.FilePath}");
             else
                 AppLogger.Error($"Plugin failed: {p.Name} — {p.LoadError} — {p.FilePath}");
         }
