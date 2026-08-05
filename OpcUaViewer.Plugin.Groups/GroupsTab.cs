@@ -130,7 +130,7 @@ public class GroupsTab : ViewModelBase, IAppTab, IConfigurableTab
 
         if (_src is not null)
         {
-            _src.ProgramChanged      += (_, f) => Dispatch(() => OnCamFileChanged(f));
+            _src.CamFileChanged      += (_, f) => Dispatch(() => OnCamFileChanged(f));
             _src.MachineStateChanged += (_, s) => Dispatch(() => OnMachineStateChanged(s));
             _src.ProductIdChanged    += (_, p) => Dispatch(() => OnProductIdChanged(p));
         }

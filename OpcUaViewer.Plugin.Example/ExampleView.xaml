@@ -57,7 +57,7 @@
                 <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ProductId}"    Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
 
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="CAM File"       Foreground="{StaticResource TextSubBrush}" VerticalAlignment="Center"/>
-                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Program}"      Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CamFile}"      Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>
 
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Machine State"  Foreground="{StaticResource TextSubBrush}" VerticalAlignment="Center"/>
                 <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding MachineState}" Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"/>

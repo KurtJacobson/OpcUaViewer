@@ -29,7 +29,7 @@ public class OpcUaDataSource : ViewModelBase, IMachineSource, ISettingsPanel, ID
     public event EventHandler<IReadOnlyList<TagInfo>>? TagsDiscovered;
     public event EventHandler<TagValueEventArgs>?      TagValueUpdated;
     public event EventHandler<string>?                 ProductIdChanged;
-    public event EventHandler<string>?                 ProgramChanged;
+    public event EventHandler<string>?                 CamFileChanged;
     public event EventHandler<int>?                    MachineStateChanged;
     public event EventHandler<bool>?                   OperatorActionChanged;
 
@@ -64,7 +64,7 @@ public class OpcUaDataSource : ViewModelBase, IMachineSource, ISettingsPanel, ID
         _svc.TagsDiscovered      += (_, tags)  => TagsDiscovered?.Invoke(this, tags);
         _svc.TagValueUpdated     += (_, e)     => TagValueUpdated?.Invoke(this, e);
         _svc.ProductIdChanged    += (_, v)     => ProductIdChanged?.Invoke(this, v);
-        _svc.ProgramChanged      += (_, v)     => ProgramChanged?.Invoke(this, v);
+        _svc.CamFileChanged      += (_, v)     => CamFileChanged?.Invoke(this, v);
         _svc.MachineStateChanged += (_, v)     => MachineStateChanged?.Invoke(this, v);
         _svc.OperatorActionChanged += (_, v)   => OperatorActionChanged?.Invoke(this, v);
 

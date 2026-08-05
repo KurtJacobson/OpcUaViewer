@@ -17,13 +17,13 @@ public class ExampleTab : ViewModelBase, IAppTab
 
     private string _statusText   = "Not connected";
     private string _productId    = "—";
-    private string _program      = "—";
+    private string _camFile      = "—";
     private string _machineState = "—";
     private string _clock        = "";
 
     public string StatusText   { get => _statusText;   private set => Set(ref _statusText,   value); }
     public string ProductId    { get => _productId;    private set => Set(ref _productId,    value); }
-    public string Program      { get => _program;      private set => Set(ref _program,      value); }
+    public string CamFile      { get => _camFile;      private set => Set(ref _camFile,      value); }
     public string MachineState { get => _machineState; private set => Set(ref _machineState, value); }
     public string Clock        { get => _clock;        private set => Set(ref _clock,        value); }
 
@@ -34,7 +34,7 @@ public class ExampleTab : ViewModelBase, IAppTab
         {
             src.StatusChanged       += (_, msg) => Dispatch(() => StatusText   = msg);
             src.ProductIdChanged    += (_, v)   => Dispatch(() => ProductId    = v);
-            src.ProgramChanged      += (_, v)   => Dispatch(() => Program      = v);
+            src.CamFileChanged      += (_, v)   => Dispatch(() => CamFile      = v);
             src.MachineStateChanged += (_, v)   => Dispatch(() => MachineState = v.ToString());
         }
 

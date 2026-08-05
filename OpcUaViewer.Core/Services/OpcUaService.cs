@@ -22,7 +22,7 @@ public class OpcUaService : IDisposable
     // ── Configuration ─────────────────────────────────────────────────────────
     public string MonitoringFolderPath     { get; set; } = "4:PLC/6:Modules/6:::/6:Global PV/6:Monitoring";
     public string ProductIdNodeMatch       { get; set; } = "ProductId";
-    public string ProgramNodeMatch         { get; set; } = "CAMFileInProcess";
+    public string CamFileNodeMatch         { get; set; } = "CAMFileInProcess";
     public string MachineStateNodeMatch    { get; set; } = "CurrentMachineState";
     public ushort ExtraNodeNamespace       { get; set; } = 6;
     public string OperatorActionNodePath   { get; set; } = "::AsGlobalPV:Monitoring.OperatorActionRequested";
@@ -32,7 +32,7 @@ public class OpcUaService : IDisposable
     public event EventHandler<IReadOnlyList<TagInfo>>? TagsDiscovered;
     public event EventHandler<TagValueEventArgs>?      TagValueUpdated;
     public event EventHandler<string>?                 ProductIdChanged;
-    public event EventHandler<string>?                 ProgramChanged;
+    public event EventHandler<string>?                 CamFileChanged;
     public event EventHandler<int>?                    MachineStateChanged;
     public event EventHandler<bool>?                   OperatorActionChanged;
 
@@ -44,7 +44,7 @@ public class OpcUaService : IDisposable
     private CancellationTokenSource? _cts;
 
     private readonly Dictionary<uint, string> _handleToName = new();
-    private uint? _productIdHandle, _programHandle, _machineStateHandle, _opActionHandle;
+    private uint? _productIdHandle, _camFileHandle, _machineStateHandle, _opActionHandle;
 
     private IReadOnlyList<TagInfo> _tags = [];
 
@@ -113,7 +113,7 @@ public class OpcUaService : IDisposable
             _session      = null;
             _subscription = null;
             _handleToName.Clear();
-            _productIdHandle = _programHandle = _machineStateHandle = _opActionHandle = null;
+            _productIdHandle = _camFileHandle = _machineStateHandle = _opActionHandle = null;
             _tags = [];
             RaiseStatus("Disconnected");
         }
@@ -173,7 +173,7 @@ public class OpcUaService : IDisposable
 
             string n = node.Name;
             if (n.Contains(ProductIdNodeMatch,    StringComparison.OrdinalIgnoreCase)) _productIdHandle    = item.ClientHandle;
-            if (n.Contains(ProgramNodeMatch,      StringComparison.OrdinalIgnoreCase)) _programHandle      = item.ClientHandle;
+            if (n.Contains(CamFileNodeMatch,      StringComparison.OrdinalIgnoreCase)) _camFileHandle      = item.ClientHandle;
             if (n.Contains(MachineStateNodeMatch, StringComparison.OrdinalIgnoreCase)) _machineStateHandle = item.ClientHandle;
         }
 
@@ -214,7 +214,7 @@ public class OpcUaService : IDisposable
             TagValueUpdated?.Invoke(this, args);
 
             if      (_productIdHandle    == item.ClientHandle) ProductIdChanged?.Invoke(this, strVal);
-            else if (_programHandle      == item.ClientHandle) ProgramChanged?.Invoke(this, strVal);
+            else if (_camFileHandle      == item.ClientHandle) CamFileChanged?.Invoke(this, strVal);
             else if (_machineStateHandle == item.ClientHandle && int.TryParse(strVal, out int state))
                 MachineStateChanged?.Invoke(this, state);
             else if (_opActionHandle     == item.ClientHandle)

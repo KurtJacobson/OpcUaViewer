@@ -18,7 +18,7 @@ public interface IMachineSource : IDataSource, INotifyPropertyChanged
     event EventHandler<IReadOnlyList<TagInfo>>? TagsDiscovered;
     event EventHandler<TagValueEventArgs>?      TagValueUpdated;
     event EventHandler<string>?                 ProductIdChanged;
-    event EventHandler<string>?                 ProgramChanged;
+    event EventHandler<string>?                 CamFileChanged;
     event EventHandler<int>?                    MachineStateChanged;
     event EventHandler<bool>?                   OperatorActionChanged;
 }
