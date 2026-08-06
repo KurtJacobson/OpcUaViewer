@@ -20,7 +20,7 @@ DefaultGroupName={#AppName}
 AllowNoIcons=yes
 OutputDir=Output
 OutputBaseFilename=OpcUaViewerSetup-{#AppVersion}
-SetupIconFile=..\OpcUaViewer\Resources\app.ico
+SetupIconFile=..\OpcUaViewer.Wpf\Resources\app.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -33,10 +33,11 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Components]
 Name: "main";    Description: "OPC UA Viewer (required)"; Types: full compact custom; Flags: fixed
+Name: "opcua";   Description: "OPC UA Plugin — connect to an OPC UA server"; Types: full compact
 Name: "groups";  Description: "Groups Plugin — manage production groups and product orders"; Types: full
 Name: "docview"; Description: "Document Viewer Plugin — display product PDF documentation"; Types: full
 Name: "webcam";  Description: "Webcam Plugin — live camera feed viewer"; Types: full
-Name: "example"; Description: "Example Plugin — developer reference plugin"; Types: full
+Name: "stats";   Description: "Stats Plugin — production statistics and cycle times"; Types: full
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut";    GroupDescription: "Additional icons:"
@@ -51,12 +52,13 @@ Source: "{#PublishDir}\*.runtimeconfig.json";              DestDir: "{app}"; Com
 Source: "{#PublishDir}\Assets\*";                          DestDir: "{app}\Assets"; Components: main; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; ── Shipped plugins (each optional) ──────────────────────────────────────────
-Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Groups.dll";    DestDir: "{app}\plugins"; Components: groups;  Flags: ignoreversion skipifsourcedoesntexist
-Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Document.dll";  DestDir: "{app}\plugins"; Components: docview; Flags: ignoreversion skipifsourcedoesntexist
-Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Webcam.dll";    DestDir: "{app}\plugins"; Components: webcam;  Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.OpcUa.dll";    DestDir: "{app}\plugins"; Components: opcua;   Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Groups.dll";   DestDir: "{app}\plugins"; Components: groups;  Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Document.dll"; DestDir: "{app}\plugins"; Components: docview; Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Webcam.dll";   DestDir: "{app}\plugins"; Components: webcam;  Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#PublishDir}\plugins\OpenCvSharp.dll";                 DestDir: "{app}\plugins"; Components: webcam;  Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#PublishDir}\OpenCvSharpExtern.dll";                   DestDir: "{app}";         Components: webcam;  Flags: ignoreversion skipifsourcedoesntexist
-Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Example.dll";   DestDir: "{app}\plugins"; Components: example; Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Stats.dll";    DestDir: "{app}\plugins"; Components: stats;   Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
 Name: "{group}\{#AppName}";       Filename: "{app}\{#AppExeName}"

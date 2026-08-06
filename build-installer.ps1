@@ -18,10 +18,14 @@ $ErrorActionPreference = "Stop"
 $root    = $PSScriptRoot
 $publish = Join-Path $root "publish"
 $plugins = Join-Path $publish "plugins"
-$tf      = "net10.0-windows"
+$tf      = "net8.0-windows"
 
 # ── 1. Publish ────────────────────────────────────────────────────────────────
 if (-not $SkipPublish) {
+    if (Test-Path $publish) {
+        Write-Host "Cleaning previous publish output..." -ForegroundColor Cyan
+        Remove-Item $publish -Recurse -Force
+    }
     Write-Host "Publishing OpcUaViewer.Wpf..." -ForegroundColor Cyan
     dotnet publish "$root\OpcUaViewer.Wpf\OpcUaViewer.Wpf.csproj" `
         -c $Configuration -o $publish
@@ -31,9 +35,11 @@ if (-not $SkipPublish) {
 # ── 2. Copy plugin DLLs into publish\plugins\ ─────────────────────────────────
 # dotnet publish does not run the CopyShippedPlugins MSBuild target, so we do it here.
 $pluginProjects = @(
+    "OpcUaViewer.Plugin.OpcUa",
     "OpcUaViewer.Plugin.Groups",
     "OpcUaViewer.Plugin.Document",
-    "OpcUaViewer.Plugin.Webcam"
+    "OpcUaViewer.Plugin.Webcam",
+    "OpcUaViewer.Plugin.Stats"
 )
 
 Write-Host "Building and copying plugins..." -ForegroundColor Cyan
