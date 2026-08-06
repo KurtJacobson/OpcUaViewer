@@ -7,4 +7,5 @@
   <Project Path="OpcUaViewer.Plugin.Webcam/OpcUaViewer.Plugin.Webcam.csproj" />
   <Project Path="OpcUaViewer.Plugin.Groups/OpcUaViewer.Plugin.Groups.csproj" />
   <Project Path="OpcUaViewer.Plugin.Document/OpcUaViewer.Plugin.Document.csproj" />
+  <Project Path="OpcUaViewer.Plugin.Stats/OpcUaViewer.Plugin.Stats.csproj" />
 </Solution>

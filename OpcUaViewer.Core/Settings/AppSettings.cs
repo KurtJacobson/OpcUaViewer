@@ -62,6 +62,17 @@ public sealed class AppSettings
     // Webcam
     public int WebcamIndex { get; set; } = 0;
 
+    // Stats — machine state int values from CurrentMachineState OPC tag
+    public int MachineStateAuto    { get; set; } = 1;
+    public int MachineStateManual  { get; set; } = 2;
+    public int MachineStateSetup   { get; set; } = 3;
+    public int MachineStateBending { get; set; } = 4;
+
+    // Stats — tag name substrings used to extract hours/bends from TagValueUpdated
+    public string TotalHoursTagMatch    { get; set; } = "TotalOperatingHours";
+    public string ProducingHoursTagMatch { get; set; } = "ProducingHours";
+    public string TotalBendsTagMatch    { get; set; } = "TotalBends";
+
     // CSV import
     public string CsvPartNameColumn     { get; set; } = "Part Name";
     public string CsvPartNameRegex      { get; set; } = "";
