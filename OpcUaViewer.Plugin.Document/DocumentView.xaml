@@ -28,5 +28,21 @@
 
         <!-- WebView2 host — wired in code-behind -->
         <Border Grid.Row="1" x:Name="WebViewHost" Background="#FF101010"/>
+
+        <!-- Shown when WebView2 runtime is not installed -->
+        <StackPanel x:Name="NoWebView2Panel" Grid.Row="1"
+                    Visibility="Collapsed"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="WebView2 runtime is not installed."
+                       Foreground="{StaticResource TextSubBrush}"
+                       FontSize="14" HorizontalAlignment="Center"/>
+            <TextBlock HorizontalAlignment="Center" Margin="0,8,0,0">
+                <Hyperlink x:Name="WebView2Link" Foreground="{StaticResource AccentBrush}"
+                           RequestNavigate="WebView2Link_RequestNavigate"
+                           NavigateUri="https://go.microsoft.com/fwlink/p/?LinkId=2124703">
+                    Download WebView2 Runtime
+                </Hyperlink>
+            </TextBlock>
+        </StackPanel>
     </Grid>
 </UserControl>

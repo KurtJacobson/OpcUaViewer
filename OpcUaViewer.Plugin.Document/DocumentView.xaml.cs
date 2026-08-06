@@ -1,7 +1,10 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Navigation;
+using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
 
 namespace OpcUaViewer.Plugin.Document;
@@ -22,6 +25,12 @@ public partial class DocumentView : UserControl
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         if (_initialized) return;
+
+        if (CoreWebView2Environment.GetAvailableBrowserVersionString() is null)
+        {
+            NoWebView2Panel.Visibility = Visibility.Visible;
+            return;
+        }
 
         _webView = new WebView2 { HorizontalAlignment = HorizontalAlignment.Stretch,
                                   VerticalAlignment   = VerticalAlignment.Stretch };
@@ -59,6 +68,12 @@ public partial class DocumentView : UserControl
             _webView.CoreWebView2.NavigateToString(LoadPlaceholder(statusText));
         else
             _webView.CoreWebView2.Navigate(uri);
+    }
+
+    private void WebView2Link_RequestNavigate(object sender, RequestNavigateEventArgs e)
+    {
+        Process.Start(new ProcessStartInfo(e.Uri.ToString()) { UseShellExecute = true });
+        e.Handled = true;
     }
 
     private static string LoadPlaceholder(string message)
