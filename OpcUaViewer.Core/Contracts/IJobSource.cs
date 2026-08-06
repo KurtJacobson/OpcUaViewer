@@ -7,14 +7,20 @@ namespace OpcUaViewer.Core.Contracts;
 /// Represents a job/work-order record pushed from an ERP or defined locally.
 /// </summary>
 public record JobRecord(
-    string JobNumber,
-    string PartNumber,
-    string Description   = "",
-    string Material      = "",
-    string Thickness     = "",
-    int    QuantityPlanned = 0,
-    string GroupName     = "",
-    string Notes         = "");
+    string    JobNumber,
+    string    PartNumber,
+    string    PartDescription  = "",
+    string    DrawingRevision  = "",
+    int       OperationSeq     = 0,
+    string    OperationDesc    = "",
+    string    ProductGroup     = "",
+    string    Material         = "",
+    string    Thickness        = "",
+    int       QuantityPlanned  = 0,
+    int       QuantityComplete = 0,
+    string    Customer         = "",
+    DateTime? DueDate          = null,
+    string    Notes            = "");
 
 /// <summary>
 /// Data source that provides job/work-order data to tab plugins.
