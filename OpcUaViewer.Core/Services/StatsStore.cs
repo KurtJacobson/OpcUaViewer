@@ -65,6 +65,9 @@ public sealed class StatsStore
         AddTo(GlobalCycleTimes, JobCycleTimes, ProductCycleTimes, jobKey, productKey, t);
     }
 
+    /// <summary>Fired after BulkImportCycles completes so subscribers can reload the store.</summary>
+    public static event EventHandler? BulkImportCompleted;
+
     /// <summary>Import many cycle records at once, saving only once at the end.</summary>
     public void BulkImportCycles(IEnumerable<(string JobKey, string ProductKey, double Seconds)> records)
     {
@@ -77,6 +80,7 @@ public sealed class StatsStore
             AddToDict(ProductCycleTimes, product, seconds);
         }
         Save();
+        BulkImportCompleted?.Invoke(null, EventArgs.Empty);
     }
 
     public void IncrementBendCount() { TotalBendCount++; Save(); }

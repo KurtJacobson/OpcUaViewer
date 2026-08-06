@@ -61,13 +61,14 @@ public class StatsTab : ViewModelBase, IAppTab
     public RelayCommand ResetBendsCommand { get; }
 
     // ── Internal state ────────────────────────────────────────────────────────
-    private readonly StatsStore _store;
-    private string   _currentJobKey     = "";
-    private string   _currentProductKey = "";
-    private DateTime _productStartTime  = DateTime.MinValue;
-    private DateTime _setupStartTime    = DateTime.MinValue;
+    private StatsStore _store;
+    private string   _currentJobKey      = "";
+    private string   _currentProductKey  = "";
+    private DateTime _productStartTime   = DateTime.MinValue;
+    private DateTime _setupStartTime     = DateTime.MinValue;
     private bool     _inSetupPhase;
     private double   _rawTotalSecs, _rawProducingSecs;
+    private double?  _pendingCycleSeconds; // set by explicit CycleTime tag (CSV source)
 
     // ── Construction ──────────────────────────────────────────────────────────
 
@@ -95,6 +96,8 @@ public class StatsTab : ViewModelBase, IAppTab
         src.CamFileChanged        += (_, f) => Dispatch(() => OnCamFileChanged(f));
         src.ProductIdChanged      += (_, p) => Dispatch(() => OnProductIdChanged(p));
         src.TagValueUpdated       += (_, e) => Dispatch(() => OnTagValueUpdated(e));
+
+        StatsStore.BulkImportCompleted += (_, _) => Dispatch(ReloadStore);
     }
 
     // ── Event handlers ────────────────────────────────────────────────────────
@@ -130,13 +133,18 @@ public class StatsTab : ViewModelBase, IAppTab
     {
         var newKey = StatsStore.ProductKey(productId);
 
-        // Record cycle time for previous product
+        // Record cycle time for previous product — use explicit value if source provided one
         if (!string.IsNullOrEmpty(_currentProductKey) && _productStartTime != DateTime.MinValue)
         {
-            double t = (DateTime.UtcNow - _productStartTime).TotalSeconds;
+            double t = _pendingCycleSeconds ?? (DateTime.UtcNow - _productStartTime).TotalSeconds;
+            _pendingCycleSeconds = null;
             _store.AddCycleTime(_currentJobKey, _currentProductKey, t);
             TotalParts = _store.TotalPartCount.ToString("N0");
             RefreshGridRow(_currentProductKey);
+        }
+        else
+        {
+            _pendingCycleSeconds = null;
         }
 
         // Record setup time when transitioning to a new product
@@ -157,8 +165,25 @@ public class StatsTab : ViewModelBase, IAppTab
         ActiveProductKey   = newKey;
     }
 
+    private void ReloadStore()
+    {
+        _store = StatsStore.Load();
+        TotalParts = _store.TotalPartCount > 0 ? _store.TotalPartCount.ToString("N0") : "—";
+        TotalBends = _store.TotalBendCount > 0 ? _store.TotalBendCount.ToString("N0") : "—";
+        RefreshGrid();
+    }
+
     private void OnTagValueUpdated(TagValueEventArgs e)
     {
+        // Explicit cycle time provided by source (e.g. CSV) — use instead of measuring elapsed time
+        if (e.Name == "CycleTime" &&
+            double.TryParse(e.StrValue, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out double cycleT))
+        {
+            _pendingCycleSeconds = cycleT;
+            return;
+        }
+
         var s = AppSettings.Current;
         string n = e.Name;
 
