@@ -46,15 +46,19 @@ public class SettingsTab : ViewModelBase, IAppTab
     public RelayCommand OpenLogCommand  { get; }
 
     private bool _loading;
+    private List<ISettingsPanel> _allPanels = [];
 
-    public SettingsTab(PluginService pluginService)
+    public SettingsTab(PluginService pluginService, IEnumerable<ISettingsPanel>? builtInPanels = null)
     {
         PluginService  = pluginService;
         SaveCommand    = new RelayCommand(Save);
         OpenLogCommand = new RelayCommand(OpenLog);
 
+        var rawPanels = (builtInPanels ?? []).Concat(pluginService.Plugins.SelectMany(pl => pl.Panels)).ToList();
+        _allPanels = rawPanels;
+
         var panels = new List<SettingsPanelVm>();
-        foreach (var p in pluginService.Plugins.SelectMany(pl => pl.Panels))
+        foreach (var p in rawPanels)
         {
             try   { panels.Add(new SettingsPanelVm(p.Header, p.CreateView())); }
             catch (Exception ex) { AppLogger.Error($"Settings panel '{p.Header}' CreateView failed", ex); }
@@ -128,7 +132,7 @@ public class SettingsTab : ViewModelBase, IAppTab
     private void Save()
     {
         SaveGeneral();
-        foreach (var panel in PluginService.Plugins.SelectMany(p => p.Panels))
+        foreach (var panel in _allPanels)
             panel.Save();
         PluginService.SaveEnabledState();
     }

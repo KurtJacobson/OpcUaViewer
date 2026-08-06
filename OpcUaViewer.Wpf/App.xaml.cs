@@ -7,6 +7,7 @@ using Microsoft.Web.WebView2.Core;
 using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Services;
 using OpcUaViewer.Core.Settings;
+using OpcUaViewer.Wpf.DataSources;
 using OpcUaViewer.Wpf.Dialogs;
 using OpcUaViewer.Wpf.Plugins;
 using OpcUaViewer.Wpf.Tabs;
@@ -39,6 +40,9 @@ public partial class App : Application
 
         _ = CoreWebView2Environment.CreateAsync();
 
+        var opcUaDataSource = new OpcUaDataSource();
+        DataSourceRegistry.Register(opcUaDataSource);
+
         var pluginService = new PluginService(this);
         var pluginTabs    = pluginService.LoadAll().ToList();
 
@@ -50,7 +54,7 @@ public partial class App : Application
                 AppLogger.Error($"Plugin failed: {p.Name} — {p.LoadError} — {p.FilePath}");
         }
 
-        var settingsTab = new SettingsTab(pluginService);
+        var settingsTab = new SettingsTab(pluginService, [opcUaDataSource]);
         var allTabs     = pluginTabs.Append(settingsTab);
         var vm          = new MainViewModel(allTabs);
         var window      = new MainWindow(vm);

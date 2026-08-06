@@ -4,9 +4,9 @@ using System.Windows;
 using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Services;
 using OpcUaViewer.Core.Settings;
-using OpcUaViewer.Plugin.OpcUa.Views;
+using OpcUaViewer.Wpf.Views;
 
-namespace OpcUaViewer.Plugin.OpcUa;
+namespace OpcUaViewer.Wpf.DataSources;
 
 public class OpcUaDataSource : ViewModelBase, IMachineSource, ISettingsPanel, IDisposable
 {
@@ -60,16 +60,16 @@ public class OpcUaDataSource : ViewModelBase, IMachineSource, ISettingsPanel, ID
     {
         _endpointUrl = AppSettings.Current.EndpointUrl;
 
-        _svc.StatusChanged       += (_, msg)   => Dispatch(() => { StatusText = msg; StatusChanged?.Invoke(this, msg); });
-        _svc.TagsDiscovered      += (_, tags)  => TagsDiscovered?.Invoke(this, tags);
-        _svc.TagValueUpdated     += (_, e)     => TagValueUpdated?.Invoke(this, e);
-        _svc.ProductIdChanged    += (_, v)     => ProductIdChanged?.Invoke(this, v);
-        _svc.CamFileChanged      += (_, v)     => CamFileChanged?.Invoke(this, v);
-        _svc.MachineStateChanged += (_, v)     => MachineStateChanged?.Invoke(this, v);
-        _svc.OperatorActionChanged += (_, v)   => OperatorActionChanged?.Invoke(this, v);
+        _svc.StatusChanged         += (_, msg)  => Dispatch(() => { StatusText = msg; StatusChanged?.Invoke(this, msg); });
+        _svc.TagsDiscovered        += (_, tags) => TagsDiscovered?.Invoke(this, tags);
+        _svc.TagValueUpdated       += (_, e)    => TagValueUpdated?.Invoke(this, e);
+        _svc.ProductIdChanged      += (_, v)    => ProductIdChanged?.Invoke(this, v);
+        _svc.CamFileChanged        += (_, v)    => CamFileChanged?.Invoke(this, v);
+        _svc.MachineStateChanged   += (_, v)    => MachineStateChanged?.Invoke(this, v);
+        _svc.OperatorActionChanged += (_, v)    => OperatorActionChanged?.Invoke(this, v);
 
-        ConnectCommand    = new RelayCommand(ConnectAsync,  () => !IsConnected && !IsBusy);
-        DisconnectCommand = new RelayCommand(Disconnect,    () => IsConnected);
+        ConnectCommand    = new RelayCommand(ConnectAsync, () => !IsConnected && !IsBusy);
+        DisconnectCommand = new RelayCommand(Disconnect,   () => IsConnected);
     }
 
     private async void ConnectAsync()

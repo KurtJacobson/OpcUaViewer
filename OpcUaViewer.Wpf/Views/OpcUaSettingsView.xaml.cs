@@ -1,4 +1,4 @@
-namespace OpcUaViewer.Plugin.OpcUa.Views;
+namespace OpcUaViewer.Wpf.Views;
 
 public partial class OpcUaSettingsView : System.Windows.Controls.UserControl
 {
