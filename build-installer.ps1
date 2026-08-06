@@ -39,7 +39,8 @@ $pluginProjects = @(
     "OpcUaViewer.Plugin.Groups",
     "OpcUaViewer.Plugin.Document",
     "OpcUaViewer.Plugin.Webcam",
-    "OpcUaViewer.Plugin.Stats"
+    "OpcUaViewer.Plugin.Stats",
+    "OpcUaViewer.Plugin.CsvSource"
 )
 
 Write-Host "Building and copying plugins..." -ForegroundColor Cyan

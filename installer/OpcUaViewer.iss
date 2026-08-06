@@ -38,6 +38,7 @@ Name: "groups";  Description: "Groups Plugin — manage production groups and pr
 Name: "docview"; Description: "Document Viewer Plugin — display product PDF documentation"; Types: full
 Name: "webcam";  Description: "Webcam Plugin — live camera feed viewer"; Types: full
 Name: "stats";   Description: "Stats Plugin — production statistics and cycle times"; Types: full
+Name: "csvsrc";  Description: "CSV Source Plugin — read production data from Schroder log files (older machines)"; Types: full
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut";    GroupDescription: "Additional icons:"
@@ -58,7 +59,8 @@ Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Document.dll"; DestDir: "{app}
 Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Webcam.dll";   DestDir: "{app}\plugins"; Components: webcam;  Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#PublishDir}\plugins\OpenCvSharp.dll";                 DestDir: "{app}\plugins"; Components: webcam;  Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#PublishDir}\OpenCvSharpExtern.dll";                   DestDir: "{app}";         Components: webcam;  Flags: ignoreversion skipifsourcedoesntexist
-Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Stats.dll";    DestDir: "{app}\plugins"; Components: stats;   Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.Stats.dll";      DestDir: "{app}\plugins"; Components: stats;   Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.CsvSource.dll";  DestDir: "{app}\plugins"; Components: csvsrc; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
 Name: "{group}\{#AppName}";       Filename: "{app}\{#AppExeName}"
