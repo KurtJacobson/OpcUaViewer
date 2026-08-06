@@ -83,11 +83,11 @@ public class OpcUaDataSource : ViewModelBase, IMachineSource, ISettingsPanel, ID
             IsConnected = true;
             AppLogger.Info("OPC UA connected");
         }
-        catch (OpcUaConnectionException ex)
+        catch (Exception ex)
         {
             AppLogger.Error($"OPC UA connection failed: {EndpointUrl.Trim()}", ex);
             DialogService.Current.Warn(
-                $"Could not connect to the OPC UA server.\n\n{ex.Message}",
+                $"Could not connect to the OPC UA server.\n\n{(ex.InnerException ?? ex).Message}",
                 "Connection Failed");
         }
         finally { IsBusy = false; }
