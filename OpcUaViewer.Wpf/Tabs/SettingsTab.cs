@@ -25,6 +25,7 @@ public class SettingsTab : ViewModelBase, IAppTab
     public FrameworkElement CreateView() => new SettingsView { DataContext = this };
 
     private bool _keyboardEnabled;
+    private bool _fullScreen;
 
     public bool KeyboardEnabled
     {
@@ -32,11 +33,19 @@ public class SettingsTab : ViewModelBase, IAppTab
         set => Set(ref _keyboardEnabled, value);
     }
 
+    public bool FullScreen
+    {
+        get => _fullScreen;
+        set => Set(ref _fullScreen, value);
+    }
+
     public PluginService                  PluginService  { get; }
     public IReadOnlyList<SettingsPanelVm> SettingsPanels { get; }
 
     public RelayCommand SaveCommand     { get; }
     public RelayCommand OpenLogCommand  { get; }
+
+    private bool _loading;
 
     public SettingsTab(PluginService pluginService)
     {
@@ -51,6 +60,13 @@ public class SettingsTab : ViewModelBase, IAppTab
             catch (Exception ex) { AppLogger.Error($"Settings panel '{p.Header}' CreateView failed", ex); }
         }
         SettingsPanels = panels;
+
+        PropertyChanged += (_, e) =>
+        {
+            if (_loading) return;
+            if (e.PropertyName is nameof(FullScreen) or nameof(KeyboardEnabled))
+                SaveGeneral();
+        };
         AppLogger.Info($"SettingsPanels built: {panels.Count} panel(s)" +
             (panels.Count > 0 ? $" [{string.Join(", ", panels.Select(p => p.Header))}]" : ""));
 
@@ -59,7 +75,10 @@ public class SettingsTab : ViewModelBase, IAppTab
 
     public void Load()
     {
+        _loading = true;
         KeyboardEnabled = AppSettings.Current.KeyboardEnabled;
+        FullScreen      = AppSettings.Current.WindowState == nameof(System.Windows.WindowState.Maximized);
+        _loading = false;
     }
 
     private static void OpenLog()
@@ -74,12 +93,43 @@ public class SettingsTab : ViewModelBase, IAppTab
         Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
     }
 
-    private void Save()
+    private void SaveGeneral()
     {
         AppSettings.Current.KeyboardEnabled = KeyboardEnabled;
+
+        var targetState = FullScreen
+            ? System.Windows.WindowState.Maximized
+            : System.Windows.WindowState.Normal;
+        AppSettings.Current.WindowState = targetState.ToString();
+
+        try
+        {
+            if (System.Windows.Application.Current?.MainWindow is { } w)
+            {
+                if (FullScreen)
+                {
+                    w.WindowStyle = System.Windows.WindowStyle.None;
+                    w.ResizeMode  = System.Windows.ResizeMode.NoResize;
+                    w.WindowState = System.Windows.WindowState.Maximized;
+                }
+                else
+                {
+                    w.WindowState = System.Windows.WindowState.Normal;
+                    w.WindowStyle = System.Windows.WindowStyle.SingleBorderWindow;
+                    w.ResizeMode  = System.Windows.ResizeMode.CanResize;
+                }
+            }
+        }
+        catch (Exception ex) { AppLogger.Error("Could not apply window state", ex); }
+
+        AppSettings.Save();
+    }
+
+    private void Save()
+    {
+        SaveGeneral();
         foreach (var panel in PluginService.Plugins.SelectMany(p => p.Panels))
             panel.Save();
         PluginService.SaveEnabledState();
-        AppSettings.Save();
     }
 }

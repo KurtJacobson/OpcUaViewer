@@ -54,6 +54,7 @@ public partial class App : Application
         var allTabs     = pluginTabs.Append(settingsTab);
         var vm          = new MainViewModel(allTabs);
         var window      = new MainWindow(vm);
+        MainWindow = window;
         window.Show();
 
         AppLogger.Info("Application started");

@@ -22,8 +22,12 @@ public partial class MainWindow : Window
             Width  = s.WindowWidth;
             Height = s.WindowHeight;
         }
-        if (Enum.TryParse<WindowState>(s.WindowState, out var state))
-            WindowState = state;
+        if (Enum.TryParse<WindowState>(s.WindowState, out var state) && state == WindowState.Maximized)
+        {
+            WindowStyle = WindowStyle.None;
+            ResizeMode  = ResizeMode.NoResize;
+            WindowState = WindowState.Maximized;
+        }
 
         var ver = Assembly.GetExecutingAssembly()
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
@@ -67,12 +71,15 @@ public partial class MainWindow : Window
         base.OnClosing(e);
         var s         = AppSettings.Current;
         s.WindowState = WindowState.ToString();
-        if (WindowState == WindowState.Normal)
+
+        // Use RestoreBounds when maximized so we remember which monitor we were on
+        var bounds = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
+        if (bounds is { Width: > 0, Height: > 0 })
         {
-            s.WindowLeft   = (int)Left;
-            s.WindowTop    = (int)Top;
-            s.WindowWidth  = (int)Width;
-            s.WindowHeight = (int)Height;
+            s.WindowLeft   = (int)bounds.Left;
+            s.WindowTop    = (int)bounds.Top;
+            s.WindowWidth  = (int)bounds.Width;
+            s.WindowHeight = (int)bounds.Height;
         }
         AppSettings.Save();
     }

@@ -78,8 +78,17 @@
                                    Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
                         <Border Background="{StaticResource SurfaceBrush}"
                                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="4" Padding="16" Margin="0,0,0,8">
+                            <CheckBox Content="Full screen on startup"
+                                      Style="{StaticResource TouchToggle}"
+                                      IsChecked="{Binding FullScreen}"/>
+                        </Border>
+                        <Border Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                                 CornerRadius="4" Padding="16" Margin="0,0,0,20">
-                            <CheckBox Content="Enable on-screen keyboard" IsChecked="{Binding KeyboardEnabled}"/>
+                            <CheckBox Content="Enable on-screen keyboard"
+                                      Style="{StaticResource TouchToggle}"
+                                      IsChecked="{Binding KeyboardEnabled}"/>
                         </Border>
 
                         <TextBlock Text="DIAGNOSTICS" Style="{StaticResource PanelHeaderStyle}"

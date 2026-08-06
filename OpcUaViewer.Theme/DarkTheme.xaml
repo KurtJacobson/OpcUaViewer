@@ -187,6 +187,51 @@
         <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
 
+    <!-- Touch-friendly toggle switch style for CheckBox -->
+    <Style x:Key="TouchToggle" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="FontSize"   Value="{StaticResource FontSizeMd}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Cursor"     Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Track -->
+                        <Border x:Name="Track"
+                                Width="48" Height="26" CornerRadius="13"
+                                Background="{StaticResource ButtonBgBrush}"
+                                VerticalAlignment="Center" Margin="0,0,10,0">
+                            <!-- Thumb -->
+                            <Border x:Name="Thumb"
+                                    Width="20" Height="20" CornerRadius="10"
+                                    Background="{StaticResource TextSubBrush}"
+                                    HorizontalAlignment="Left"
+                                    Margin="3,0,0,0"/>
+                        </Border>
+                        <ContentPresenter VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Track" Property="Background" Value="{StaticResource AccentBrush}"/>
+                            <Setter TargetName="Thumb" Property="Background" Value="White"/>
+                            <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
+                            <Setter TargetName="Thumb" Property="Margin" Value="0,0,3,0"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Track" Property="Opacity" Value="0.85"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ══ ComboBox ════════════════════════════════════════════════════════════ -->
 
     <Style TargetType="ComboBoxItem">
