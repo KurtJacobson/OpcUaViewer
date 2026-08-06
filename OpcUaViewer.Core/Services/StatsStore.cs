@@ -65,6 +65,20 @@ public sealed class StatsStore
         AddTo(GlobalCycleTimes, JobCycleTimes, ProductCycleTimes, jobKey, productKey, t);
     }
 
+    /// <summary>Import many cycle records at once, saving only once at the end.</summary>
+    public void BulkImportCycles(IEnumerable<(string JobKey, string ProductKey, double Seconds)> records)
+    {
+        foreach (var (job, product, seconds) in records)
+        {
+            TotalPartCount++;
+            GlobalCycleTimes.Add(seconds);
+            if (GlobalCycleTimes.Count > MaxGlobal) GlobalCycleTimes.RemoveAt(0);
+            AddToDict(JobCycleTimes,     job,     seconds);
+            AddToDict(ProductCycleTimes, product, seconds);
+        }
+        Save();
+    }
+
     public void IncrementBendCount() { TotalBendCount++; Save(); }
     public void ResetPartCount()     { TotalPartCount = 0; Save(); }
     public void ResetBendCount()     { TotalBendCount = 0; Save(); }

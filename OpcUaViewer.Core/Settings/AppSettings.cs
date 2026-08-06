@@ -43,7 +43,8 @@ public sealed class AppSettings
     // Connection / folders
     public string EndpointUrl       { get; set; } = "opc.tcp://10.10.10.102:4840";
     public string PdfFolderPath     { get; set; } = "C:\\ProductDocs";
-    public string CsvLogFolderPath  { get; set; } = "";
+    public string CsvLogFolderPath   { get; set; } = "";
+    public int    CsvHistoryDaysBack { get; set; } = 7;
     public string CamFolderPath     { get; set; } = "";
     public string CamOutputPath     { get; set; } = "";
     public string CamProductsPath   { get; set; } = "";

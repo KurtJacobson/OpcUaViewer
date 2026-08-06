@@ -24,6 +24,21 @@
                         Click="BrowseButton_Click"/>
             </Grid>
 
+            <!-- History import -->
+            <Separator Margin="0,16,0,12"/>
+            <Label Content="Historical Import"/>
+            <TextBlock Text="On startup, import completed parts from past log files to pre-populate the Stats view. Files are only imported once."
+                       Foreground="{StaticResource TextSubBrush}" FontSize="11" Margin="0,0,0,8"
+                       TextWrapping="Wrap"/>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Days to look back:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBox Text="{Binding HistoryDaysBack, UpdateSourceTrigger=PropertyChanged}"
+                         Width="60" VerticalContentAlignment="Center"/>
+                <TextBlock Text="(0 = disabled)" Foreground="{StaticResource TextSubBrush}"
+                           VerticalAlignment="Center" Margin="8,0,0,0" FontSize="11"/>
+            </StackPanel>
+
+            <!-- Status -->
             <Grid Margin="0,16,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>

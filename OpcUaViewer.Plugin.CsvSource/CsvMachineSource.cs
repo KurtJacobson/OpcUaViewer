@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using OpcUaViewer.Core.Contracts;
 using OpcUaViewer.Core.Services;
@@ -37,20 +38,28 @@ public class CsvMachineSource : ViewModelBase, IMachineSource, ISettingsPanel, I
     System.Windows.FrameworkElement ISettingsPanel.CreateView() => new CsvSourceSettingsView { DataContext = this };
     public void Save()
     {
-        AppSettings.Current.CsvLogFolderPath = LogFolderPath.Trim();
+        AppSettings.Current.CsvLogFolderPath   = LogFolderPath.Trim();
+        AppSettings.Current.CsvHistoryDaysBack  = HistoryDaysBack;
         AppSettings.Save();
         RestartWatcher();
     }
 
     // ── ViewModel surface ─────────────────────────────────────────────────────
     private bool   _isConnected;
-    private string _statusText    = "Not watching";
+    private string _statusText      = "Not watching";
     private string _logFolderPath;
+    private int    _historyDaysBack;
 
     public string LogFolderPath
     {
         get => _logFolderPath;
         set => Set(ref _logFolderPath, value);
+    }
+
+    public int HistoryDaysBack
+    {
+        get => _historyDaysBack;
+        set => Set(ref _historyDaysBack, Math.Max(0, Math.Min(365, value)));
     }
 
     // ── State ─────────────────────────────────────────────────────────────────
@@ -61,12 +70,115 @@ public class CsvMachineSource : ViewModelBase, IMachineSource, ISettingsPanel, I
     private readonly object    _lock          = new();
     private System.Threading.Timer? _pollTimer;
 
+    private static readonly string ImportLogPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "OpcUaViewer", "csv_import_log.json");
+
     public CsvMachineSource()
     {
-        _logFolderPath = AppSettings.Current.CsvLogFolderPath;
+        _logFolderPath   = AppSettings.Current.CsvLogFolderPath;
+        _historyDaysBack = AppSettings.Current.CsvHistoryDaysBack;
     }
 
-    public void OnApplicationStarted() => RestartWatcher();
+    public void OnApplicationStarted()
+    {
+        ImportHistory();
+        RestartWatcher();
+    }
+
+    // ── Historical import ─────────────────────────────────────────────────────
+
+    private void ImportHistory()
+    {
+        string folder = LogFolderPath.Trim();
+        if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder) || HistoryDaysBack <= 0) return;
+
+        var imported = LoadImportLog();
+        var store    = StatsStore.Load();
+        var records  = new List<(string JobKey, string ProductKey, double Seconds)>();
+        var newFiles = new List<string>();
+
+        for (int d = HistoryDaysBack; d >= 1; d--)
+        {
+            var date     = DateTime.Today.AddDays(-d);
+            string fname = $"{date:yyyy-MM-dd}_ProductionLog.csv";
+            string path  = Path.Combine(folder, fname);
+
+            if (!File.Exists(path) || imported.Contains(fname)) continue;
+
+            try
+            {
+                using var fs     = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var reader = new StreamReader(fs);
+                string jobKey    = date.ToString("yyyy-MM-dd");
+                string? line;
+
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    var parts = line.Split(';');
+                    if (parts.Length < 5) continue;
+
+                    string status  = parts[1].Trim().Trim('"');
+                    string durStr  = parts[2].Trim().Trim('"');
+                    string partNum = parts[4].Trim().Trim('"');
+
+                    if (!status.Equals("Completed", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (string.IsNullOrWhiteSpace(partNum)) continue;
+                    if (!double.TryParse(durStr,
+                            System.Globalization.NumberStyles.Any,
+                            System.Globalization.CultureInfo.InvariantCulture,
+                            out double seconds)) continue;
+
+                    string productKey = StatsStore.ProductKey(partNum);
+                    records.Add((jobKey, productKey, seconds));
+                }
+
+                newFiles.Add(fname);
+                AppLogger.Info($"CsvMachineSource: queued history from {fname} ({records.Count} records so far)");
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error($"CsvMachineSource: error reading history file {fname}", ex);
+            }
+        }
+
+        if (records.Count > 0)
+        {
+            store.BulkImportCycles(records);
+            AppLogger.Info($"CsvMachineSource: imported {records.Count} historical cycles from {newFiles.Count} file(s)");
+        }
+
+        if (newFiles.Count > 0)
+            SaveImportLog(imported, newFiles);
+    }
+
+    private static HashSet<string> LoadImportLog()
+    {
+        try
+        {
+            if (File.Exists(ImportLogPath))
+            {
+                var list = System.Text.Json.JsonSerializer.Deserialize<List<string>>(
+                    File.ReadAllText(ImportLogPath));
+                return new HashSet<string>(list ?? [], StringComparer.OrdinalIgnoreCase);
+            }
+        }
+        catch { }
+        return [];
+    }
+
+    private static void SaveImportLog(HashSet<string> existing, IEnumerable<string> add)
+    {
+        try
+        {
+            foreach (var f in add) existing.Add(f);
+            Directory.CreateDirectory(Path.GetDirectoryName(ImportLogPath)!);
+            File.WriteAllText(ImportLogPath,
+                System.Text.Json.JsonSerializer.Serialize(existing.ToList()));
+        }
+        catch { }
+    }
 
     // ── Watcher lifecycle ─────────────────────────────────────────────────────
 
