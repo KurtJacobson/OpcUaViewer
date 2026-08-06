@@ -15,7 +15,7 @@ namespace OpcUaViewer.Plugin.CsvSource;
 /// File format (semicolon-delimited):
 ///   DateTime ; Status ; Duration(s) ; User ; PartNumber ; Mode
 /// </summary>
-public class CsvMachineSource : ViewModelBase, IMachineSource, ISettingsPanel, IDisposable
+public class CsvMachineSource : ViewModelBase, IMachineSource, ICycleSource, ISettingsPanel, IDisposable
 {
     // ── IDataSource ───────────────────────────────────────────────────────────
     public string Name        => "CSV Source";
@@ -25,13 +25,14 @@ public class CsvMachineSource : ViewModelBase, IMachineSource, ISettingsPanel, I
     public bool   IsConnected { get => _isConnected; private set => Set(ref _isConnected, value); }
     public string StatusText  { get => _statusText;  private set => Set(ref _statusText, value); }
 
-    public event EventHandler<string>?                 StatusChanged;
-    public event EventHandler<IReadOnlyList<TagInfo>>? TagsDiscovered;
-    public event EventHandler<TagValueEventArgs>?      TagValueUpdated;
-    public event EventHandler<string>?                 ProductIdChanged;
-    public event EventHandler<string>?                 CamFileChanged;
-    public event EventHandler<int>?                    MachineStateChanged;
-    public event EventHandler<bool>?                   OperatorActionChanged;
+    public event EventHandler<string>?                    StatusChanged;
+    public event EventHandler<IReadOnlyList<TagInfo>>?    TagsDiscovered;
+    public event EventHandler<TagValueEventArgs>?         TagValueUpdated;
+    public event EventHandler<string>?                    ProductIdChanged;
+    public event EventHandler<string>?                    CamFileChanged;
+    public event EventHandler<int>?                       MachineStateChanged;
+    public event EventHandler<bool>?                      OperatorActionChanged;
+    public event EventHandler<CycleCompletedEventArgs>?   CycleCompleted;
 
     // ── ISettingsPanel ────────────────────────────────────────────────────────
     public string Header => "CSV Source";
@@ -334,33 +335,28 @@ public class CsvMachineSource : ViewModelBase, IMachineSource, ISettingsPanel, I
 
         if (status.Equals("Completed", StringComparison.OrdinalIgnoreCase))
         {
-            // Fire a synthetic TagValueUpdated for cycle time
+            if (string.IsNullOrWhiteSpace(partNum)) return;
+
+            // Fire explicit cycle event with exact duration from CSV
             if (double.TryParse(duration,
                 System.Globalization.NumberStyles.Any,
                 System.Globalization.CultureInfo.InvariantCulture,
                 out double cycleSeconds))
             {
-                var cycleArg = new TagValueEventArgs(
-                    "CycleTime", cycleSeconds, "Good", timestamp);
-                Dispatch(() => TagValueUpdated?.Invoke(this, cycleArg));
+                string pn = partNum;
+                Dispatch(() => CycleCompleted?.Invoke(this, new CycleCompletedEventArgs(pn, cycleSeconds)));
             }
 
-            if (!string.IsNullOrWhiteSpace(partNum) && partNum != _lastProductId)
+            // Only fire ProductIdChanged when the part actually changes (for Document/Groups tabs)
+            if (partNum != _lastProductId)
             {
                 _lastProductId = partNum;
-                string captured = partNum;
-                Dispatch(() => ProductIdChanged?.Invoke(this, captured));
-            }
-            else if (!string.IsNullOrWhiteSpace(partNum))
-            {
-                // Same product, still fire so Stats counts the cycle
                 string captured = partNum;
                 Dispatch(() => ProductIdChanged?.Invoke(this, captured));
             }
         }
         else if (status.Equals("Pause", StringComparison.OrdinalIgnoreCase))
         {
-            // Clear product ID when machine pauses
             if (!string.IsNullOrEmpty(_lastProductId))
             {
                 _lastProductId = "";
