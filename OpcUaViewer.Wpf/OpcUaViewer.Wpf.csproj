@@ -1,8 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
@@ -24,6 +24,8 @@
                       ReferenceOutputAssembly="false" Private="false"/>
     <ProjectReference Include="..\OpcUaViewer.Plugin.OpcUa\OpcUaViewer.Plugin.OpcUa.csproj"
                       ReferenceOutputAssembly="false" Private="false"/>
+    <ProjectReference Include="..\OpcUaViewer.Plugin.Stats\OpcUaViewer.Plugin.Stats.csproj"
+                      ReferenceOutputAssembly="false" Private="false"/>
   </ItemGroup>
 
   <Target Name="CopyShippedPlugins" AfterTargets="Build">
@@ -32,6 +34,7 @@
       <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Groups\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Groups.dll"/>
       <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Document\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Document.dll"/>
       <_ShippedPlugin Include="..\OpcUaViewer.Plugin.OpcUa\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.OpcUa.dll"/>
+      <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Stats\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Stats.dll"/>
     </ItemGroup>
     <Copy SourceFiles="@(_ShippedPlugin)"
           DestinationFolder="$(OutputPath)plugins\"
