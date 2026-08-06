@@ -26,6 +26,8 @@
                       ReferenceOutputAssembly="false" Private="false"/>
     <ProjectReference Include="..\OpcUaViewer.Plugin.Stats\OpcUaViewer.Plugin.Stats.csproj"
                       ReferenceOutputAssembly="false" Private="false"/>
+    <ProjectReference Include="..\OpcUaViewer.Plugin.CsvSource\OpcUaViewer.Plugin.CsvSource.csproj"
+                      ReferenceOutputAssembly="false" Private="false"/>
   </ItemGroup>
 
   <Target Name="CopyShippedPlugins" AfterTargets="Build">
@@ -35,6 +37,7 @@
       <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Document\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Document.dll"/>
       <_ShippedPlugin Include="..\OpcUaViewer.Plugin.OpcUa\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.OpcUa.dll"/>
       <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Stats\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Stats.dll"/>
+      <_ShippedPlugin Include="..\OpcUaViewer.Plugin.CsvSource\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.CsvSource.dll"/>
     </ItemGroup>
     <Copy SourceFiles="@(_ShippedPlugin)"
           DestinationFolder="$(OutputPath)plugins\"
