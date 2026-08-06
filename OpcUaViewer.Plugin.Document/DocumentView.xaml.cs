@@ -26,7 +26,11 @@ public partial class DocumentView : UserControl
     {
         if (_initialized) return;
 
-        if (CoreWebView2Environment.GetAvailableBrowserVersionString() is null)
+        bool webView2Available;
+        try { webView2Available = CoreWebView2Environment.GetAvailableBrowserVersionString() is not null; }
+        catch { webView2Available = false; }
+
+        if (!webView2Available)
         {
             NoWebView2Panel.Visibility = Visibility.Visible;
             return;
