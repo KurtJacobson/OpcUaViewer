@@ -1,13 +1,11 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="OpcUaViewer.Plugin.Document.DocumentSettingsDialog"
-        Title="Document Viewer Settings"
         WindowStyle="None" ResizeMode="NoResize"
         SizeToContent="Height" Width="480"
-        Background="#FF1E1E1E"
         WindowStartupLocation="CenterOwner"
-        Foreground="#FFDCDCDC"
-        FontFamily="Segoe UI" FontSize="13">
+        ShowInTaskbar="False"
+        AllowsTransparency="True" Background="Transparent">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -17,51 +15,60 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="40"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="56"/>
-        </Grid.RowDefinitions>
+    <Border Margin="18"
+            Background="{StaticResource BgBrush}"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="6">
+        <Border.Effect>
+            <DropShadowEffect Color="#FF000000" Direction="270"
+                              ShadowDepth="6" BlurRadius="24" Opacity="0.75"/>
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="44"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="60"/>
+            </Grid.RowDefinitions>
 
-        <!-- Title bar -->
-        <Border Grid.Row="0" Background="{StaticResource NavBrush}"
-                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-            <TextBlock Text="Document Viewer — Settings"
-                       VerticalAlignment="Center" Margin="16,0"
-                       FontWeight="SemiBold"/>
-        </Border>
+            <!-- Title bar -->
+            <Border Grid.Row="0" Background="{StaticResource NavBrush}"
+                    CornerRadius="6,6,0,0"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <TextBlock Text="Document Viewer — Settings"
+                           VerticalAlignment="Center" Margin="16,0"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource TextBrush}" FontSize="13"/>
+            </Border>
 
-        <!-- Content -->
-        <StackPanel Grid.Row="1" Margin="20,16">
-            <Label Content="PDF Folder Path"
-                   Foreground="{StaticResource TextSubBrush}"/>
-            <Grid Margin="0,4,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBox x:Name="PdfFolderBox" Grid.Column="0" Margin="0,0,8,0"/>
-                <Button Grid.Column="1" Content="Browse…"
-                        Click="Browse_Click" Padding="12,6"/>
-            </Grid>
-            <TextBlock Text="The folder where product PDFs are stored. Files must be named {ProductId}.pdf"
-                       Foreground="{StaticResource TextSubBrush}"
-                       FontSize="{StaticResource FontSizeSm}"
-                       TextWrapping="Wrap" Margin="0,6,0,0"/>
-        </StackPanel>
-
-        <!-- Button bar -->
-        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                        VerticalAlignment="Center" Margin="0,0,16,0">
-                <Button Content="Cancel" Click="Cancel_Click" Margin="0,0,8,0" Padding="16,6"/>
-                <Button Content="Save" Click="Save_Click"
-                        Style="{StaticResource AccentButtonStyle}" Padding="16,6"/>
+            <!-- Content -->
+            <StackPanel Grid.Row="1" Margin="20,16">
+                <Label Content="PDF Folder Path" Foreground="{StaticResource TextSubBrush}"/>
+                <Grid Margin="0,4,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="PdfFolderBox" Grid.Column="0" Margin="0,0,8,0"/>
+                    <Button Grid.Column="1" Content="Browse…" Click="Browse_Click" Padding="12,6"/>
+                </Grid>
+                <TextBlock Text="The folder where product PDFs are stored. Files must be named {ProductId}.pdf"
+                           Foreground="{StaticResource TextSubBrush}"
+                           FontSize="{StaticResource FontSizeSm}"
+                           TextWrapping="Wrap" Margin="0,6,0,0"/>
             </StackPanel>
-        </Border>
-    </Grid>
+
+            <!-- Button bar -->
+            <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0"
+                    CornerRadius="0,0,6,6">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                            VerticalAlignment="Center" Margin="0,0,16,0">
+                    <Button Content="Cancel" Click="Cancel_Click" Margin="0,0,8,0" Padding="16,6"/>
+                    <Button Content="Save" Click="Save_Click"
+                            Style="{StaticResource AccentButtonStyle}" Padding="16,6"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Border>
 </Window>
