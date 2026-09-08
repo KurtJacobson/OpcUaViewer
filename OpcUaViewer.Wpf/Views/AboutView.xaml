@@ -109,12 +109,11 @@
                 </Grid>
             </Border>
 
-            <!-- Install license button (shown when no valid license) -->
+            <!-- Install / update license button (always visible) -->
             <Button x:Name="InstallLicenseButton"
                     Content="Install License…"
                     Margin="0,12,0,0" Padding="16,8"
                     HorizontalAlignment="Left"
-                    Visibility="Collapsed"
                     Click="InstallLicense_Click"/>
 
             <!-- No license fallback -->

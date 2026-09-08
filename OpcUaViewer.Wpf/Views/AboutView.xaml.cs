@@ -28,11 +28,15 @@ public partial class AboutView : System.Windows.Controls.UserControl
         var lic = LicenseState.Current;
         if (lic is null)
         {
-            LicenseBorder.Visibility        = Visibility.Collapsed;
-            NoLicenseBorder.Visibility      = Visibility.Visible;
-            InstallLicenseButton.Visibility = Visibility.Visible;
+            LicenseBorder.Visibility      = Visibility.Collapsed;
+            NoLicenseBorder.Visibility    = Visibility.Visible;
+            InstallLicenseButton.Content  = "Install License…";
             return;
         }
+
+        InstallLicenseButton.Content  = "Update License…";
+        NoLicenseBorder.Visibility    = Visibility.Collapsed;
+        LicenseBorder.Visibility      = Visibility.Visible;
 
         LicenseeText.Text = lic.Licensee;
         AddressText.Text  = lic.Address.Trim();
@@ -74,15 +78,11 @@ public partial class AboutView : System.Windows.Controls.UserControl
 
     private void InstallLicense_Click(object sender, RoutedEventArgs e)
     {
-        LicenseDialog.ShowIfNeeded("No valid license is currently installed.");
-        // Refresh display if the user successfully installed one
-        if (LicenseState.Current is not null)
-        {
-            NoLicenseBorder.Visibility      = Visibility.Collapsed;
-            InstallLicenseButton.Visibility = Visibility.Collapsed;
-            LicenseBorder.Visibility        = Visibility.Visible;
-            Populate();
-        }
+        string msg = LicenseState.Current is null
+            ? "No valid license is currently installed."
+            : "Browse to a new license file to replace the current one.";
+        LicenseDialog.ShowIfNeeded(msg);
+        Populate();
     }
 
     private void SetBadge(System.Windows.Controls.Border badge,
