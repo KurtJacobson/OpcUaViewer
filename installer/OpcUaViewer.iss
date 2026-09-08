@@ -15,7 +15,7 @@
 AppId={{B3C1A7E2-4F8D-4A3B-9C5E-0D6F2A1B8E34}
 AppName={#AppName}
 AppVersion={#AppVersion}
-AppPublisherURL=https://metalforming-llc.com
+AppPublisherURL=https://metalforming-usa.com
 AppPublisher={#AppPublisher}
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
