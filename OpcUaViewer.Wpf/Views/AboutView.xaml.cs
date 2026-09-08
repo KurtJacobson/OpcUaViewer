@@ -38,7 +38,7 @@ public partial class AboutView : System.Windows.Controls.UserControl
         ValidUntilText.Text = lic.IsPerpetual ? "Perpetual" : lic.ValidUntil!.Value.ToString("yyyy-MM-dd");
         SetBadge(ValidBadge, ValidBadgeText,
             ok:    !lic.IsExpired,
-            okLabel:  lic.IsPerpetual ? "PERPETUAL" : "ACTIVE",
+            okLabel:  "ACTIVE",
             badLabel: "EXPIRED");
 
         MaintenanceText.Text = lic.MaintenanceUntil.ToString("yyyy-MM-dd");
