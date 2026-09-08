@@ -9,6 +9,7 @@ public partial class WebcamSettingsDialog : Window
     public WebcamSettingsDialog()
     {
         InitializeComponent();
+        Owner = Application.Current.MainWindow;
         CameraIndexBox.SelectedIndex = AppSettings.Current.WebcamIndex;
     }
 
