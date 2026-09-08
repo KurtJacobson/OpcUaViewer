@@ -24,7 +24,8 @@ xDqLGMCe+v/H4VgcixPQ66lLrFxKGySHSyNa0PAiiR7RIVDvOY1r4aIAvPeIQ1QATA28RjXRzhZi
     private const string EndSignature   = "-----END LICENSE SIGNATURE-----";
 
     public static readonly string DefaultLicensePath = Path.Combine(
-        AppDomain.CurrentDomain.BaseDirectory, "license.lic");
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        "Metalforming USA", "OPC UA Viewer", "license.lic");
 
     /// <summary>
     /// Loads and validates a license file. Returns the LicenseInfo on success.

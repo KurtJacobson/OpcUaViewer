@@ -60,9 +60,12 @@ public partial class LicenseDialog : Window
         {
             string dest = LicenseValidator.DefaultLicensePath;
 
-            // Copy to app folder if it's not already there
+            // Copy to license folder if it's not already there
             if (!string.Equals(_selectedPath, dest, System.StringComparison.OrdinalIgnoreCase))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
                 File.Copy(_selectedPath, dest, overwrite: true);
+            }
 
             LicenseState.Current = LicenseValidator.Load(dest);
             AppLogger.Info($"License installed — {LicenseState.Current.Licensee}");
