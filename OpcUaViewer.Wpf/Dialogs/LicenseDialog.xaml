@@ -20,6 +20,7 @@
                 <RowDefinition Height="44"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="60"/>
             </Grid.RowDefinitions>
 
@@ -51,7 +52,7 @@
             </StackPanel>
 
             <!-- Browse row -->
-            <Grid Grid.Row="2" Margin="20,16,20,0">
+            <Grid Grid.Row="2" Margin="20,16,20,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="8"/>
@@ -65,13 +66,13 @@
             </Grid>
 
             <!-- Status -->
-            <TextBlock x:Name="StatusText" Grid.Row="2"
-                       Margin="20,0,20,0" Padding="0,8,0,0"
+            <TextBlock x:Name="StatusText" Grid.Row="3"
+                       Margin="20,0,20,12"
                        TextWrapping="Wrap" FontSize="11"
                        Visibility="Collapsed"/>
 
             <!-- Button bar -->
-            <Border Grid.Row="3"
+            <Border Grid.Row="4"
                     Background="{StaticResource SurfaceBrush}"
                     BorderBrush="{StaticResource BorderBrush}"
                     BorderThickness="0,1,0,0"
