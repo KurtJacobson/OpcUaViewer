@@ -89,7 +89,7 @@ public class SettingsTab : ViewModelBase, IAppTab
     {
         string path = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "OpcUaViewer", "logs", $"{DateTime.Today:yyyy-MM-dd}.log");
+            "FoldControl", "logs", $"{DateTime.Today:yyyy-MM-dd}.log");
 
         if (!File.Exists(path))
             File.WriteAllText(path, "");

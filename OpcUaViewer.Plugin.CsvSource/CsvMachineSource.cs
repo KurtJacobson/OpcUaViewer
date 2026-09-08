@@ -73,7 +73,7 @@ public class CsvMachineSource : ViewModelBase, IMachineSource, ICycleSource, ISe
 
     private static readonly string ImportLogPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "OpcUaViewer", "csv_import_log.json");
+        "FoldControl", "csv_import_log.json");
 
     public CsvMachineSource()
     {

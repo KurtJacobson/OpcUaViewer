@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Publishes OPC UA Viewer and compiles the Inno Setup installer.
+    Publishes Fold Control and compiles the Inno Setup installer.
 
 .PARAMETER Configuration
     Build configuration. Default: Release
@@ -68,7 +68,7 @@ if (Test-Path $managedCv) { Copy-Item $managedCv -Destination $plugins -Force; W
 if (Test-Path $nativeCv)  { Copy-Item $nativeCv  -Destination $publish  -Force; Write-Host "  Copied OpenCvSharpExtern.dll" -ForegroundColor Gray }
 
 # ── 3. Read version from published exe ───────────────────────────────────────
-$exePath = Join-Path $publish "OpcUaViewer.exe"
+$exePath = Join-Path $publish "FoldControl.exe"
 $appVersion = (Get-Item $exePath).VersionInfo.ProductVersion -replace '\+.*',''
 if (-not $appVersion) { throw "Could not read version from $exePath" }
 Write-Host "Version: $appVersion" -ForegroundColor Cyan

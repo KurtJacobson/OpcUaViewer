@@ -14,7 +14,7 @@
                            FontSize="12" VerticalAlignment="Bottom" Margin="10,0,0,3"
                            Foreground="{StaticResource TextSubBrush}"/>
             </StackPanel>
-            <TextBlock Text="© Metalforming USA"
+            <TextBlock Text="© MetalForming LLC"
                        Foreground="{StaticResource TextSubBrush}" FontSize="11"
                        Margin="0,0,0,24"/>
 

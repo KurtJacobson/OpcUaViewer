@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:OpcUaViewer.Wpf.ViewModels"
-        Title="OPC UA Viewer"
+        Title="Fold Control"
         Background="{StaticResource BgBrush}"
         Foreground="{StaticResource TextBrush}"
         WindowStyle="SingleBorderWindow"
@@ -69,7 +69,7 @@
                         BorderBrush="{StaticResource BorderBrush}"
                         BorderThickness="0,0,0,1">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="OPC UA&#x0A;VIEWER"
+                        <TextBlock Text="FOLD&#x0A;CONTROL"
                                    TextAlignment="Center"
                                    Foreground="{StaticResource AccentBrush}"
                                    FontSize="12"

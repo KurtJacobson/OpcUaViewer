@@ -22,7 +22,7 @@ public partial class AboutView : System.Windows.Controls.UserControl
                       ?.InformationalVersion
                       // strip the +git-hash suffix MinVer appends on tagged commits
                       .Split('+')[0];
-        AppNameText.Text    = "OPC UA Viewer";
+        AppNameText.Text    = "Fold Control";
         AppVersionText.Text = ver is null ? "" : $"v{ver}";
 
         var lic = LicenseState.Current;

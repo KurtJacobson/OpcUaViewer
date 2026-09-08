@@ -27,7 +27,7 @@ public partial class App : Application
 
         string logDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "OpcUaViewer", "logs");
+            "FoldControl", "logs");
         AppLogger.Initialize(logDir);
         AppLogger.Info("Application starting");
 
@@ -91,7 +91,7 @@ public partial class App : Application
             AppDialog.Show(
                 $"The maintenance period for this license expired on {info.MaintenanceUntil:yyyy-MM-dd}.\n\n" +
                 "The application will continue to work, but this version may not be covered for support or updates. " +
-                "Contact Metalforming USA to renew your maintenance agreement.",
+                "Contact MetalForming LLC to renew your maintenance agreement.",
                 "Maintenance Expired", AppDialogIcon.Warning);
         }
 

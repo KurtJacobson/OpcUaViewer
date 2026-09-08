@@ -267,7 +267,7 @@
                                    FontSize="{StaticResource FontSizeSm}"
                                    Visibility="{Binding PluginService.Plugins.Count, Converter={StaticResource ZeroToVisibility}}">
                             No plugins found. Place plugin DLLs in the plugins folder next to the application,
-                            or in %LocalAppData%\OpcUaViewer\plugins\.
+                            or in %LocalAppData%\FoldControl\plugins\.
                         </TextBlock>
 
                     </StackPanel>

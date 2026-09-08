@@ -44,7 +44,7 @@ public sealed class StatsStore
 
     public static StatsStore Load()
     {
-        string dir  = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OpcUaViewer");
+        string dir  = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FoldControl");
         string path = Path.Combine(dir, "stats.json");
         StatsStore store;
         try

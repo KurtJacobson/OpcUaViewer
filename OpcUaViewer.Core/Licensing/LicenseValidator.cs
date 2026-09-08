@@ -18,14 +18,14 @@ xDqLGMCe+v/H4VgcixPQ66lLrFxKGySHSyNa0PAiiR7RIVDvOY1r4aIAvPeIQ1QATA28RjXRzhZi
 4O4UhQIDAQAB
 -----END PUBLIC KEY-----";
 
-    private const string BeginLicense   = "-----BEGIN OPC UA VIEWER LICENSE-----";
-    private const string EndLicense     = "-----END OPC UA VIEWER LICENSE-----";
+    private const string BeginLicense   = "-----BEGIN FOLD CONTROL LICENSE-----";
+    private const string EndLicense     = "-----END FOLD CONTROL LICENSE-----";
     private const string BeginSignature = "-----BEGIN LICENSE SIGNATURE-----";
     private const string EndSignature   = "-----END LICENSE SIGNATURE-----";
 
     public static readonly string DefaultLicensePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-        "Metalforming USA", "OPC UA Viewer", "license.lic");
+        "MetalForming LLC", "Fold Control", "license.lic");
 
     /// <summary>
     /// Loads and validates a license file. Returns the LicenseInfo on success.

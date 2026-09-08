@@ -280,11 +280,11 @@ public class OpcUaService : IDisposable
 
     private static ApplicationConfiguration BuildConfig() => new()
     {
-        ApplicationName = "OPC UA Viewer",
+        ApplicationName = "Fold Control",
         ApplicationType = ApplicationType.Client,
         SecurityConfiguration = new SecurityConfiguration
         {
-            ApplicationCertificate     = new CertificateIdentifier { StoreType = CertificateStoreType.Directory, StorePath = "CertificateStores/UA_MachineDefault", SubjectName = "CN=OPC UA Viewer" },
+            ApplicationCertificate     = new CertificateIdentifier { StoreType = CertificateStoreType.Directory, StorePath = "CertificateStores/UA_MachineDefault", SubjectName = "CN=Fold Control" },
             TrustedPeerCertificates    = new CertificateTrustList  { StoreType = CertificateStoreType.Directory, StorePath = "CertificateStores/UA Applications" },
             TrustedIssuerCertificates  = new CertificateTrustList  { StoreType = CertificateStoreType.Directory, StorePath = "CertificateStores/UA Certificate Authorities" },
             RejectedCertificateStore   = new CertificateTrustList  { StoreType = CertificateStoreType.Directory, StorePath = "CertificateStores/RejectedCertificates" },

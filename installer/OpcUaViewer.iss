@@ -3,25 +3,25 @@
 ; Requires a Release publish first:
 ;   dotnet publish OpcUaViewer.Wpf\OpcUaViewer.Wpf.csproj -c Release -o publish\
 
-#define AppName      "OPC UA Viewer"
+#define AppName      "Fold Control"
 #ifndef AppVersion
   #define AppVersion "0.0.0-local"
 #endif
-#define AppPublisher "Metalforming USA"
-#define AppExeName   "OpcUaViewer.exe"
+#define AppPublisher "MetalForming LLC"
+#define AppExeName   "FoldControl.exe"
 #define PublishDir   "..\publish"
 
 [Setup]
 AppId={{B3C1A7E2-4F8D-4A3B-9C5E-0D6F2A1B8E34}
 AppName={#AppName}
 AppVersion={#AppVersion}
-AppPublisherURL=https://metalforming-usa.net
+AppPublisherURL=https://metalforming-llc.com
 AppPublisher={#AppPublisher}
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 AllowNoIcons=yes
 OutputDir=Output
-OutputBaseFilename=OpcUaViewerSetup-v{#AppVersion}
+OutputBaseFilename=FoldControlSetup-v{#AppVersion}
 SetupIconFile=..\OpcUaViewer.Wpf\Resources\app.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
@@ -34,7 +34,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Components]
-Name: "main";    Description: "OPC UA Viewer (required)"; Types: full compact custom; Flags: fixed
+Name: "main";    Description: "Fold Control (required)"; Types: full compact custom; Flags: fixed
 Name: "opcua";   Description: "OPC UA Plugin — connect to an OPC UA server"; Types: full compact
 Name: "groups";  Description: "Groups Plugin — manage production groups and product orders"; Types: full
 Name: "docview"; Description: "Document Viewer Plugin — display product PDF documentation"; Types: full

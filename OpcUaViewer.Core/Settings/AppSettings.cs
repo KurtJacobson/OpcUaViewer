@@ -10,7 +10,7 @@ public sealed class AppSettings
 {
     private static readonly string FilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "OpcUaViewer", "settings.json");
+        "FoldControl", "settings.json");
 
     private static readonly JsonSerializerOptions JsonOpts = new()
     {

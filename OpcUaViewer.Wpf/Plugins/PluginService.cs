@@ -22,7 +22,7 @@ public sealed class PluginService
     [
         Path.Combine(AppContext.BaseDirectory, "plugins"),
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                     "OpcUaViewer", "plugins"),
+                     "FoldControl", "plugins"),
     ];
 
     public PluginService(Application app) => _app = app;
