@@ -4,7 +4,9 @@
 ;   dotnet publish OpcUaViewer.Wpf\OpcUaViewer.Wpf.csproj -c Release -o publish\
 
 #define AppName      "OPC UA Viewer"
-#define AppVersion   "1.0.0"
+#ifndef AppVersion
+  #define AppVersion "0.0.0-local"
+#endif
 #define AppPublisher "Metalforming USA"
 #define AppExeName   "OpcUaViewer.exe"
 #define PublishDir   "..\publish"
@@ -19,7 +21,7 @@ DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 AllowNoIcons=yes
 OutputDir=Output
-OutputBaseFilename=OpcUaViewerSetup-{#AppVersion}
+OutputBaseFilename=OpcUaViewerSetup-v{#AppVersion}
 SetupIconFile=..\OpcUaViewer.Wpf\Resources\app.ico
 Compression=lzma2/ultra64
 SolidCompression=yes

@@ -67,7 +67,13 @@ $nativeCv  = "$webcamBin\OpenCvSharpExtern.dll"
 if (Test-Path $managedCv) { Copy-Item $managedCv -Destination $plugins -Force; Write-Host "  Copied OpenCvSharp.dll" -ForegroundColor Gray }
 if (Test-Path $nativeCv)  { Copy-Item $nativeCv  -Destination $publish  -Force; Write-Host "  Copied OpenCvSharpExtern.dll" -ForegroundColor Gray }
 
-# ── 3. Compile installer ──────────────────────────────────────────────────────
+# ── 3. Read version from published exe ───────────────────────────────────────
+$exePath = Join-Path $publish "OpcUaViewer.exe"
+$appVersion = (Get-Item $exePath).VersionInfo.ProductVersion -replace '\+.*',''
+if (-not $appVersion) { throw "Could not read version from $exePath" }
+Write-Host "Version: $appVersion" -ForegroundColor Cyan
+
+# ── 4. Compile installer ──────────────────────────────────────────────────────
 $iscc = @(
     "C:\Program Files (x86)\Inno Setup 6\iscc.exe",
     "C:\Program Files\Inno Setup 6\iscc.exe"
@@ -78,7 +84,7 @@ if (-not $iscc) {
 }
 
 Write-Host "Compiling installer..." -ForegroundColor Cyan
-& $iscc "$root\Installer\OpcUaViewer.iss"
+& $iscc "$root\Installer\OpcUaViewer.iss" /DAppVersion="$appVersion"
 if ($LASTEXITCODE -ne 0) { throw "iscc failed." }
 
 Write-Host ""
