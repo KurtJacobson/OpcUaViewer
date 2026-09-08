@@ -17,9 +17,13 @@ public partial class AboutView : System.Windows.Controls.UserControl
 
     private void Populate()
     {
-        var ver = Assembly.GetEntryAssembly()?.GetName().Version;
+        var asm = Assembly.GetEntryAssembly();
+        var ver = asm?.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()
+                      ?.InformationalVersion
+                      // strip the +git-hash suffix MinVer appends on tagged commits
+                      .Split('+')[0];
         AppNameText.Text    = "OPC UA Viewer";
-        AppVersionText.Text = ver is null ? "" : $"v{ver.Major}.{ver.Minor}.{ver.Build}";
+        AppVersionText.Text = ver is null ? "" : $"v{ver}";
 
         var lic = LicenseState.Current;
         if (lic is null)
