@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Threading;
 using Microsoft.Web.WebView2.Core;
 using OpcUaViewer.Core.Contracts;
+using OpcUaViewer.Core.Licensing;
 using OpcUaViewer.Core.Services;
 using OpcUaViewer.Core.Settings;
 using OpcUaViewer.Wpf.DataSources;
@@ -17,6 +18,8 @@ namespace OpcUaViewer.Wpf;
 
 public partial class App : Application
 {
+    private bool _showMaintenanceWarning;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -37,6 +40,28 @@ public partial class App : Application
 
         AppSettings.Load();
         DialogService.Current = new WpfDialogService();
+
+        // ── License check ─────────────────────────────────────────────────────
+        try
+        {
+            LicenseState.Current = LicenseValidator.Load();
+            AppLogger.Info($"License valid — {LicenseState.Current.Licensee}");
+
+            if (!LicenseState.Current.MaintenanceActive)
+            {
+                AppLogger.Info("Maintenance period has expired — upgrades not covered.");
+                _showMaintenanceWarning = true;
+            }
+        }
+        catch (LicenseException ex)
+        {
+            AppLogger.Error($"License check failed: {ex.Message}");
+            AppDialog.Show(
+                ex.Message + "\n\nPlace a valid license.lic file in the application folder and restart.",
+                "License Error", AppDialogIcon.Error);
+            Shutdown(1);
+            return;
+        }
 
         _ = CoreWebView2Environment.CreateAsync();
 
@@ -60,6 +85,16 @@ public partial class App : Application
         var window      = new MainWindow(vm);
         MainWindow = window;
         window.Show();
+
+        if (_showMaintenanceWarning)
+        {
+            var info = LicenseState.Current!;
+            AppDialog.Show(
+                $"The maintenance period for this license expired on {info.MaintenanceUntil:yyyy-MM-dd}.\n\n" +
+                "The application will continue to work, but this version may not be covered for support or updates. " +
+                "Contact Metalforming USA to renew your maintenance agreement.",
+                "Maintenance Expired", AppDialogIcon.Warning);
+        }
 
         AppLogger.Info("Application started");
 
