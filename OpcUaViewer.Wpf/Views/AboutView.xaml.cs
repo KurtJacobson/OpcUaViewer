@@ -53,6 +53,15 @@ public partial class AboutView : System.Windows.Controls.UserControl
 
         IssuedText.Text = lic.IssuedDate.ToString("yyyy-MM-dd");
 
+        if (lic.Options.Length > 0)
+        {
+            OptionsText.Text          = string.Join(", ", lic.Options);
+            OptionsLabel.Visibility   = Visibility.Visible;
+            OptionsText.Visibility    = Visibility.Visible;
+            OptionsLabel.Margin       = new Thickness(0, 10, 0, 0);
+            OptionsText.Margin        = new Thickness(0, 10, 0, 0);
+        }
+
         if (!string.IsNullOrWhiteSpace(lic.Notes))
         {
             NotesText.Text             = lic.Notes.Trim();

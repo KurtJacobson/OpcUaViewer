@@ -39,6 +39,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <!-- Licensee -->
@@ -89,11 +90,19 @@
                     <TextBlock x:Name="IssuedText" Grid.Row="3" Grid.Column="1"
                                Foreground="{StaticResource TextBrush}" Margin="0,0,0,10"/>
 
-                    <!-- Notes (conditional) -->
-                    <TextBlock x:Name="NotesLabel" Grid.Row="4" Grid.Column="0" Text="Notes"
+                    <!-- Options (conditional) -->
+                    <TextBlock x:Name="OptionsLabel" Grid.Row="4" Grid.Column="0" Text="Options"
                                Foreground="{StaticResource TextSubBrush}" FontSize="11"
                                VerticalAlignment="Top" Visibility="Collapsed"/>
-                    <TextBlock x:Name="NotesText" Grid.Row="4" Grid.Column="1"
+                    <TextBlock x:Name="OptionsText" Grid.Row="4" Grid.Column="1"
+                               Foreground="{StaticResource TextBrush}" FontSize="11"
+                               TextWrapping="Wrap" Visibility="Collapsed"/>
+
+                    <!-- Notes (conditional) -->
+                    <TextBlock x:Name="NotesLabel" Grid.Row="5" Grid.Column="0" Text="Notes"
+                               Foreground="{StaticResource TextSubBrush}" FontSize="11"
+                               VerticalAlignment="Top" Visibility="Collapsed"/>
+                    <TextBlock x:Name="NotesText" Grid.Row="5" Grid.Column="1"
                                Foreground="{StaticResource TextSubBrush}" FontSize="11"
                                TextWrapping="Wrap" Visibility="Collapsed"/>
 

@@ -65,6 +65,9 @@ xDqLGMCe+v/H4VgcixPQ66lLrFxKGySHSyNa0PAiiR7RIVDvOY1r4aIAvPeIQ1QATA28RjXRzhZi
         string  validStr  = Require(fields, "Valid Until");
         string  maintStr  = Require(fields, "Maintenance Until");
         string  issued    = Require(fields, "Issued");
+        string[] options  = fields.TryGetValue("Options", out var optStr)
+            ? optStr.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            : [];
 
         DateTime? validUntil = validStr.Equals("Perpetual", StringComparison.OrdinalIgnoreCase)
             ? null
@@ -73,7 +76,7 @@ xDqLGMCe+v/H4VgcixPQ66lLrFxKGySHSyNa0PAiiR7RIVDvOY1r4aIAvPeIQ1QATA28RjXRzhZi
         DateTime maintenanceUntil = ParseDate(maintStr, "Maintenance Until");
         DateTime issuedDate       = ParseDate(issued,   "Issued");
 
-        var info = new LicenseInfo(licensee, address, validUntil, maintenanceUntil, notes, issuedDate);
+        var info = new LicenseInfo(licensee, address, validUntil, maintenanceUntil, notes, issuedDate, options);
 
         if (info.IsExpired)
             throw new LicenseException($"This license expired on {info.ValidUntil!.Value:yyyy-MM-dd}.");
@@ -155,6 +158,7 @@ xDqLGMCe+v/H4VgcixPQ66lLrFxKGySHSyNa0PAiiR7RIVDvOY1r4aIAvPeIQ1QATA28RjXRzhZi
         DateTime  maintenanceUntil,
         DateTime  issuedDate,
         string    notes,
+        string    options,
         string    privateKeyPem)
     {
         // Build the human-readable block
@@ -182,6 +186,9 @@ xDqLGMCe+v/H4VgcixPQ66lLrFxKGySHSyNa0PAiiR7RIVDvOY1r4aIAvPeIQ1QATA28RjXRzhZi
                 if (!string.IsNullOrWhiteSpace(noteLines[i]))
                     lines.Add($"                   {noteLines[i].Trim()}");
         }
+
+        if (!string.IsNullOrWhiteSpace(options))
+            lines.Add($"Options:           {options.Trim()}");
 
         string block = string.Join("\n", lines);
 
