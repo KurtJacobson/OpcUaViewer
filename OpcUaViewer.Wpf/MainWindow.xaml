@@ -65,15 +65,23 @@
 
                 <!-- App brand -->
                 <Border Grid.Row="0"
-                        Padding="10,18,10,18"
+                        Padding="10,16,10,16"
                         BorderBrush="{StaticResource BorderBrush}"
                         BorderThickness="0,0,0,1">
-                    <TextBlock Text="OPC UA&#x0A;VIEWER"
-                               TextAlignment="Center"
-                               Foreground="{StaticResource AccentBrush}"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               LineHeight="18"/>
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="OPC UA&#x0A;VIEWER"
+                                   TextAlignment="Center"
+                                   Foreground="{StaticResource AccentBrush}"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   LineHeight="18"/>
+                        <TextBlock x:Name="VersionText"
+                                   Text="v0.0.0"
+                                   FontSize="10"
+                                   Foreground="{StaticResource TextSubBrush}"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
                 </Border>
 
                 <!-- Tab group nav -->
@@ -124,12 +132,6 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-                    <TextBlock x:Name="VersionText"
-                               Text="v0.0.0"
-                               FontSize="10"
-                               Foreground="{StaticResource TextSubBrush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,0,0,10"/>
                 </StackPanel>
             </Grid>
         </Border>

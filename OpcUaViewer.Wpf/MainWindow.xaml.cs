@@ -29,9 +29,9 @@ public partial class MainWindow : Window
             WindowState = WindowState.Maximized;
         }
 
-        var ver = Assembly.GetExecutingAssembly()
+        var ver = (Assembly.GetExecutingAssembly()
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-            ?? "0.0.0";
+            ?? "0.0.0").Split('+')[0];
         VersionText.Text = $"v{ver}";
     }
 
