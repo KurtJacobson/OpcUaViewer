@@ -1,0 +1,97 @@
+<Window x:Class="OpcUaViewer.Wpf.Dialogs.LicenseDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="480" SizeToContent="Height"
+        WindowStyle="None" ResizeMode="NoResize"
+        ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        AllowsTransparency="True" Background="Transparent">
+
+    <Border Margin="18"
+            Background="{StaticResource BgBrush}"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="6">
+        <Border.Effect>
+            <DropShadowEffect Color="#FF000000" Direction="270"
+                              ShadowDepth="6" BlurRadius="24" Opacity="0.75"/>
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="44"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="60"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title bar -->
+            <Border Grid.Row="0" Background="{StaticResource NavBrush}"
+                    CornerRadius="6,6,0,0"
+                    MouseLeftButtonDown="TitleBar_Drag">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0">
+                    <TextBlock Text="⚠" FontSize="14" Foreground="{StaticResource AccentBrush}"
+                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="License Required"
+                               Foreground="{StaticResource TextBrush}"
+                               FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Message -->
+            <StackPanel Grid.Row="1" Margin="20,18,20,0">
+                <TextBlock x:Name="MessageText"
+                           Foreground="{StaticResource TextBrush}"
+                           TextWrapping="Wrap" FontSize="13" LineHeight="20"/>
+                <TextBlock Text="Expected location:"
+                           Foreground="{StaticResource TextSubBrush}"
+                           FontSize="11" Margin="0,12,0,4"/>
+                <TextBlock x:Name="ExpectedPathText"
+                           Foreground="{StaticResource TextSubBrush}"
+                           FontSize="11" FontFamily="Consolas"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <!-- Browse row -->
+            <Grid Grid.Row="2" Margin="20,16,20,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="LicensePathBox" Grid.Column="0"
+                         IsReadOnly="True" VerticalContentAlignment="Center"
+                         Foreground="{StaticResource TextSubBrush}"/>
+                <Button Grid.Column="2" Content="Browse…" Padding="14,6"
+                        Click="Browse_Click"/>
+            </Grid>
+
+            <!-- Status -->
+            <TextBlock x:Name="StatusText" Grid.Row="2"
+                       Margin="20,0,20,0" Padding="0,8,0,0"
+                       TextWrapping="Wrap" FontSize="11"
+                       Visibility="Collapsed"/>
+
+            <!-- Button bar -->
+            <Border Grid.Row="3"
+                    Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="0,1,0,0"
+                    CornerRadius="0,0,6,6"
+                    Padding="14,0">
+                <Grid>
+                    <Button x:Name="InstallButton"
+                            Content="Install License"
+                            HorizontalAlignment="Right" VerticalAlignment="Center"
+                            Width="140" Margin="0,0,8,0"
+                            Style="{StaticResource AccentButtonStyle}"
+                            IsEnabled="False"
+                            Click="Install_Click"/>
+                    <Button Content="Continue without license"
+                            HorizontalAlignment="Left" VerticalAlignment="Center"
+                            Foreground="{StaticResource TextSubBrush}"
+                            Background="Transparent" BorderThickness="0"
+                            Click="Skip_Click"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

@@ -24,6 +24,13 @@ public partial class SettingsView : UserControl
                         Content = new Border { Margin = new Thickness(32, 24, 32, 24), Child = panel.View }
                     }
                 });
+
+            SettingsTabs.Items.Add(new TabItem
+            {
+                Header  = "About",
+                Style   = (Style)FindResource("SettingsTabItemStyle"),
+                Content = new AboutView(),
+            });
         }
     }
 

@@ -18,7 +18,8 @@ namespace OpcUaViewer.Wpf;
 
 public partial class App : Application
 {
-    private bool _showMaintenanceWarning;
+    private bool    _showMaintenanceWarning;
+    private string? _licenseError;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -41,7 +42,7 @@ public partial class App : Application
         AppSettings.Load();
         DialogService.Current = new WpfDialogService();
 
-        // ── License check ─────────────────────────────────────────────────────
+        // ── License check (soft — app loads regardless) ───────────────────────
         try
         {
             LicenseState.Current = LicenseValidator.Load();
@@ -55,12 +56,8 @@ public partial class App : Application
         }
         catch (LicenseException ex)
         {
-            AppLogger.Error($"License check failed: {ex.Message}");
-            AppDialog.Show(
-                ex.Message + "\n\nPlace a valid license.lic file in the application folder and restart.",
-                "License Error", AppDialogIcon.Error);
-            Shutdown(1);
-            return;
+            AppLogger.Info($"No valid license: {ex.Message}");
+            _licenseError = ex.Message;
         }
 
         _ = CoreWebView2Environment.CreateAsync();
@@ -86,7 +83,9 @@ public partial class App : Application
         MainWindow = window;
         window.Show();
 
-        if (_showMaintenanceWarning)
+        if (_licenseError is not null)
+            LicenseDialog.ShowIfNeeded(_licenseError);
+        else if (_showMaintenanceWarning)
         {
             var info = LicenseState.Current!;
             AppDialog.Show(
