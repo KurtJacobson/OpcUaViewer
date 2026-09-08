@@ -120,7 +120,7 @@
             <Border x:Name="NoLicenseBorder"
                     Background="{StaticResource SurfaceBrush}"
                     BorderBrush="{StaticResource ErrorBrush}" BorderThickness="1"
-                    CornerRadius="4" Padding="20,14"
+                    CornerRadius="4" Padding="20,14" Margin="0,16,0,0"
                     Visibility="Collapsed">
                 <TextBlock Text="No valid license found. Place a license.lic file in the application folder."
                            Foreground="{StaticResource ErrorBrush}" TextWrapping="Wrap"/>
