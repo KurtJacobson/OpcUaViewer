@@ -437,6 +437,94 @@
         </Setter>
     </Style>
 
+    <!-- ══ DatePicker ════════════════════════════════════════════════════════════ -->
+
+    <Style TargetType="DatePickerTextBox">
+        <Setter Property="Background"      Value="{StaticResource InputBgBrush}"/>
+        <Setter Property="Foreground"      Value="{StaticResource TextBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding"         Value="6,4"/>
+        <Setter Property="CaretBrush"      Value="{StaticResource TextBrush}"/>
+        <Setter Property="SelectionBrush"  Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DatePickerTextBox">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Margin="{TemplateBinding Padding}"
+                                      VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="DatePicker">
+        <Setter Property="Background"      Value="{StaticResource InputBgBrush}"/>
+        <Setter Property="Foreground"      Value="{StaticResource TextBrush}"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="FontFamily"      Value="{StaticResource UiFont}"/>
+        <Setter Property="FontSize"        Value="{StaticResource FontSizeMd}"/>
+        <Setter Property="IsTodayHighlighted" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DatePicker">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="30"/>
+                            </Grid.ColumnDefinitions>
+                            <DatePickerTextBox x:Name="PART_TextBox"
+                                               Grid.Column="0"
+                                               Foreground="{TemplateBinding Foreground}"/>
+                            <Button x:Name="PART_Button"
+                                    Grid.Column="1"
+                                    Focusable="False"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="0"
+                                    Cursor="Hand">
+                                <Path Data="M 2 0 L 2 2 L 0 2 L 0 10 L 12 10 L 12 2 L 10 2 L 10 0 L 8 0 L 8 2 L 4 2 L 4 0 Z M 1 4 L 11 4 L 11 9 L 1 9 Z"
+                                      Fill="{StaticResource TextSubBrush}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Stretch="Uniform" Width="13"/>
+                            </Button>
+                            <Popup x:Name="PART_Popup"
+                                   AllowsTransparency="True"
+                                   PlacementTarget="{Binding ElementName=PART_Button}"
+                                   Placement="Bottom"
+                                   StaysOpen="False">
+                                <Border Background="{StaticResource Surface2Brush}"
+                                        BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="1">
+                                    <Calendar x:Name="PART_Calendar"
+                                              Background="{StaticResource Surface2Brush}"
+                                              Foreground="{StaticResource TextBrush}"
+                                              BorderThickness="0"/>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{StaticResource TextSubBrush}"/>
+                            <Setter Property="Opacity"    Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ══ ToolTip ═══════════════════════════════════════════════════════════════ -->
 
     <Style TargetType="ToolTip">
