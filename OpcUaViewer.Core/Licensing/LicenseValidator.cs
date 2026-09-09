@@ -80,8 +80,8 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
         string  validStr  = Require(fields, "Valid Until");
         string  maintStr  = Require(fields, "Maintenance Until");
         string  issued    = Require(fields, "Issued");
-        string[] options  = fields.TryGetValue("Options", out var optStr)
-            ? optStr.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        LicenseOption[] options = fields.TryGetValue("Options", out var optStr)
+            ? ParseOptions(optStr)
             : [];
 
         DateTime? validUntil = validStr.Equals("Perpetual", StringComparison.OrdinalIgnoreCase)
@@ -91,7 +91,8 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
         DateTime maintenanceUntil = ParseDate(maintStr, "Maintenance Until");
         DateTime issuedDate       = ParseDate(issued,   "Issued");
 
-        var info = new LicenseInfo(licVersion, licensee, address, validUntil, maintenanceUntil, notes, issuedDate, options);
+        var info = new LicenseInfo(licVersion, licensee, address, validUntil, maintenanceUntil,
+                                   notes, issuedDate, options);
 
         if (info.IsExpired)
             throw new LicenseException($"This license expired on {info.ValidUntil!.Value:yyyy-MM-dd}.");
@@ -151,6 +152,30 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
         return result;
     }
 
+    // Parses the multi-line Options field value.
+    // Each logical line is "Key" or "Key, yyyy-MM-dd". Lines are separated by \n (continuation).
+    private static LicenseOption[] ParseOptions(string raw)
+    {
+        var result = new List<LicenseOption>();
+        foreach (var line in raw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            int comma = line.IndexOf(',');
+            if (comma < 0)
+            {
+                result.Add(new LicenseOption(line.Trim(), null));
+            }
+            else
+            {
+                string key     = line[..comma].Trim();
+                string datePart = line[(comma + 1)..].Trim();
+                DateTime? expiry = DateTime.TryParse(datePart, out var d) ? d.Date : null;
+                result.Add(new LicenseOption(key, expiry));
+            }
+        }
+        return result.ToArray();
+    }
+
     private static string Require(Dictionary<string, string> f, string key) =>
         f.TryGetValue(key, out var v) && !string.IsNullOrWhiteSpace(v)
             ? v
@@ -167,14 +192,14 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
     /// Builds and signs a license file, returning the complete text content.
     /// </summary>
     public static string CreateLicenseText(
-        string    licensee,
-        string    address,
-        DateTime? validUntil,
-        DateTime  maintenanceUntil,
-        DateTime  issuedDate,
-        string    notes,
-        string    options,
-        string    privateKeyPem)
+        string          licensee,
+        string          address,
+        DateTime?       validUntil,
+        DateTime        maintenanceUntil,
+        DateTime        issuedDate,
+        string          notes,
+        LicenseOption[] options,
+        string          privateKeyPem)
     {
         // Build the human-readable block
         var lines = new List<string>();
@@ -203,8 +228,19 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
                     lines.Add($"                   {noteLines[i].Trim()}");
         }
 
-        if (!string.IsNullOrWhiteSpace(options))
-            lines.Add($"Options:           {options.Trim()}");
+        if (options.Length > 0)
+        {
+            // First option on the Options: line, subsequent ones as continuation lines
+            string pad = "                   "; // 19 spaces — aligns with field value column
+            for (int i = 0; i < options.Length; i++)
+            {
+                var opt = options[i];
+                string entry = opt.ExpiresOn.HasValue
+                    ? $"{opt.Key}, {opt.ExpiresOn.Value:yyyy-MM-dd}"
+                    : opt.Key;
+                lines.Add(i == 0 ? $"Options:           {entry}" : $"{pad}{entry}");
+            }
+        }
 
         string block = string.Join("\n", lines);
 

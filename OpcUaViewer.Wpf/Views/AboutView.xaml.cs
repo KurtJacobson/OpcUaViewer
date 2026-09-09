@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Media;
@@ -59,7 +60,10 @@ public partial class AboutView : System.Windows.Controls.UserControl
 
         if (lic.Options.Length > 0)
         {
-            OptionsText.Text          = string.Join(", ", lic.Options);
+            OptionsText.Text = string.Join("\n", lic.Options.Select(o =>
+                o.ExpiresOn.HasValue
+                    ? $"{o.Key}  (until {o.ExpiresOn.Value:yyyy-MM-dd}{(o.IsActive ? "" : " — expired")})"
+                    : o.Key));
             OptionsLabel.Visibility   = Visibility.Visible;
             OptionsText.Visibility    = Visibility.Visible;
             OptionsLabel.Margin       = new Thickness(0, 10, 0, 0);
