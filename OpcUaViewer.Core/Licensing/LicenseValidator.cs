@@ -24,12 +24,13 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
     };
 
     // The version written into newly issued licenses (must match a key in PublicKeys).
-    public const int CurrentLicVersion = 1;
+    public const int    CurrentLicVersion = 1;
+    public const string ProductName       = "Fold Control";
 
-    private const string BeginLicense   = "-----BEGIN FOLD CONTROL LICENSE-----";
-    private const string EndLicense     = "-----END FOLD CONTROL LICENSE-----";
-    private const string BeginSignature = "-----BEGIN LICENSE SIGNATURE-----";
-    private const string EndSignature   = "-----END LICENSE SIGNATURE-----";
+    private const string BeginLicense   = "-----BEGIN LICENSE-----";
+    private const string EndLicense     = "-----END LICENSE-----";
+    private const string BeginSignature = "-----BEGIN SIGNATURE-----";
+    private const string EndSignature   = "-----END SIGNATURE-----";
 
     public static readonly string DefaultLicensePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
@@ -203,6 +204,7 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
     {
         // Build the human-readable block
         var lines = new List<string>();
+        lines.Add($"Product:           {ProductName}");
         lines.Add($"LicVersion:        {CurrentLicVersion}");
         lines.Add($"Licensee:          {licensee}");
 
@@ -241,7 +243,6 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
                 lines.Add(i == 0 ? $"Options:           {entry}" : $"{pad}{entry}");
             }
         }
-
         string block = string.Join("\n", lines);
 
         // Sign the block bytes
