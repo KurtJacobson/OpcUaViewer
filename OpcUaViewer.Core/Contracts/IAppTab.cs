@@ -1,0 +1,15 @@
+using System.Windows;
+
+namespace OpcUaViewer.Core.Contracts;
+
+public interface IAppTab
+{
+    string Title        { get; }
+    string Icon         { get; }  // Emoji or Segoe MDL2 glyph character
+    int    Order        { get; }  // Nav sort position; built-ins use 10, 20, 30...
+    string Description  => "";     // Optional human-readable description shown in the plugin viewer
+    bool   PinToBottom  => false;  // Pin to the bottom of the nav panel (e.g. Settings)
+    string GroupKey     => Title;  // Tabs sharing the same GroupKey are grouped under one sidebar button
+
+    FrameworkElement CreateView();
+}

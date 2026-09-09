@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpcUaViewer.Core\OpcUaViewer.Core.csproj"/>
+    <ProjectReference Include="..\OpcUaViewer.Theme\OpcUaViewer.Theme.csproj"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="WebcamResources.xaml"/>
+    <EmbeddedResource Include="WebcamResources.xaml"/>
+  </ItemGroup>
+
+  <Target Name="CopyOpenCvNative" AfterTargets="Build">
+    <Copy SourceFiles="$(NuGetPackageRoot)opencvsharp4.runtime.win\4.10.0.20241108\runtimes\win-x64\native\OpenCvSharpExtern.dll"
+          DestinationFolder="$(OutputPath)"
+          SkipUnchangedFiles="true"/>
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="OpenCvSharp4"             Version="4.10.0.20241108"/>
+    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.10.0.20241108"/>
+  </ItemGroup>
+</Project>

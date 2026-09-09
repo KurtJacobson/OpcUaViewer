@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpcUaViewer.Core\OpcUaViewer.Core.csproj"/>
+    <ProjectReference Include="..\OpcUaViewer.Theme\OpcUaViewer.Theme.csproj"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="GroupsResources.xaml"/>
+    <EmbeddedResource Include="GroupsResources.xaml"/>
+  </ItemGroup>
+</Project>

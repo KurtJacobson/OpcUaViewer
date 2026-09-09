@@ -357,5 +357,5 @@ healthchecksdb
 # Backup folder for Package Reference Convert tool in Visual Studio 2017
 MigrationBackup/
 
-# Inno Setup installer output
-installer/
+# Inno Setup installer output directory (compiled EXEs), but track the script
+[Ii]nstaller/[Oo]utput/

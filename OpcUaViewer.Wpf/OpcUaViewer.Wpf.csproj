@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>OpcUaViewer.Wpf</RootNamespace>
+    <AssemblyName>FoldControl</AssemblyName>
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
+    <NoWarn>$(NoWarn);CA1416;CS0618;MSB3277</NoWarn>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>dev</MinVerDefaultPreReleaseIdentifiers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpcUaViewer.Core\OpcUaViewer.Core.csproj" />
+    <ProjectReference Include="..\OpcUaViewer.Theme\OpcUaViewer.Theme.csproj" />
+    <!-- Shipped plugins: build-order dependency only — DLLs go to plugins\ subfolder, not the GAC -->
+    <ProjectReference Include="..\OpcUaViewer.Plugin.Groups\OpcUaViewer.Plugin.Groups.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\OpcUaViewer.Plugin.Document\OpcUaViewer.Plugin.Document.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\OpcUaViewer.Plugin.Webcam\OpcUaViewer.Plugin.Webcam.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\OpcUaViewer.Plugin.OpcUa\OpcUaViewer.Plugin.OpcUa.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\OpcUaViewer.Plugin.Stats\OpcUaViewer.Plugin.Stats.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\OpcUaViewer.Plugin.CsvSource\OpcUaViewer.Plugin.CsvSource.csproj" ReferenceOutputAssembly="false" Private="false" />
+  </ItemGroup>
+
+  <Target Name="CopyShippedPlugins" AfterTargets="Build">
+    <!-- Single-DLL plugins -->
+    <ItemGroup>
+      <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Groups\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Groups.dll" />
+      <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Document\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Document.dll" />
+      <_ShippedPlugin Include="..\OpcUaViewer.Plugin.OpcUa\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.OpcUa.dll" />
+      <_ShippedPlugin Include="..\OpcUaViewer.Plugin.Stats\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Stats.dll" />
+      <_ShippedPlugin Include="..\OpcUaViewer.Plugin.CsvSource\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.CsvSource.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_ShippedPlugin)" DestinationFolder="$(OutputPath)plugins\" SkipUnchangedFiles="true" ContinueOnError="true" />
+
+    <!-- Webcam: copy plugin DLL + managed deps to plugins\, native DLL to app root -->
+    <ItemGroup>
+      <_WebcamPlugin Include="..\OpcUaViewer.Plugin.Webcam\bin\$(Configuration)\$(TargetFramework)\OpcUaViewer.Plugin.Webcam.dll" />
+      <_WebcamPlugin Include="..\OpcUaViewer.Plugin.Webcam\bin\$(Configuration)\$(TargetFramework)\OpenCvSharp.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_WebcamPlugin)" DestinationFolder="$(OutputPath)plugins\" SkipUnchangedFiles="true" ContinueOnError="true" />
+    <Copy SourceFiles="..\OpcUaViewer.Plugin.Webcam\bin\$(Configuration)\$(TargetFramework)\OpenCvSharpExtern.dll" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" ContinueOnError="true" />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4078.44" />
+    <PackageReference Include="MinVer" Version="8.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\no-document.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>
