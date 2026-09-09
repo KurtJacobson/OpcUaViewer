@@ -3,6 +3,7 @@ using System;
 namespace OpcUaViewer.Core.Licensing;
 
 public record LicenseInfo(
+    int       LicVersion,
     string    Licensee,
     string    Address,
     DateTime? ValidUntil,        // null = perpetual

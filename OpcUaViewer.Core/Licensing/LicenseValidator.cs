@@ -8,8 +8,11 @@ namespace OpcUaViewer.Core.Licensing;
 
 public static class LicenseValidator
 {
-    // Public key matching the private key held by the license tool (developer only).
-    private const string PublicKeyPem = @"-----BEGIN PUBLIC KEY-----
+    // Keyed by LicVersion number. Add a new entry here when rotating keys; old entries
+    // stay so existing licenses remain valid until they expire or are reissued.
+    private static readonly Dictionary<int, string> PublicKeys = new()
+    {
+        [1] = @"-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyAItVPNU4kV1U2kR5TBK
 3FA97dlx6RYBXGFSImnlEOZkuxjEfcUg27dL5JuLJFrfnjmsgdXzT7InsA6uXhFg
 Mgdwvy2fBZEMI02A2RjFtUMpOVGBnb7NQDEkUnvN9DyRcfQUoRxS8aQWKW6qhIiH
@@ -17,7 +20,11 @@ TVgY4SehSf6r5QOxQ+em69EaYe69r0cPmXs2qQ4/aYZqd9C3u8G4Mfi/wo66+LEy
 a70ipssNHPdyjiB1JgOWADZzeKFNO89Mn5oAmnt9f7kNnZsRs/CBptrtNE2iQ7G3
 BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
 0wIDAQAB
------END PUBLIC KEY-----";
+-----END PUBLIC KEY-----",
+    };
+
+    // The version written into newly issued licenses (must match a key in PublicKeys).
+    public const int CurrentLicVersion = 1;
 
     private const string BeginLicense   = "-----BEGIN FOLD CONTROL LICENSE-----";
     private const string EndLicense     = "-----END FOLD CONTROL LICENSE-----";
@@ -45,6 +52,16 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
         string sigBlock = ExtractBlock(text, BeginSignature, EndSignature)
             ?? throw new LicenseException("License file is missing the signature block.");
 
+        // Parse fields first so we can pick the correct public key by LicVersion
+        var fields = ParseFields(block);
+
+        int licVersion = 1;
+        if (fields.TryGetValue("LicVersion", out var verStr) && int.TryParse(verStr.Trim(), out int parsedVer))
+            licVersion = parsedVer;
+
+        if (!PublicKeys.TryGetValue(licVersion, out string? publicKeyPem))
+            throw new LicenseException($"License version {licVersion} is not recognised by this installation.");
+
         // Verify RSA signature over the exact bytes of the license block content
         byte[] blockBytes = Encoding.UTF8.GetBytes(block);
         byte[] sigBytes;
@@ -52,13 +69,10 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
         catch { throw new LicenseException("License signature is malformed."); }
 
         using var rsa = RSA.Create();
-        rsa.ImportFromPem(PublicKeyPem);
+        rsa.ImportFromPem(publicKeyPem);
 
         if (!rsa.VerifyData(blockBytes, sigBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
             throw new LicenseException("License signature is invalid. The file may have been tampered with.");
-
-        // Parse key-value fields (continuation lines indented with whitespace)
-        var fields = ParseFields(block);
 
         string  licensee  = Require(fields, "Licensee");
         string  address   = fields.GetValueOrDefault("Address", "");
@@ -77,7 +91,7 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
         DateTime maintenanceUntil = ParseDate(maintStr, "Maintenance Until");
         DateTime issuedDate       = ParseDate(issued,   "Issued");
 
-        var info = new LicenseInfo(licensee, address, validUntil, maintenanceUntil, notes, issuedDate, options);
+        var info = new LicenseInfo(licVersion, licensee, address, validUntil, maintenanceUntil, notes, issuedDate, options);
 
         if (info.IsExpired)
             throw new LicenseException($"This license expired on {info.ValidUntil!.Value:yyyy-MM-dd}.");
@@ -164,6 +178,7 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
     {
         // Build the human-readable block
         var lines = new List<string>();
+        lines.Add($"LicVersion:        {CurrentLicVersion}");
         lines.Add($"Licensee:          {licensee}");
 
         if (!string.IsNullOrWhiteSpace(address))
