@@ -10,12 +10,13 @@ public static class LicenseValidator
 {
     // Public key matching the private key held by the license tool (developer only).
     private const string PublicKeyPem = @"-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyAg8wVHYZI1BYegwGkPt2FVNKqAM7z3e
-Cqdoh16e8R/77Vb7BH7C1Is2KFbUz2A5tjBGJN/Pqt9bIxdU0uRa9o8nXOX9ZffA4YkrbIWQf7sH
-zPca7Sf5bi/iJX2Q+x+cY5tw7ltXcMbJpFx6HXrDWkU5xBaLbmMlm9tgGpBDA2a3k93xySYncW7U
-l3UQvi+evsff0bPF+uUtziO8rZu2Clu4Dld8VT3Lj+Af2fUfYthElL+Dd+XjuneW6ru1B5bP5f9U
-xDqLGMCe+v/H4VgcixPQ66lLrFxKGySHSyNa0PAiiR7RIVDvOY1r4aIAvPeIQ1QATA28RjXRzhZi
-4O4UhQIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyAItVPNU4kV1U2kR5TBK
+3FA97dlx6RYBXGFSImnlEOZkuxjEfcUg27dL5JuLJFrfnjmsgdXzT7InsA6uXhFg
+Mgdwvy2fBZEMI02A2RjFtUMpOVGBnb7NQDEkUnvN9DyRcfQUoRxS8aQWKW6qhIiH
+TVgY4SehSf6r5QOxQ+em69EaYe69r0cPmXs2qQ4/aYZqd9C3u8G4Mfi/wo66+LEy
+a70ipssNHPdyjiB1JgOWADZzeKFNO89Mn5oAmnt9f7kNnZsRs/CBptrtNE2iQ7G3
+BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
+0wIDAQAB
 -----END PUBLIC KEY-----";
 
     private const string BeginLicense   = "-----BEGIN FOLD CONTROL LICENSE-----";
