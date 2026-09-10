@@ -8,7 +8,7 @@ namespace OpcUaViewer.Core.Licensing;
 
 public static class LicenseValidator
 {
-    // Keyed by LicVersion number. Add a new entry here when rotating keys; old entries
+    // Keyed by Format number. Add a new entry here when rotating keys; old entries
     // stay so existing licenses remain valid until they expire or are reissued.
     private static readonly Dictionary<int, string> PublicKeys = new()
     {
@@ -24,7 +24,7 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
     };
 
     // The version written into newly issued licenses (must match a key in PublicKeys).
-    public const int    CurrentLicVersion = 1;
+    public const int    CurrentFormat = 1;
     public const string ProductName       = "Fold Control";
 
     private const string BeginLicense   = "-----BEGIN LICENSE-----";
@@ -53,15 +53,15 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
         string sigBlock = ExtractBlock(text, BeginSignature, EndSignature)
             ?? throw new LicenseException("License file is missing the signature block.");
 
-        // Parse fields first so we can pick the correct public key by LicVersion
+        // Parse fields first so we can pick the correct public key by Format
         var fields = ParseFields(block);
 
-        int licVersion = 1;
-        if (fields.TryGetValue("LicVersion", out var verStr) && int.TryParse(verStr.Trim(), out int parsedVer))
-            licVersion = parsedVer;
+        int format = 1;
+        if (fields.TryGetValue("Format", out var verStr) && int.TryParse(verStr.Trim(), out int parsedVer))
+            format = parsedVer;
 
-        if (!PublicKeys.TryGetValue(licVersion, out string? publicKeyPem))
-            throw new LicenseException($"License version {licVersion} is not recognised by this installation.");
+        if (!PublicKeys.TryGetValue(format, out string? publicKeyPem))
+            throw new LicenseException($"License format version {format} is not recognised by this installation.");
 
         // Verify RSA signature over the exact bytes of the license block content
         byte[] blockBytes = Encoding.UTF8.GetBytes(block);
@@ -92,7 +92,7 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
         DateTime maintenanceUntil = ParseDate(maintStr, "Maintenance Until");
         DateTime issuedDate       = ParseDate(issued,   "Issued");
 
-        var info = new LicenseInfo(licVersion, licensee, address, validUntil, maintenanceUntil,
+        var info = new LicenseInfo(format, licensee, address, validUntil, maintenanceUntil,
                                    notes, issuedDate, options);
 
         if (info.IsExpired)
@@ -205,7 +205,7 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
         // Build the human-readable block
         var lines = new List<string>();
         lines.Add($"Product:           {ProductName}");
-        lines.Add($"LicVersion:        {CurrentLicVersion}");
+        lines.Add($"Format:        {CurrentFormat}");
         lines.Add($"Licensee:          {licensee}");
 
         if (!string.IsNullOrWhiteSpace(address))
@@ -258,3 +258,4 @@ BLvNykmtR3gi/aLMvls3beLLscVdzKen5931PQJSEwDJ7dr6gHjY2OCHsECxguyQ
 }
 
 public class LicenseException(string message) : Exception(message);
+

@@ -8,7 +8,7 @@ public record LicenseOption(string Key, DateTime? ExpiresOn)
 }
 
 public record LicenseInfo(
-    int             LicVersion,
+    int             Format,
     string          Licensee,
     string          Address,
     DateTime?       ValidUntil,        // null = perpetual
