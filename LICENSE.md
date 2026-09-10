@@ -16,9 +16,10 @@ distributed with the installer (see `installer/EULA.txt`). A valid license
 key issued by MetalForming LLC is required to operate the Software.
 
 The Software incorporates third-party components that are distributed under
-their own open source licenses (MIT, Apache 2.0, and the Microsoft WebView2
-SDK license). Those licenses apply only to the respective components and do
-not extend to the Software as a whole.
+their own open source licenses (MIT, Apache 2.0, BSD 3-Clause, and public
+domain). Those licenses apply only to the respective components and do not
+extend to the Software as a whole. See `THIRD-PARTY-NOTICES.txt` for the
+component list and license texts.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

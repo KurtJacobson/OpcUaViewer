@@ -65,11 +65,11 @@ this Agreement transfers any ownership interest to Licensee.
 
 The Software includes third-party components that are licensed under their
 own terms, including components licensed under the MIT License, the Apache
-License 2.0, and the Microsoft WebView2 SDK license. Those terms apply to the
-respective components only. Copies of the applicable notices are provided
-with the Software. To the extent any third-party term conflicts with this
-Agreement with respect to that component, the third-party term governs for
-that component.
+License 2.0, and the BSD 3-Clause License. Those terms apply to the
+respective components only. The component list and license texts are
+provided in the file THIRD-PARTY-NOTICES.txt installed with the Software. To
+the extent any third-party term conflicts with this Agreement with respect
+to that component, the third-party term governs for that component.
 
 
 6. PRODUCTION DATA

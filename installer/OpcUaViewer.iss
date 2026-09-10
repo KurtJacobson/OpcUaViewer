@@ -56,6 +56,7 @@ Source: "{#PublishDir}\*.json";                            DestDir: "{app}"; Com
 Source: "{#PublishDir}\*.runtimeconfig.json";              DestDir: "{app}"; Components: main; Flags: ignoreversion
 Source: "{#PublishDir}\Assets\*";                          DestDir: "{app}\Assets"; Components: main; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "EULA.txt";                                        DestDir: "{app}"; Components: main; Flags: ignoreversion
+Source: "..\THIRD-PARTY-NOTICES.txt";                      DestDir: "{app}"; Components: main; Flags: ignoreversion
 
 ; ── Shipped plugins (each optional) ──────────────────────────────────────────
 Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.OpcUa.dll";    DestDir: "{app}\plugins"; Components: opcua;   Flags: ignoreversion skipifsourcedoesntexist
