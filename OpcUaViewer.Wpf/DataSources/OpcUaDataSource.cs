@@ -10,7 +10,8 @@ namespace OpcUaViewer.Wpf.DataSources;
 
 public class OpcUaDataSource : ViewModelBase, IMachineSource, ISettingsPanel, IDisposable
 {
-    private readonly OpcUaService _svc = new();
+    private readonly OpcUaService _svc     = new();
+    private readonly FaultLog     _faultLog = new();
 
     private bool   _isConnected;
     private bool   _isBusy;
@@ -65,7 +66,7 @@ public class OpcUaDataSource : ViewModelBase, IMachineSource, ISettingsPanel, ID
         _svc.TagValueUpdated       += (_, e)    => TagValueUpdated?.Invoke(this, e);
         _svc.ProductIdChanged      += (_, v)    => ProductIdChanged?.Invoke(this, v);
         _svc.CamFileChanged        += (_, v)    => CamFileChanged?.Invoke(this, v);
-        _svc.MachineStateChanged   += (_, v)    => MachineStateChanged?.Invoke(this, v);
+        _svc.MachineStateChanged   += (_, v)    => { OnMachineStateChanged(v); MachineStateChanged?.Invoke(this, v); };
         _svc.OperatorActionChanged += (_, v)    => OperatorActionChanged?.Invoke(this, v);
 
         ConnectCommand    = new RelayCommand(ConnectAsync, () => !IsConnected && !IsBusy);
@@ -99,7 +100,19 @@ public class OpcUaDataSource : ViewModelBase, IMachineSource, ISettingsPanel, ID
         IsConnected = false;
     }
 
-    public void Dispose() => _svc.Dispose();
+    private void OnMachineStateChanged(int state)
+    {
+        if (state == AppSettings.Current.MachineStateFaulted)
+            _faultLog.RecordFaultStart();
+        else
+            _faultLog.RecordFaultCleared();
+    }
+
+    public void Dispose()
+    {
+        _svc.Dispose();
+        _faultLog.Dispose();
+    }
 
     private static void Dispatch(Action a)
     {

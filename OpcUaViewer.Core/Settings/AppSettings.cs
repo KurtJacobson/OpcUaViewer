@@ -40,6 +40,12 @@ public sealed class AppSettings
         catch { }
     }
 
+    // Machine / site identity
+    public string MachineId   { get; set; } = "";   // unique ID for this machine instance
+    public string MachineName { get; set; } = "";   // human label, e.g. "Folder 1"
+    public string SiteCode    { get; set; } = "";   // short plant/site code, e.g. "CHI"
+    public string PlantCode   { get; set; } = "";   // ERP plant code if different from SiteCode
+
     // Connection / folders
     public string EndpointUrl       { get; set; } = "opc.tcp://10.10.10.102:4840";
     public string PdfFolderPath     { get; set; } = "C:\\ProductDocs";
@@ -69,6 +75,7 @@ public sealed class AppSettings
     public int MachineStateManual  { get; set; } = 2;
     public int MachineStateSetup   { get; set; } = 3;
     public int MachineStateBending { get; set; } = 4;
+    public int MachineStateFaulted { get; set; } = 5;
 
     // Stats — tag name substrings used to extract hours/bends from TagValueUpdated
     public string TotalHoursTagMatch    { get; set; } = "TotalOperatingHours";
