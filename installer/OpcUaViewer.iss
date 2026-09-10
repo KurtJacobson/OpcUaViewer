@@ -17,6 +17,8 @@ AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisherURL=https://metalforming-usa.com
 AppPublisher={#AppPublisher}
+AppCopyright=Copyright (C) 2026 {#AppPublisher}
+LicenseFile=EULA.txt
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 AllowNoIcons=yes
@@ -53,6 +55,7 @@ Source: "{#PublishDir}\*.dll";                             DestDir: "{app}"; Com
 Source: "{#PublishDir}\*.json";                            DestDir: "{app}"; Components: main; Flags: ignoreversion
 Source: "{#PublishDir}\*.runtimeconfig.json";              DestDir: "{app}"; Components: main; Flags: ignoreversion
 Source: "{#PublishDir}\Assets\*";                          DestDir: "{app}\Assets"; Components: main; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "EULA.txt";                                        DestDir: "{app}"; Components: main; Flags: ignoreversion
 
 ; ── Shipped plugins (each optional) ──────────────────────────────────────────
 Source: "{#PublishDir}\plugins\OpcUaViewer.Plugin.OpcUa.dll";    DestDir: "{app}\plugins"; Components: opcua;   Flags: ignoreversion skipifsourcedoesntexist
